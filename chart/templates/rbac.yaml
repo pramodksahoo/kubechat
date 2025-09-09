@@ -1,0 +1,48 @@
+{{- if .Values.rbac.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "kubechat.fullname" . }}
+  labels:
+    {{- include "kubechat.labels" . | nindent 4 }}
+rules:
+  # Core resources access
+  - apiGroups: [""]
+    resources: ["pods", "services", "endpoints", "configmaps", "secrets", "namespaces", "nodes", "events"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get", "list"]
+  # Apps resources access
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets", "daemonsets", "statefulsets"]
+    verbs: ["get", "list", "watch"]
+  # Extensions resources access
+  - apiGroups: ["extensions"]
+    resources: ["deployments", "replicasets", "daemonsets"]
+    verbs: ["get", "list", "watch"]
+  # Metrics access (if metrics-server is available)
+  - apiGroups: ["metrics.k8s.io"]
+    resources: ["pods", "nodes"]
+    verbs: ["get", "list"]
+  # Networking resources
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses", "networkpolicies"]
+    verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "kubechat.fullname" . }}
+  labels:
+    {{- include "kubechat.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "kubechat.fullname" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "kubechat.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}

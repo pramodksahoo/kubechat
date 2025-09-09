@@ -1,0 +1,90 @@
+{{- if and .Values.llm.ollama.enabled .Values.llm.ollama.deploy }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "kubechat.fullname" . }}-ollama
+  labels:
+    {{- include "kubechat.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ollama
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "kubechat.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: ollama
+  template:
+    metadata:
+      labels:
+        {{- include "kubechat.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: ollama
+    spec:
+      containers:
+        - name: ollama
+          image: "{{ .Values.llm.ollama.image.repository }}:{{ .Values.llm.ollama.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 11434
+              protocol: TCP
+          env:
+            - name: OLLAMA_KEEP_ALIVE
+              value: "24h"
+            - name: OLLAMA_HOST
+              value: "0.0.0.0"
+          resources:
+            {{- toYaml .Values.llm.ollama.resources | nindent 12 }}
+          volumeMounts:
+            {{- if .Values.llm.ollama.persistence.enabled }}
+            - name: ollama-data
+              mountPath: /root/.ollama
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 5
+      {{- if .Values.llm.ollama.persistence.enabled }}
+      volumes:
+        - name: ollama-data
+          persistentVolumeClaim:
+            claimName: {{ include "kubechat.fullname" . }}-ollama-pvc
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+{{- if .Values.llm.ollama.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "kubechat.fullname" . }}-ollama-pvc
+  labels:
+    {{- include "kubechat.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ollama
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.llm.ollama.persistence.size }}
+  {{- if .Values.llm.ollama.persistence.storageClass }}
+  storageClassName: {{ .Values.llm.ollama.persistence.storageClass }}
+  {{- end }}
+{{- end }}
+{{- end }}
