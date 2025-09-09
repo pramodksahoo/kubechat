@@ -23,7 +23,7 @@ llm:
     enabled: true
     # URL to Ollama service (automatically set for in-cluster deployment)
     url: ""  # Will be auto-generated as http://{release-name}-kubechat-ollama:11434
-    model: "llama2"
+    model: "phi3:mini"
     # Deploy Ollama in the same cluster (set to false if using external Ollama)
     deploy: true
     image:

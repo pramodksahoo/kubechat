@@ -1,5 +1,5 @@
-# Build stage for Go backend
-FROM golang:1.21-alpine AS go-builder
+# Simple Dockerfile for PoC testing - just Go backend
+FROM golang:1.21-alpine AS builder
 
 WORKDIR /app
 
@@ -14,21 +14,6 @@ COPY internal/ internal/
 # Build the Go binary
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o kubechat ./cmd/server
 
-# Build stage for React frontend
-FROM node:18-alpine AS web-builder
-
-WORKDIR /app/web
-
-# Copy package files
-COPY web/package*.json ./
-RUN npm install
-
-# Copy web source code
-COPY web/ ./
-
-# Build the React app
-RUN npm run build
-
 # Final stage
 FROM alpine:latest
 
@@ -36,10 +21,13 @@ RUN apk --no-cache add ca-certificates curl
 WORKDIR /root/
 
 # Copy Go binary
-COPY --from=go-builder /app/kubechat .
+COPY --from=builder /app/kubechat .
 
-# Copy React build
-COPY --from=web-builder /app/web/build ./web/build
+# Create simple web directory structure for static serving
+RUN mkdir -p web/build
+
+# Create a simple index.html for testing
+RUN echo '<html><body><h1>KubeChat API Server</h1><p>Frontend coming soon. Try API at /api/health</p></body></html>' > web/build/index.html
 
 # Create non-root user
 RUN adduser -D -s /bin/sh kubechat
