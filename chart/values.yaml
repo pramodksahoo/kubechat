@@ -1,0 +1,143 @@
+# Default values for kubechat.
+replicaCount: 1
+
+image:
+  repository: kubechat/kubechat
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# LLM Configuration
+llm:
+  # Primary LLM provider: "ollama" or "openai"
+  provider: "ollama"
+  
+  # Enable fallback to secondary provider
+  enableFallback: true
+  
+  # Ollama configuration
+  ollama:
+    enabled: true
+    # URL to Ollama service (automatically set for in-cluster deployment)
+    url: ""  # Will be auto-generated as http://{release-name}-kubechat-ollama:11434
+    model: "llama2"
+    # Deploy Ollama in the same cluster (set to false if using external Ollama)
+    deploy: true
+    image:
+      repository: ollama/ollama
+      tag: "latest"
+    resources:
+      requests:
+        memory: "2Gi"
+        cpu: "1000m"
+      limits:
+        memory: "4Gi" 
+        cpu: "2000m"
+    persistence:
+      enabled: true
+      size: "10Gi"
+      storageClass: ""
+  
+  # OpenAI configuration
+  openai:
+    enabled: false
+    # OpenAI API key (set via secret)
+    apiKey: ""
+    model: "gpt-4"
+    # Secret containing OpenAI API key
+    existingSecret: ""
+    secretKey: "api-key"
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8080
+
+# Ingress configuration
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: kubechat.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+# Resources
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "250m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+# Autoscaling
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+
+# Node selection
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Security context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  fsGroup: 1001
+
+# Pod security context  
+podSecurityContext:
+  fsGroup: 1001
+
+# Service account
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  name: ""
+
+# RBAC
+rbac:
+  # Specifies whether RBAC resources should be created
+  create: true
+  
+# Pod annotations
+podAnnotations: {}
+
+# Configuration
+config:
+  # Database type: "memory" or "postgres"
+  database:
+    type: "memory"
+    url: ""
+  
+  # Server configuration
+  server:
+    port: 8080
+    host: "0.0.0.0"
+
+# Persistent Volume Claims
+persistence:
+  enabled: false
+  size: "1Gi"
+  storageClass: ""
+
+# Environment variables
+env: {}
+
+# Extra environment variables from secrets
+envFrom: []
