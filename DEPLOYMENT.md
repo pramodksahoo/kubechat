@@ -197,9 +197,23 @@ curl http://localhost:8080/api/health
 # Test cluster info
 curl http://localhost:8080/api/clusters
 
+# Test natural language queries
+curl -X POST http://localhost:8080/api/query \
+  -H "Content-Type: application/json" \
+  -d '{"query": "show me all pods"}'
+
+curl -X POST http://localhost:8080/api/query \
+  -H "Content-Type: application/json" \
+  -d '{"query": "list all services in the kubechat namespace"}'
+
 # Test Ollama connectivity (if deployed in-cluster)
 kubectl port-forward svc/kubechat-ollama 11434:11434 -n kubechat
 curl http://localhost:11434/api/tags
+
+# Test Ollama model directly
+curl -X POST http://localhost:11434/api/generate \
+  -H "Content-Type: application/json" \
+  -d '{"model": "phi3:mini", "prompt": "Hello", "stream": false}'
 ```
 
 ### Common Issues
@@ -223,9 +237,59 @@ kubectl scale deployment kubechat-ollama --replicas=0 -n kubechat
 # Check job logs
 kubectl logs job/kubechat-ollama-init -n kubechat
 
-# Manually pull model
-kubectl exec -it deployment/kubechat-ollama -n kubechat -- ollama pull llama2
+# Manually pull model (use phi3:mini for better memory efficiency)
+kubectl exec -it deployment/kubechat-ollama -n kubechat -- ollama pull phi3:mini
 ```
+
+## Memory Optimization
+
+### Using Smaller Models
+
+For clusters with limited memory (< 8GB), use the phi3:mini model instead of llama2:
+
+```bash
+# Update the model in values.yaml
+helm upgrade kubechat ./chart \
+  --set llm.ollama.model=phi3:mini \
+  -n kubechat
+
+# Or patch the running deployment
+kubectl patch deployment kubechat -n kubechat \
+  -p '{"spec":{"template":{"spec":{"containers":[{"name":"kubechat","env":[{"name":"OLLAMA_MODEL","value":"phi3:mini"}]}]}}}}'
+```
+
+### Model Specifications
+
+| Model | Size | Memory Required | Performance |
+|-------|------|----------------|-------------|
+| llama2 | 3.8GB | ~6GB | High quality responses |
+| phi3:mini | 2.2GB | ~3GB | Good quality, faster |
+| qwen2:0.5b | 0.5GB | ~1GB | Basic responses |
+
+### Managing Models
+
+```bash
+# List available models
+kubectl exec -n kubechat deployment/kubechat-ollama -- ollama list
+
+# Remove unused models to save space
+kubectl exec -n kubechat deployment/kubechat-ollama -- ollama rm llama2
+
+# Pull specific model version
+kubectl exec -n kubechat deployment/kubechat-ollama -- ollama pull phi3:mini
+```
+
+## Tested Configuration
+
+This deployment has been tested successfully on:
+
+- **Platform**: Rancher Desktop on macOS
+- **Kubernetes Version**: 1.28+
+- **Memory**: 8GB+ allocated to Rancher Desktop
+- **Model**: phi3:mini (2.2GB)
+- **Test Queries**:
+  - "show me all pods" → `kubectl get pods`
+  - "list all services in kubechat namespace" → `kubectl get svc -n kubechat`
 
 ## Cleanup
 
