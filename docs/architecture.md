@@ -1703,4 +1703,4 @@ This comprehensive architecture provides the foundation for building KubeChat as
 
 *🏗️ Generated with [Claude Code](https://claude.ai/code)*
 
-*Co-Authored-By: Winston (Architect) <architect@kubechat.dev>*
+*Co-Authored-By: Winston (Architect) <hello@kubechat.dev>*

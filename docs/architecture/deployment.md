@@ -680,4 +680,4 @@ For deployment issues or questions, consult the troubleshooting section or creat
 
 *📚 Generated with [Claude Code](https://claude.ai/code)*
 
-*Co-Authored-By: Winston (Architect) <architect@kubechat.dev>*
+*Co-Authored-By: Winston (Architect) <hello@kubechat.dev>*
