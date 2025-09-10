@@ -158,29 +158,31 @@ Enterprise adoption requires thorough testing given the operational criticality.
 
 ## Epic List
 
-**Epic 1: Foundation & Community Launch**  
+**Epic 1: Foundation & Community Launch** *(72 points, 8-10 sprints)*  
 Establish Go microservices architecture, React frontend, core natural language translation, and **Helm-based deployment** for easy community adoption. **Includes open-source launch milestone** with community documentation and contribution guidelines to build early momentum.
 
-**Epic 2: Enterprise Security & Compliance Foundation**  
+**Epic 2: Enterprise Security & Compliance Foundation** *(55 points, 6-8 sprints)*  
 Implement comprehensive audit trails, RBAC integration, and baseline security frameworks to establish enterprise trust and meet initial compliance requirements, creating the foundation for regulated industry adoption.
 
-**Epic 3: Air-Gapped Support & Local AI**  
+**Epic 3: Air-Gapped Support & Local AI** *(48 points, 5-7 sprints)*  
 Enable complete offline operation with Ollama local model integration, bundled deployments, and air-gapped installation capabilities to capture the unique underserved market segment.
 
-**Epic 4: Real-Time Observability Layer**  
+**Epic 4: Real-Time Observability Layer** *(45 points, 5-6 sprints)*  
 Implement comprehensive cluster health monitoring, workload status tracking, WebSocket live updates, and visual dashboards to provide essential DevOps operational capabilities.
 
-**Epic 5: Open Source Product Release & Documentation**  
+**Epic 5: Open Source Product Release & Documentation** *(38 points, 4-5 sprints)*  
 Transform KubeChat from internal project into professional open-source product with comprehensive documentation, community infrastructure, and release processes that establish market credibility.
 
-**Epic 6: Multi-LLM Integration & Intelligence**  
+**Epic 6: Multi-LLM Integration & Intelligence** *(52 points, 6-7 sprints)*  
 Build pluggable AI backend system with OpenAI, Claude, Anthropic support, intelligent failover, LLM response caching strategy, and performance optimization to establish AI reliability and cost management.
 
-**Epic 7: Intelligent Recommendations & Predictive Insights**  
+**Epic 7: Intelligent Recommendations & Predictive Insights** *(44 points, 5-6 sprints)*  
 Add AI-powered optimization suggestions, predictive failure analysis, remediation recommendations, and proactive cluster management to **bridge open-source users to enterprise upsell opportunities**.
 
-**Epic 8: Enterprise Scale & Multi-Tenant Features**  
+**Epic 8: Enterprise Scale & Multi-Tenant Features** *(58 points, 7-8 sprints)*  
 Complete enterprise feature set with multi-cluster management, advanced export APIs, enterprise SSO integration, and professional services capabilities for large-scale adoption.
+
+**Total Project Scope:** *412 story points across 40-50 sprints*
 
 ---
 
@@ -843,14 +845,17 @@ so that **KubeChat gains visibility and adoption in the Kubernetes community**.
 
 ## Remaining Epic Summaries (6-8)
 
-### Epic 6: Multi-LLM Integration & Intelligence (Enterprise Enhancement)
-Enhance the proven open-source KubeChat with pluggable AI backend system supporting multiple LLM providers (OpenAI, Claude, Anthropic), intelligent routing, cost optimization, and enterprise governance. Builds upon successful Ollama foundation to create premium enterprise AI capabilities.
+### Epic 6: Multi-LLM Integration & Intelligence (Enterprise Enhancement)  
+**Story Points: 52** | **Duration: 6-7 Sprints**  
+Implement universal LLM integration layer supporting 10+ providers with intelligent routing, cost optimization, and specialized AI agents for different Kubernetes domains. Builds upon successful Ollama foundation to create premium enterprise AI capabilities with 40% cost reduction through intelligent routing.
 
-### Epic 7: Intelligent Recommendations & Predictive Insights (Enterprise Premium)
-Add AI-powered optimization suggestions, predictive failure analysis, resource optimization, security recommendations, and proactive cluster management. Serves as key enterprise upsell feature demonstrating advanced AI value beyond basic command translation.
+### Epic 7: Intelligent Recommendations & Predictive Insights (Enterprise Premium)  
+**Story Points: 44** | **Duration: 5-6 Sprints**  
+Build AI-driven recommendation engine with predictive analytics, automated optimization suggestions, and proactive cluster management capabilities. Provides 80% accuracy in predictive issue detection with 15-minute early warning and 60% reduction in manual optimization tasks.
 
-### Epic 8: Enterprise Scale & Multi-Tenant Features (Fortune 500 Ready)
-Complete enterprise transformation with multi-cluster management, multi-tenancy, enterprise SSO integration, advanced export APIs, professional services integration, and global deployment capabilities. Enables Fortune 500 deployments with comprehensive organizational support.
+### Epic 8: Enterprise Scale & Multi-Tenant Features (Fortune 500 Ready)  
+**Story Points: 58** | **Duration: 7-8 Sprints**  
+Transform KubeChat into enterprise-scale multi-tenant platform supporting 10,000+ concurrent users across 100+ organizations with global deployment capabilities. Enables Fortune 500 deployments with comprehensive organizational support and 99.99% uptime.
 
 ---
 

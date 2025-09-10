@@ -321,4 +321,4 @@ For questions about technology choices or upgrade paths, consult the architectur
 
 *📚 Generated with [Claude Code](https://claude.ai/code)*
 
-*Co-Authored-By: Winston (Architect) <architect@kubechat.dev>*
+*Co-Authored-By: Winston (Architect) <hello@kubechat.dev>*

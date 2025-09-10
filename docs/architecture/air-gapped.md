@@ -1005,4 +1005,4 @@ For air-gapped deployment support or questions, consult the troubleshooting sect
 
 *📚 Generated with [Claude Code](https://claude.ai/code)*
 
-*Co-Authored-By: Winston (Architect) <architect@kubechat.dev>*
+*Co-Authored-By: Kubechat (Architect) <hello@kubechat.dev>*

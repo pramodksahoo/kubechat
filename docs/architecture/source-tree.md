@@ -666,4 +666,4 @@ For questions about project structure or file organization, consult the architec
 
 *📚 Generated with [Claude Code](https://claude.ai/code)*
 
-*Co-Authored-By: Winston (Architect) <architect@kubechat.dev>*
+*Co-Authored-By: Winston (Architect) <hello@kubechat.dev>*
