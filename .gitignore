@@ -30,3 +30,42 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# Build artifacts
+kubechat
+dist/
+build/
+
+# Docker build context
+.dockerignore.bak
+
+# Node.js dependencies and build artifacts
+node_modules/
+web/build/
+web/dist/
+web/node_modules/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Kubernetes secrets and configs
+*.kubeconfig
+secrets/
+*.key
+*.crt
+*.pem
+
+# Helm packaging
+*.tgz
+chart/charts/
+chart/Chart.lock

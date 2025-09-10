@@ -1,0 +1,20 @@
+apiVersion: v2
+name: kubechat
+description: Natural Language Kubernetes Management Platform
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+home: https://github.com/pramodksahoo/kubechat
+sources:
+  - https://github.com/pramodksahoo/kubechat
+maintainers:
+  - name: KubeChat Team
+    email: team@kubechat.io
+keywords:
+  - kubernetes
+  - ai
+  - natural-language
+  - kubectl
+  - devops
+annotations:
+  category: DevOps
