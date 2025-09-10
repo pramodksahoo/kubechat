@@ -219,24 +219,6 @@ kubectl logs -f deployment/kubechat-ollama -n kubechat
 curl http://localhost:8080/api/audit?limit=10
 ```
 
-## 🧪 Development
-
-### Project Structure
-
-```
-├── cmd/server/          # Main application entry point
-├── internal/            # Go backend packages
-│   ├── config/         # Configuration management
-│   ├── handlers/       # HTTP handlers
-│   ├── k8s/           # Kubernetes client wrapper
-│   ├── llm/           # LLM integration layer
-│   ├── translator/    # Natural language translation engine
-│   └── audit/         # Audit logging
-├── web/                # React frontend
-├── chart/              # Helm chart
-└── docs/               # Documentation
-```
-
 ### Adding New Commands
 
 1. Add command handling in `internal/translator/engine.go`
@@ -252,28 +234,6 @@ make test
 # Run specific tests
 go test ./internal/translator/...
 ```
-
-## 🚧 Roadmap
-
-### Phase 1 (Current - PoC)
-- [x] Basic natural language to kubectl translation
-- [x] Ollama and OpenAI integration
-- [x] Web dashboard with chat interface
-- [x] RBAC integration and audit logging
-- [x] Helm chart deployment
-
-### Phase 2 (Enterprise Features)
-- [ ] Multi-cluster management
-- [ ] Advanced export & integration APIs
-- [ ] Enterprise SSO/LDAP integration
-- [ ] Advanced approval workflows
-- [ ] Sophisticated knowledge learning
-
-### Phase 3 (Advanced AI)
-- [ ] Predictive operations recommendations
-- [ ] Automated incident response
-- [ ] Custom model fine-tuning
-- [ ] Industry-specific templates
 
 ## 🤝 Contributing
 
