@@ -223,13 +223,22 @@ graph TB
 
 #### TypeScript Interface
 ```typescript
+// Enhanced User model supporting multi-tenant and enterprise features
 interface User {
-  id: string;
+  id: string; // UUID
   username: string;
-  email?: string;
-  roles: string[];
-  clusters: string[];
+  email: string; // Required for audit trails
+  password_hash?: string; // For local auth when not using SSO
+  roles: string[]; // Kubernetes RBAC roles
+  clusters: string[]; // Accessible cluster contexts
   preferences: UserPreferences;
+  
+  // Enterprise features (Epic 2 & 8)
+  mfa_enabled?: boolean;
+  tenant_id?: string; // Multi-tenant support
+  enterprise_roles?: string[]; // Organization-specific roles
+  
+  // Audit fields
   lastLogin: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -355,28 +364,41 @@ type SafetyLevel = 'safe' | 'warning' | 'dangerous';
 
 #### TypeScript Interface
 ```typescript
+// Comprehensive audit log model matching epic database schemas
 interface AuditLogEntry {
-  id: string;
+  id: bigint; // Sequential ID for immutable logging
   userId: string;
-  action: 'query' | 'execute' | 'login' | 'logout' | 'permission_change';
-  resource: string;
-  cluster: string;
-  namespace: string;
-  details: AuditDetails;
+  sessionId: string;
+  queryText: string; // Original natural language query
+  generatedCommand: string; // Generated kubectl command
+  safetyLevel: 'safe' | 'warning' | 'dangerous';
+  executionResult?: object; // Command execution results
+  executionStatus: 'success' | 'failed' | 'cancelled';
+  clusterContext: string;
+  namespaceContext?: string;
   timestamp: Date;
-  hash: string;
-  complianceFlags: ('sox' | 'hipaa' | 'soc2' | 'pci' | 'fedramp')[];
+  ipAddress: string;
+  userAgent: string;
+  
+  // Immutability protection (Epic 2 requirements)
+  checksum: string; // SHA-256 of record
+  previousChecksum?: string; // Chain to previous record
+  
+  // Enterprise features
+  complianceFlags?: ('sox' | 'hipaa' | 'soc2' | 'pci' | 'fedramp')[];
+  tenantId?: string; // Multi-tenant support
 }
 
 interface AuditDetails {
-  originalQuery?: string;
-  generatedCommand?: string;
-  executionSuccess?: boolean;
+  originalQuery: string;
+  generatedCommand: string;
+  executionSuccess: boolean;
   ipAddress: string;
   userAgent: string;
-  sessionId?: string;
+  sessionId: string;
   errorMessage?: string;
   resourcesAffected: string[];
+  safetyClassification: 'safe' | 'warning' | 'dangerous';
 }
 ```
 
