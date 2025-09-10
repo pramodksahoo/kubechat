@@ -704,7 +704,7 @@ kubectl get ingress kubechat -n kubechat
 echo "192.168.1.100 kubechat.local" | sudo tee -a /etc/hosts
 
 # Or setup port forwarding
-kubectl port-forward svc/kubechat-web 3000:80 -n kubechat &
+kubectl port-forward svc/kubechat-web 3001:80 -n kubechat &
 kubectl port-forward svc/kubechat-api 8080:80 -n kubechat &
 ```
 

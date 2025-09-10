@@ -143,7 +143,7 @@ make dev-test-e2e      # Run end-to-end tests
 
 ```bash
 # Application Services
-localhost:3000  -> kubechat-web       # Frontend application
+localhost:3001  -> kubechat-web       # Frontend application
 localhost:8080  -> kubechat-api       # Backend API
 localhost:11434 -> ollama             # AI inference service
 
