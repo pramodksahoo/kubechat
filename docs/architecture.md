@@ -1365,7 +1365,7 @@ make dev-deploy
 make dev-status
 
 # Access development services (port-forward to containers)
-make dev-access-web      # Frontend at http://localhost:3000
+make dev-access-web      # Frontend at http://localhost:3001
 make dev-access-api      # Backend at http://localhost:8080
 make dev-access-ollama   # Ollama at http://localhost:11434
 
