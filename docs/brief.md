@@ -299,4 +299,4 @@ This Project Brief provides the full context for **KubeChat**. Please start in '
 
 *🤖 Generated with [Claude Code](https://claude.ai/code)*
 
-*Co-Authored-By: Kubechat <helo@kubechat.dev>*
+*Co-Authored-By: Kubechat <hello@kubechat.dev>*

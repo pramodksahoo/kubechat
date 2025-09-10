@@ -622,4 +622,4 @@ This specification provides a comprehensive foundation for creating an enterpris
 
 *🎨 Generated with [Claude Code](https://claude.ai/code)*
 
-*Co-Authored-By: Sally (UX Expert) <design@kubechat.dev>*
+*Co-Authored-By: Sally (UX Expert) <hello@kubechat.dev>*

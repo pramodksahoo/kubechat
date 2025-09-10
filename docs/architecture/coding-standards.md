@@ -709,4 +709,4 @@ For questions about coding standards or to propose changes, create an issue in t
 
 *📝 Generated with [Claude Code](https://claude.ai/code)*
 
-*Co-Authored-By: Winston (Architect) <architect@kubechat.dev>*
+*Co-Authored-By: Winston (Architect) <hello@kubechat.dev>*
