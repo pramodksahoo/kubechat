@@ -1,0 +1,42 @@
+{
+  "name": "@kubechat/ui",
+  "version": "1.0.0",
+  "description": "KubeChat UI component library",
+  "main": "index.ts",
+  "types": "index.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint .",
+    "type-check": "tsc --noEmit",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
+  },
+  "dependencies": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "@headlessui/react": "2.1.10",
+    "@heroicons/react": "2.1.5",
+    "clsx": "2.1.1",
+    "tailwind-merge": "2.5.4"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
+    "typescript": "5.6.3",
+    "eslint": "8.57.1",
+    "@typescript-eslint/eslint-plugin": "7.18.0",
+    "@typescript-eslint/parser": "7.18.0",
+    "@storybook/react": "8.3.6",
+    "@storybook/react-vite": "8.3.6"
+  },
+  "peerDependencies": {
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0"
+  },
+  "exports": {
+    ".": "./index.ts",
+    "./components": "./components/index.ts",
+    "./hooks": "./hooks/index.ts"
+  }
+}
