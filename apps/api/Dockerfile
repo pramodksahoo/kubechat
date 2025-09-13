@@ -19,10 +19,10 @@ WORKDIR /app
 FROM base AS deps
 
 # Copy go mod and sum files
-COPY apps/api/go.mod apps/api/go.sum ./apps/api/
+COPY go.mod go.sum ./
 
 # Set working directory for Go module
-WORKDIR /app/apps/api
+WORKDIR /app
 
 # Download dependencies
 RUN go mod download && go mod verify
@@ -34,10 +34,10 @@ FROM base AS builder
 COPY --from=deps /go/pkg/mod /go/pkg/mod
 
 # Copy source code
-COPY apps/api ./apps/api
+COPY . ./
 
 # Set working directory
-WORKDIR /app/apps/api
+WORKDIR /app
 
 # Build flags for optimized binary
 ENV CGO_ENABLED=0

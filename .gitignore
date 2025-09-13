@@ -20,14 +20,18 @@ coverage.*
 *.coverprofile
 profile.cov
 coverage.html
+# Specific coverage files from our make commands
+apps/api/coverage.out
+apps/api/coverage.html
 
 # Dependency directories
 vendor/
 __debug_bin
 
-# Go workspace file
+# Go workspace file  
 go.work
 go.work.sum
+# NOTE: go.sum files should be tracked (not ignored) for dependency verification
 
 # Build artifacts
 kubechat
@@ -44,7 +48,7 @@ cmd/*/cmd
 node_modules/
 .pnpm-store/
 .pnpm-debug.log
-pnpm-lock.yaml
+# NOTE: pnpm-lock.yaml should be tracked for dependency reproducibility
 
 # Build outputs
 .next/
@@ -405,6 +409,11 @@ docker-compose.local.yml
 Makefile.local
 .env.local.example
 
+# KubeChat specific local files
+kubechat-backup-*.sql
+*.local.yaml
+*-local.*
+
 # Downloaded dependencies (should be rebuilt)
 downloads/
 vendor-cache/
@@ -438,3 +447,9 @@ session-*.md
 *.llm.temp
 anthropic-*
 openai-*
+
+# BMAD temporary files (but keep .bmad-core/ tracked)
+bmad-temp/
+*.bmad-output
+.bmad-core/temp/
+.bmad-core/cache/

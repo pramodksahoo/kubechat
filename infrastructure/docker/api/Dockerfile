@@ -1,8 +1,8 @@
 # KubeChat Backend API Dockerfile
 # Multi-stage build for Go application with hot-reload development support
 
-# Stage 1: Base Go image
-FROM golang:1.23.2-alpine AS base
+# Stage 1: Base Go image - Latest stable Go version
+FROM golang:1.24-alpine AS base
 
 # Install system dependencies
 RUN apk add --no-cache \

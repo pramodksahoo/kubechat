@@ -9,13 +9,13 @@ import (
 func TestMain(m *testing.M) {
 	// Setup test environment
 	setup()
-	
+
 	// Run tests
 	code := m.Run()
-	
+
 	// Teardown
 	teardown()
-	
+
 	os.Exit(code)
 }
 

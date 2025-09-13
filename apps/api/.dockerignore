@@ -12,9 +12,18 @@ kubechat-api
 # Output of the go coverage tool
 *.out
 coverage.txt
+coverage.html
+*.coverprofile
+profile.cov
+*.prof
+*.pprof
 
-# Go workspace file
+# Go workspace files (exclude from container)
 go.work
+go.work.sum
+
+# Go module cache (container will download fresh)
+go.sum.temp
 
 # IDE files
 .vscode
@@ -69,3 +78,35 @@ README.md
 # Development artifacts
 vendor/
 node_modules/
+
+# Security and secrets (double protection)
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+.env*
+!.env.example
+secrets/
+credentials.json
+api-keys.json
+
+# Kubernetes and deployment configs
+*.kubeconfig
+.kube/
+manifests/
+k8s-temp/
+
+# Air hot reload artifacts
+.air.toml.local
+build-errors.log
+
+# Database files
+*.db
+*.sqlite*
+*.dump
+data/
+
+# Additional Go artifacts
+*.trace
+heap.out
