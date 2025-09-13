@@ -59,6 +59,7 @@ import (
 
 	auditHandler "github.com/pramodksahoo/kubechat/apps/api/internal/handlers/audit"
 	"github.com/pramodksahoo/kubechat/apps/api/internal/handlers/auth"
+	chatHandler "github.com/pramodksahoo/kubechat/apps/api/internal/handlers/chat"
 	commandHandler "github.com/pramodksahoo/kubechat/apps/api/internal/handlers/command"
 	communicationHandler "github.com/pramodksahoo/kubechat/apps/api/internal/handlers/communication"
 	databaseHandler "github.com/pramodksahoo/kubechat/apps/api/internal/handlers/database"
@@ -74,6 +75,7 @@ import (
 	auditService "github.com/pramodksahoo/kubechat/apps/api/internal/services/audit"
 	authService "github.com/pramodksahoo/kubechat/apps/api/internal/services/auth"
 	cacheService "github.com/pramodksahoo/kubechat/apps/api/internal/services/cache"
+	chatService "github.com/pramodksahoo/kubechat/apps/api/internal/services/chat"
 	commandService "github.com/pramodksahoo/kubechat/apps/api/internal/services/command"
 	communicationService "github.com/pramodksahoo/kubechat/apps/api/internal/services/communication"
 	"github.com/pramodksahoo/kubechat/apps/api/internal/services/credentials"
@@ -179,6 +181,11 @@ func main() {
 	nlpSvc := nlpService.NewService(ollamaSvc, openaiSvc, nlpConfig)
 
 	log.Println("NLP service initialized with Ollama and OpenAI providers")
+
+	// Initialize Chat Service
+	chatConfig := chatService.DefaultConfig()
+	chatSvc := chatService.NewService(nlpSvc, chatConfig)
+	log.Println("Chat service initialized")
 
 	// Initialize Safety Classification Service (Story 1.5 Task 2)
 	safetyConfig := &safetyService.Config{
@@ -978,6 +985,7 @@ func main() {
 
 	// Initialize handlers
 	authHandler := auth.NewHandler(authSvc)
+	chatHandlerInstance := chatHandler.NewHandler(chatSvc)
 	kubeHandler := kubernetesHandler.NewHandler(kubeSvc)
 	nlpHandlerInstance := nlpHandler.NewHandler(nlpSvc)
 	// Initialize Enhanced NLP Handler with Safety Integration (Story 1.5 Task 7)
@@ -1058,6 +1066,9 @@ func main() {
 
 		// Register authentication routes
 		authHandler.RegisterRoutes(v1)
+
+		// Register chat routes
+		chatHandlerInstance.RegisterRoutes(v1)
 
 		// Register Kubernetes routes if service is available
 		if kubeSvc != nil {

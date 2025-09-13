@@ -1,92 +1,55 @@
 # KubeChat Frontend Dockerfile
-# Multi-stage build for React TypeScript application with hot-reload development support
+# Multi-stage production build for minimal Next.js application
 
-# Stage 1: Base Node.js image
-FROM node:20.10-alpine AS base
+# Build stage
+FROM node:20.10-alpine AS builder
 
-# Install system dependencies for development
-RUN apk add --no-cache \
-    git \
-    curl \
-    bash
+# Install system dependencies for build
+RUN apk add --no-cache libc6-compat
 
 # Install PNPM globally
-RUN npm install -g pnpm@8
+RUN npm install -g pnpm@10
 
 # Set working directory
 WORKDIR /app
 
 # Copy package configuration files
 COPY pnpm-workspace.yaml ./
+COPY pnpm-lock.yaml ./
 COPY package.json ./
 COPY apps/web/package.json ./apps/web/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/ui/package.json ./packages/ui/
 COPY packages/config/package.json ./packages/config/
 
-# Stage 2: Dependencies installation
-FROM base AS deps
+# Install dependencies
+RUN pnpm install --frozen-lockfile
 
-# Install all dependencies
-RUN pnpm install
-
-# Stage 3: Development environment
-FROM base AS development
-
-# Copy node_modules from deps stage
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
-
-# Copy source code
-COPY . .
-
-# Create non-root user for security
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nextjs -u 1001
-
-# Set ownership for non-root user
-RUN chown -R nextjs:nodejs /app
-USER nextjs
-
-# Expose port
-EXPOSE 3000
-
-# Environment variables for development
-ENV NODE_ENV=development
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV WATCHPACK_POLLING=true
-ENV CHOKIDAR_USEPOLLING=true
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:3000/api/health || exit 1
-
-# Development command with hot reload
-CMD ["pnpm", "--filter", "web", "dev"]
-
-# Stage 4: Build for production
-FROM deps AS builder
-
-# Copy source code
-COPY . .
+# Copy only necessary source files
+COPY apps/web ./apps/web/
+COPY packages ./packages/
 
 # Build the application
 RUN pnpm --filter web build
 
-# Stage 5: Production runtime
-FROM node:20.10-alpine AS production
+# Production stage
+FROM node:20.10-alpine AS runner
 
-# Install system dependencies
+# Install only runtime dependencies
 RUN apk add --no-cache \
     dumb-init \
     curl
 
 # Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nextjs -u 1001
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
 # Set working directory
 WORKDIR /app
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 
 # Copy built application from builder stage
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
@@ -99,10 +62,6 @@ USER nextjs
 # Expose port
 EXPOSE 3000
 
-# Environment variables for production
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:3000/api/health || exit 1
@@ -110,5 +69,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 # Use dumb-init to properly handle signals
 ENTRYPOINT ["dumb-init", "--"]
 
-# Production command
+# Start the application
 CMD ["node", "apps/web/server.js"]
