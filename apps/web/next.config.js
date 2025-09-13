@@ -22,7 +22,9 @@ const nextConfig = {
   
   // Image optimization
   images: {
-    unoptimized: true, // Disable for container deployments
+    unoptimized: false, // Enable optimization for better performance
+    domains: [], // Add any external domains here if needed
+    formats: ['image/webp', 'image/avif'],
   },
   
   // Webpack configuration
@@ -35,7 +37,7 @@ const nextConfig = {
     return config;
   },
   
-  // Headers for security
+  // Headers for security and caching
   async headers() {
     return [
       {
@@ -52,6 +54,27 @@ const nextConfig = {
           {
             key: 'Referrer-Policy',
             value: 'strict-origin-when-cross-origin'
+          },
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate'
+          },
+          {
+            key: 'Pragma',
+            value: 'no-cache'
+          },
+          {
+            key: 'Expires',
+            value: '0'
+          }
+        ]
+      },
+      {
+        source: '/_next/static/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable'
           }
         ]
       }

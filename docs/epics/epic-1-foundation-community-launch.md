@@ -205,9 +205,9 @@ CREATE TABLE cluster_configs (
 - PostgreSQL for data persistence
 - Redis for caching and sessions
 - WebSocket support for real-time updates
-- **NEW:** Circuit breaker patterns
-- **NEW:** Service mesh preparation
-- **NEW:** Security middleware
+- Circuit breaker patterns
+- Service mesh preparation
+- Security middleware
 
 ### Story 1.4: External API Integration and Credentials Management
 **Story Points:** 8 *(NEW STORY - addressing critical checklist gap)*  
@@ -293,8 +293,8 @@ CREATE TABLE cluster_configs (
 - Enhanced command execution safety controls
 - Result parsing and formatting
 - Error handling and timeouts
-- **NEW:** RBAC integration and validation
-- **NEW:** Advanced security controls
+- RBAC integration and validation
+- Advanced security controls
 
 ### Story 1.7: Web Frontend with Enterprise UI Components
 **Story Points:** 12 *(increased from 8 to address checklist gaps)*  
@@ -326,9 +326,9 @@ CREATE TABLE cluster_configs (
 - Tailwind CSS + Headless UI
 - Responsive design patterns
 - WCAG AA accessibility compliance
-- **NEW:** Advanced state management with Zustand
-- **NEW:** Real-time WebSocket integration
-- **NEW:** Comprehensive error boundaries
+- Advanced state management with Zustand
+- Real-time WebSocket integration
+- Comprehensive error boundaries
 
 ### Story 1.8: Audit Trail and Advanced Compliance Logging
 **Story Points:** 8 *(increased from 5 to address checklist gaps)*  
@@ -387,8 +387,8 @@ CREATE TABLE cluster_configs (
 - Multi-environment values.yaml templates
 - RBAC and security configurations with enterprise standards
 - Automated installation and upgrade procedures
-- **NEW:** Production monitoring and alerting integration
-- **NEW:** Security and vulnerability scanning
+- Production monitoring and alerting integration
+- Security and vulnerability scanning
 
 ### Story 1.10: Open Source Community Launch with Security Hardening
 **Story Points:** 8 *(increased from 5 to address checklist gaps)*  
@@ -543,6 +543,25 @@ CREATE TABLE cluster_configs (
 - [ ] **Input validation** preventing injection attacks and malicious queries
 - [ ] **Error handling** without information disclosure
 - [ ] **Logging security** with no sensitive information exposure
+
+### Container-First Development Workflow ⚠️ CRITICAL FOR ALL TASKS
+**This workflow requirement applies to EVERY task in EVERY story:**
+
+**Task Completion Workflow (Required for ALL tasks):**
+1. **Code Implementation** - Complete the task requirements
+2. **Container Build** - `make dev-rebuild-api` or `make dev-rebuild-web` 
+3. **Deploy to Cluster** - `make dev-deploy` or `helm upgrade kubechat-dev`
+4. **End-to-End Testing** - Verify functionality works in deployed environment
+5. **Mark Complete** - Only after successful build, deploy, and E2E verification
+
+**CRITICAL RULE: No task is considered complete without successful container build, cluster deployment, and end-to-end verification.**
+
+This ensures:
+- Container-first development compliance
+- No untested code reaches completion
+- Continuous integration of changes
+- Early detection of deployment issues
+- Production parity maintenance
 
 ---
 

@@ -3,6 +3,13 @@
 
 import { z } from 'zod';
 
+// Export UI types
+export * from './ui';
+export * from './dashboard';
+export * from './chat';
+export * from './auth';
+export * from './audit';
+
 // API Response Types
 export interface ApiResponse<T = unknown> {
   success: boolean;

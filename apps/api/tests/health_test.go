@@ -15,7 +15,7 @@ func TestHealthEndpoint(t *testing.T) {
 	// Setup Gin router
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
-	
+
 	// Add health endpoint
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{

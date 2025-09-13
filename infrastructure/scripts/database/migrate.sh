@@ -1,261 +1,443 @@
 #!/bin/bash
-# KubeChat Database Migration Script
-# Handles database migrations and schema updates
 
-set -e
+# Database Migration Management Script
+# Compatible with golang-migrate and container-first development
+# Date: 2025-01-11
+# Author: James (Full Stack Developer Agent)
+
+set -euo pipefail
 
 # Configuration
-NAMESPACE=${NAMESPACE:-kubechat}
-POSTGRES_POD=$(kubectl get pod -n $NAMESPACE -l app.kubernetes.io/name=postgresql -o jsonpath='{.items[0].metadata.name}')
-DB_USER=${DB_USER:-kubechat}
-DB_NAME=${DB_NAME:-kubechat}
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MIGRATIONS_DIR="${SCRIPT_DIR}/migrations"
+DATABASE_URL="${DATABASE_URL:-}"
+POSTGRES_HOST="${POSTGRES_HOST:-localhost}"
+POSTGRES_PORT="${POSTGRES_PORT:-5432}"
+POSTGRES_DB="${POSTGRES_DB:-kubechat}"
+POSTGRES_USER="${POSTGRES_USER:-kubechat}"
+POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-kubechat}"
 
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Logging functions
 log_info() {
-    echo -e "${GREEN}[INFO]${NC} $1"
+    echo -e "${BLUE}[INFO]${NC} $1"
 }
 
-log_warn() {
-    echo -e "${YELLOW}[WARN]${NC} $1"
+log_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+log_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
 }
 
 log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Check if PostgreSQL pod is running
-check_postgres() {
-    log_info "Checking PostgreSQL pod status..."
-    if [ -z "$POSTGRES_POD" ]; then
-        log_error "PostgreSQL pod not found in namespace $NAMESPACE"
-        exit 1
-    fi
-    
-    kubectl wait --for=condition=ready pod/$POSTGRES_POD -n $NAMESPACE --timeout=60s
-    log_info "PostgreSQL pod is ready: $POSTGRES_POD"
+# Help function
+show_help() {
+    cat << EOF
+KubeChat Database Migration Management Script
+
+USAGE:
+    $0 [COMMAND] [OPTIONS]
+
+COMMANDS:
+    up [N]           Apply all pending migrations or N migrations
+    down [N]         Rollback N migrations (default: 1)
+    version          Show current migration version
+    force VERSION    Force set migration version (use with caution)
+    create NAME      Create new migration files
+    status           Show migration status
+    validate         Validate migration files
+    reset            Reset database (drop all tables)
+    help             Show this help
+
+EXAMPLES:
+    $0 up                    # Apply all pending migrations
+    $0 up 1                  # Apply next 1 migration
+    $0 down                  # Rollback 1 migration
+    $0 down 2                # Rollback 2 migrations
+    $0 create add_user_table # Create new migration
+    $0 status                # Show current status
+    $0 validate              # Validate all migrations
+
+ENVIRONMENT VARIABLES:
+    DATABASE_URL            Full database connection string
+    POSTGRES_HOST           Database host (default: localhost)
+    POSTGRES_PORT           Database port (default: 5432)
+    POSTGRES_DB             Database name (default: kubechat)
+    POSTGRES_USER           Database user (default: kubechat)
+    POSTGRES_PASSWORD       Database password (default: kubechat)
+
+CONTAINER-FIRST USAGE:
+    # From container with kubectl port-forward
+    export POSTGRES_HOST=localhost
+    export POSTGRES_PORT=5432
+    $0 up
+
+    # Direct kubernetes pod execution
+    kubectl exec -it deployment/kubechat-api -- /app/scripts/migrate.sh up
+EOF
 }
 
-# Execute SQL file
-execute_sql() {
-    local sql_file=$1
-    local description=$2
+# Build database URL if not provided
+build_database_url() {
+    if [[ -z "${DATABASE_URL}" ]]; then
+        DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable"
+    fi
+}
+
+# Check if psql is available
+check_dependencies() {
+    if ! command -v psql &> /dev/null; then
+        log_error "psql command not found. Please install PostgreSQL client."
+        exit 1
+    fi
+}
+
+# Check database connectivity
+check_database_connection() {
+    log_info "Checking database connectivity..."
+    build_database_url
     
-    log_info "$description"
-    if kubectl exec -n $NAMESPACE $POSTGRES_POD -- psql -U $DB_USER -d $DB_NAME -f /tmp/$(basename $sql_file); then
-        log_info "✅ $description completed successfully"
+    if PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "SELECT 1;" &> /dev/null; then
+        log_success "Database connection successful"
     else
-        log_error "❌ $description failed"
+        log_error "Cannot connect to database. Please check your connection parameters."
+        log_info "Host: ${POSTGRES_HOST}, Port: ${POSTGRES_PORT}, DB: ${POSTGRES_DB}, User: ${POSTGRES_USER}"
         exit 1
     fi
 }
 
-# Copy SQL file to pod
-copy_sql_to_pod() {
-    local sql_file=$1
+# Create schema_migrations table if it doesn't exist
+ensure_migrations_table() {
+    log_info "Ensuring schema_migrations table exists..."
+    PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "
+        CREATE TABLE IF NOT EXISTS schema_migrations (
+            version BIGINT PRIMARY KEY,
+            dirty BOOLEAN NOT NULL DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT NOW()
+        );
+        CREATE INDEX IF NOT EXISTS idx_schema_migrations_version ON schema_migrations(version);
+        CREATE INDEX IF NOT EXISTS idx_schema_migrations_dirty ON schema_migrations(dirty);
+    " &> /dev/null
+}
+
+# Get current migration version
+get_current_version() {
+    ensure_migrations_table
+    PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -t -c "
+        SELECT COALESCE(MAX(version), 0) FROM schema_migrations WHERE NOT dirty;
+    " 2>/dev/null | xargs || echo "0"
+}
+
+# Get pending migrations
+get_pending_migrations() {
+    local current_version=$(get_current_version)
+    find "${MIGRATIONS_DIR}" -name "*.sql" -not -name "*.down.sql" | \
+        sed 's/.*\/\([0-9]*\)_.*/\1/' | \
+        sort -n | \
+        awk -v current="${current_version}" '$1 > current'
+}
+
+# Apply migration
+apply_migration() {
+    local version=$1
+    local migration_file="${MIGRATIONS_DIR}/${version}_*.sql"
+    local actual_file=$(ls ${migration_file} 2>/dev/null | head -1)
     
-    if [ ! -f "$sql_file" ]; then
-        log_error "SQL file not found: $sql_file"
-        exit 1
+    if [[ ! -f "${actual_file}" ]]; then
+        log_error "Migration file not found: ${migration_file}"
+        return 1
     fi
     
-    log_info "Copying $sql_file to PostgreSQL pod..."
-    kubectl cp $sql_file $NAMESPACE/$POSTGRES_POD:/tmp/$(basename $sql_file)
-}
-
-# Initialize database
-init_database() {
-    log_info "=== Initializing KubeChat Database ==="
-    copy_sql_to_pod "infrastructure/scripts/database/init.sql"
-    execute_sql "/tmp/init.sql" "Creating database schema and tables"
-}
-
-# Seed database with development data
-seed_database() {
-    log_info "=== Seeding Database with Development Data ==="
-    copy_sql_to_pod "infrastructure/scripts/database/seed.sql"
-    execute_sql "/tmp/seed.sql" "Inserting development seed data"
-}
-
-# Run database migrations
-run_migrations() {
-    log_info "=== Running Database Migrations ==="
+    log_info "Applying migration ${version}: $(basename "${actual_file}")"
     
-    # Create migrations table if it doesn't exist
-    kubectl exec -n $NAMESPACE $POSTGRES_POD -- psql -U $DB_USER -d $DB_NAME -c "
-        CREATE TABLE IF NOT EXISTS migrations (
-            id SERIAL PRIMARY KEY,
-            filename VARCHAR(255) UNIQUE NOT NULL,
-            executed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-        );"
+    # Mark as dirty first
+    PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "
+        INSERT INTO schema_migrations (version, dirty) VALUES (${version}, TRUE) 
+        ON CONFLICT (version) DO UPDATE SET dirty = TRUE;
+    " || return 1
     
-    # Find all migration files
-    migrations_dir="infrastructure/scripts/database/migrations"
-    if [ -d "$migrations_dir" ]; then
-        for migration_file in $migrations_dir/*.sql; do
-            if [ -f "$migration_file" ]; then
-                filename=$(basename "$migration_file")
-                
-                # Check if migration has already been run
-                already_run=$(kubectl exec -n $NAMESPACE $POSTGRES_POD -- psql -U $DB_USER -d $DB_NAME -t -c "SELECT COUNT(*) FROM migrations WHERE filename='$filename';" | tr -d ' ')
-                
-                if [ "$already_run" -eq "0" ]; then
-                    log_info "Running migration: $filename"
-                    copy_sql_to_pod "$migration_file"
-                    execute_sql "/tmp/$filename" "Executing migration $filename"
-                    
-                    # Record migration as executed
-                    kubectl exec -n $NAMESPACE $POSTGRES_POD -- psql -U $DB_USER -d $DB_NAME -c "INSERT INTO migrations (filename) VALUES ('$filename');"
-                else
-                    log_info "Migration already executed: $filename"
-                fi
-            fi
+    # Apply migration
+    if PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -f "${actual_file}"; then
+        # Mark as clean
+        PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "
+            UPDATE schema_migrations SET dirty = FALSE WHERE version = ${version};
+        "
+        log_success "Migration ${version} applied successfully"
+        return 0
+    else
+        log_error "Migration ${version} failed"
+        return 1
+    fi
+}
+
+# Rollback migration
+rollback_migration() {
+    local version=$1
+    local down_file="${MIGRATIONS_DIR}/${version}_*.down.sql"
+    local actual_file=$(ls ${down_file} 2>/dev/null | head -1)
+    
+    if [[ ! -f "${actual_file}" ]]; then
+        log_error "Rollback file not found: ${down_file}"
+        return 1
+    fi
+    
+    log_info "Rolling back migration ${version}: $(basename "${actual_file}")"
+    
+    # Apply rollback
+    if PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -f "${actual_file}"; then
+        # Remove from migrations table
+        PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "
+            DELETE FROM schema_migrations WHERE version = ${version};
+        "
+        log_success "Migration ${version} rolled back successfully"
+        return 0
+    else
+        log_error "Rollback ${version} failed"
+        return 1
+    fi
+}
+
+# Commands
+cmd_up() {
+    local limit=${1:-}
+    check_database_connection
+    
+    local pending_migrations=($(get_pending_migrations))
+    
+    if [[ ${#pending_migrations[@]} -eq 0 ]]; then
+        log_info "No pending migrations"
+        return 0
+    fi
+    
+    if [[ -n "${limit}" ]]; then
+        pending_migrations=(${pending_migrations[@]:0:${limit}})
+    fi
+    
+    log_info "Applying ${#pending_migrations[@]} migration(s)"
+    
+    for version in "${pending_migrations[@]}"; do
+        if ! apply_migration "${version}"; then
+            log_error "Migration failed. Database may be in inconsistent state."
+            exit 1
+        fi
+    done
+    
+    log_success "All migrations applied successfully"
+}
+
+cmd_down() {
+    local count=${1:-1}
+    check_database_connection
+    
+    local current_version=$(get_current_version)
+    if [[ "${current_version}" == "0" ]]; then
+        log_info "No migrations to rollback"
+        return 0
+    fi
+    
+    # Get last N applied migrations in reverse order
+    local applied_migrations=($(PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -t -c "
+        SELECT version FROM schema_migrations WHERE NOT dirty ORDER BY version DESC LIMIT ${count};
+    " | xargs))
+    
+    log_info "Rolling back ${#applied_migrations[@]} migration(s)"
+    
+    for version in "${applied_migrations[@]}"; do
+        if ! rollback_migration "${version}"; then
+            log_error "Rollback failed. Database may be in inconsistent state."
+            exit 1
+        fi
+    done
+    
+    log_success "Rollback completed successfully"
+}
+
+cmd_version() {
+    check_database_connection
+    local current_version=$(get_current_version)
+    echo "Current migration version: ${current_version}"
+}
+
+cmd_status() {
+    check_database_connection
+    
+    local current_version=$(get_current_version)
+    local pending_migrations=($(get_pending_migrations))
+    
+    echo "Current migration version: ${current_version}"
+    echo "Pending migrations: ${#pending_migrations[@]}"
+    
+    if [[ ${#pending_migrations[@]} -gt 0 ]]; then
+        echo "Pending:"
+        for version in "${pending_migrations[@]}"; do
+            local file=$(ls "${MIGRATIONS_DIR}/${version}_"*.sql 2>/dev/null | head -1)
+            echo "  ${version} - $(basename "${file}")"
         done
-    else
-        log_warn "No migrations directory found at $migrations_dir"
+    fi
+    
+    # Check for dirty migrations
+    local dirty_count=$(PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -t -c "
+        SELECT COUNT(*) FROM schema_migrations WHERE dirty;
+    " 2>/dev/null | xargs || echo "0")
+    
+    if [[ "${dirty_count}" -gt 0 ]]; then
+        log_warning "Found ${dirty_count} dirty migration(s). Database may be in inconsistent state."
     fi
 }
 
-# Reset database (WARNING: This will delete all data)
-reset_database() {
-    log_warn "=== RESETTING DATABASE (THIS WILL DELETE ALL DATA) ==="
-    echo "Are you sure you want to reset the database? This will delete all data!"
-    echo "Type 'YES' to confirm:"
-    read -r confirmation
-    
-    if [ "$confirmation" != "YES" ]; then
-        log_info "Database reset cancelled"
-        exit 0
+cmd_create() {
+    local name=$1
+    if [[ -z "${name}" ]]; then
+        log_error "Migration name is required"
+        exit 1
     fi
     
-    log_warn "Dropping all tables..."
-    kubectl exec -n $NAMESPACE $POSTGRES_POD -- psql -U $DB_USER -d $DB_NAME -c "
-        DROP SCHEMA IF EXISTS kubechat CASCADE;
-        DROP TABLE IF EXISTS migrations;
+    local timestamp=$(date +%s)
+    local up_file="${MIGRATIONS_DIR}/${timestamp}_${name}.sql"
+    local down_file="${MIGRATIONS_DIR}/${timestamp}_${name}.down.sql"
+    
+    cat > "${up_file}" << EOF
+-- Migration ${timestamp}: ${name}
+-- Date: $(date '+%Y-%m-%d')
+-- Author: Generated by migrate.sh
+
+-- Add your migration SQL here
+
+EOF
+
+    cat > "${down_file}" << EOF
+-- Migration ${timestamp} DOWN: ${name}
+-- Date: $(date '+%Y-%m-%d')
+-- Author: Generated by migrate.sh
+
+-- Add your rollback SQL here
+
+EOF
+
+    log_success "Created migration files:"
+    echo "  Up:   ${up_file}"
+    echo "  Down: ${down_file}"
+}
+
+cmd_validate() {
+    log_info "Validating migration files..."
+    
+    local error_count=0
+    
+    # Check for migration files
+    local migration_files=($(find "${MIGRATIONS_DIR}" -name "*.sql" -not -name "*.down.sql" | sort))
+    
+    if [[ ${#migration_files[@]} -eq 0 ]]; then
+        log_warning "No migration files found"
+        return 0
+    fi
+    
+    # Validate each migration has corresponding down file
+    for up_file in "${migration_files[@]}"; do
+        local base_name=$(basename "${up_file}" .sql)
+        local down_file="${MIGRATIONS_DIR}/${base_name}.down.sql"
+        
+        if [[ ! -f "${down_file}" ]]; then
+            log_error "Missing down migration: ${down_file}"
+            ((error_count++))
+        fi
+    done
+    
+    if [[ ${error_count} -eq 0 ]]; then
+        log_success "All migrations are valid"
+    else
+        log_error "Found ${error_count} validation error(s)"
+        exit 1
+    fi
+}
+
+cmd_force() {
+    local version=$1
+    if [[ -z "${version}" ]]; then
+        log_error "Version is required"
+        exit 1
+    fi
+    
+    check_database_connection
+    log_warning "Force setting migration version to ${version}"
+    
+    PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "
+        DELETE FROM schema_migrations;
+        INSERT INTO schema_migrations (version, dirty) VALUES (${version}, FALSE);
     "
     
-    log_info "Reinitializing database..."
-    init_database
-    
-    log_info "Reseeding database..."
-    seed_database
-    
-    log_info "✅ Database reset completed"
+    log_success "Migration version set to ${version}"
 }
 
-# Backup database
-backup_database() {
-    local backup_name="kubechat-backup-$(date +%Y%m%d-%H%M%S).sql"
-    log_info "=== Creating Database Backup: $backup_name ==="
+cmd_reset() {
+    check_database_connection
+    log_warning "This will drop all tables and reset the database!"
+    read -p "Are you sure? (yes/no): " confirm
     
-    kubectl exec -n $NAMESPACE $POSTGRES_POD -- pg_dump -U $DB_USER $DB_NAME > "$backup_name"
-    log_info "✅ Backup created: $backup_name"
+    if [[ "${confirm}" == "yes" ]]; then
+        log_info "Resetting database..."
+        PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "
+            DROP SCHEMA public CASCADE;
+            CREATE SCHEMA public;
+            GRANT ALL ON SCHEMA public TO ${POSTGRES_USER};
+            GRANT ALL ON SCHEMA public TO public;
+        "
+        log_success "Database reset completed"
+    else
+        log_info "Reset cancelled"
+    fi
 }
 
-# Show database status
-show_status() {
-    log_info "=== Database Status ==="
-    echo
-    log_info "PostgreSQL Version:"
-    kubectl exec -n $NAMESPACE $POSTGRES_POD -- psql -U $DB_USER -d $DB_NAME -c "SELECT version();"
-    
-    echo
-    log_info "Database Size:"
-    kubectl exec -n $NAMESPACE $POSTGRES_POD -- psql -U $DB_USER -d $DB_NAME -c "
-        SELECT 
-            pg_size_pretty(pg_database_size('$DB_NAME')) AS database_size;"
-    
-    echo
-    log_info "Tables:"
-    kubectl exec -n $NAMESPACE $POSTGRES_POD -- psql -U $DB_USER -d $DB_NAME -c "
-        SELECT 
-            schemaname,
-            tablename,
-            pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) AS size
-        FROM pg_tables 
-        WHERE schemaname = 'kubechat'
-        ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;"
-    
-    echo
-    log_info "Recent Migrations:"
-    kubectl exec -n $NAMESPACE $POSTGRES_POD -- psql -U $DB_USER -d $DB_NAME -c "
-        SELECT filename, executed_at 
-        FROM migrations 
-        ORDER BY executed_at DESC 
-        LIMIT 10;" 2>/dev/null || log_warn "No migrations table found"
-}
-
-# Main function
+# Main execution
 main() {
-    local command=${1:-help}
+    check_dependencies
     
-    case $command in
-        init)
-            check_postgres
-            init_database
+    case "${1:-help}" in
+        up)
+            cmd_up "${2:-}"
             ;;
-        seed)
-            check_postgres
-            seed_database
+        down)
+            cmd_down "${2:-1}"
             ;;
-        migrate)
-            check_postgres
-            run_migrations
-            ;;
-        reset)
-            check_postgres
-            reset_database
-            ;;
-        backup)
-            check_postgres
-            backup_database
+        version)
+            cmd_version
             ;;
         status)
-            check_postgres
-            show_status
+            cmd_status
             ;;
-        full)
-            check_postgres
-            init_database
-            run_migrations
-            seed_database
+        create)
+            cmd_create "${2:-}"
             ;;
-        help|*)
-            cat << EOF
-KubeChat Database Migration Tool
-
-Usage: $0 [command]
-
-Commands:
-    init      Initialize database schema and tables
-    seed      Insert development seed data
-    migrate   Run pending migrations
-    reset     Reset database (WARNING: deletes all data)
-    backup    Create database backup
-    status    Show database status and information
-    full      Full setup (init + migrate + seed)
-    help      Show this help message
-
-Environment Variables:
-    NAMESPACE   Kubernetes namespace (default: kubechat)
-    DB_USER     Database user (default: kubechat)
-    DB_NAME     Database name (default: kubechat)
-
-Examples:
-    $0 init                  # Initialize database
-    $0 migrate              # Run migrations
-    $0 seed                 # Add development data
-    $0 full                 # Complete setup
-    NAMESPACE=prod $0 status # Check production database
-EOF
+        validate)
+            cmd_validate
+            ;;
+        force)
+            cmd_force "${2:-}"
+            ;;
+        reset)
+            cmd_reset
+            ;;
+        help|--help|-h)
+            show_help
+            ;;
+        *)
+            log_error "Unknown command: $1"
+            show_help
+            exit 1
             ;;
     esac
 }
 
-# Run main function
+# Run main function with all arguments
 main "$@"

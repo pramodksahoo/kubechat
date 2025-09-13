@@ -19,9 +19,16 @@ type HealthResponse struct {
 var startTime = time.Now()
 
 // HealthCheck returns the health status of the API
+//
+//	@Summary		API health check
+//	@Description	Returns basic health status and uptime information for the API
+//	@Tags			Health
+//	@Produce		json
+//	@Success		200	{object}	HealthResponse	"API health status"
+//	@Router			/health [get]
 func HealthCheck(c *gin.Context) {
 	uptime := time.Since(startTime)
-	
+
 	response := HealthResponse{
 		Status:      "ok",
 		Timestamp:   time.Now(),
@@ -34,9 +41,16 @@ func HealthCheck(c *gin.Context) {
 }
 
 // GetStatus returns detailed API status information
+//
+//	@Summary		Get detailed API status
+//	@Description	Returns comprehensive status information including service health
+//	@Tags			Health
+//	@Produce		json
+//	@Success		200	{object}	map[string]interface{}	"Detailed API status"
+//	@Router			/status [get]
 func GetStatus(c *gin.Context) {
 	uptime := time.Since(startTime)
-	
+
 	status := map[string]interface{}{
 		"api": map[string]interface{}{
 			"status":      "healthy",
