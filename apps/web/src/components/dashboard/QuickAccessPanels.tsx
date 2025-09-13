@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon } from '@/components/ui/Icon';
+import { Icon } from '@/components/ui';
 
 interface BaseComponentProps {
   className?: string;
@@ -278,6 +278,20 @@ export const QuickAccessPanels: React.FC<QuickAccessPanelsProps> = ({
           </div>
         </div>
       )}
+
+      {/* Add keyframes for animations */}
+      <style jsx>{`
+        @keyframes fadeInUp {
+          0% {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 };

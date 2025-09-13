@@ -82,34 +82,33 @@ dev-clean: ## Clean development environment
 
 # Container Management
 dev-build: ## Build all application containers
-	$(eval BUILD_TAG := dev-$(shell date +%s))
 	@echo "=== Building Application Containers ==="
-	@echo "Build tag: $(BUILD_TAG)"
+	@echo "Building without cache for fresh builds..."
 	@echo ""
 	@echo "Building web container..."
-	@docker build -t kubechat/web:$(BUILD_TAG) -t kubechat/web:dev -f infrastructure/docker/web/Dockerfile .
+	@docker build --no-cache -t kubechat/web:dev -f infrastructure/docker/web/Dockerfile .
 	@echo "Importing web image to Rancher Desktop k8s namespace..."
 	@docker save kubechat/web:dev | nerdctl --address /var/run/docker/containerd/containerd.sock --namespace k8s.io load
 	@echo ""
 	@echo "Building API container..."
-	@docker build -t kubechat/api:$(BUILD_TAG) -t kubechat/api:dev -f infrastructure/docker/api/Dockerfile .
+	@docker build --no-cache -t kubechat/api:dev -f infrastructure/docker/api/Dockerfile .
 	@echo "Importing API image to Rancher Desktop k8s namespace..."
 	@docker save kubechat/api:dev | nerdctl --address /var/run/docker/containerd/containerd.sock --namespace k8s.io load
 	@echo ""
 	@echo "✅ All containers built and imported to k8s successfully"
 
 dev-rebuild-api: ## Rebuild API container only
-	$(eval BUILD_TAG := dev-$(shell date +%s))
 	@echo "=== Rebuilding API Container ==="
-	@echo "Build tag: $(BUILD_TAG)"
-	@docker build -t kubechat/api:$(BUILD_TAG) -t kubechat/api:dev -f infrastructure/docker/api/Dockerfile .
-	@echo "✅ API container rebuilt with unique tag"
+	@echo "Building without cache for fresh build..."
+	@docker build --no-cache -t kubechat/api:dev -f infrastructure/docker/api/Dockerfile .
+	@echo "Importing API image to Rancher Desktop k8s namespace..."
+	@docker save kubechat/api:dev | nerdctl --address /var/run/docker/containerd/containerd.sock --namespace k8s.io load
+	@echo "✅ API container rebuilt and imported to k8s"
 
 dev-rebuild-web: ## Rebuild web container only
-	$(eval BUILD_TAG := dev-$(shell date +%s))
 	@echo "=== Rebuilding Web Container ==="
-	@echo "Build tag: $(BUILD_TAG)"
-	@docker build -t kubechat/web:$(BUILD_TAG) -t kubechat/web:dev -f infrastructure/docker/web/Dockerfile .
+	@echo "Building without cache for fresh build..."
+	@docker build --no-cache -t kubechat/web:dev -f infrastructure/docker/web/Dockerfile .
 	@echo "Importing web image to Rancher Desktop k8s namespace..."
 	@docker save kubechat/web:dev | nerdctl --address /var/run/docker/containerd/containerd.sock --namespace k8s.io load
 	@echo "✅ Web container rebuilt and imported to k8s"

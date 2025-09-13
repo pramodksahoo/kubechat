@@ -78,47 +78,24 @@ export const UserProfile: React.FC<UserProfileProps> = ({
     <div className={`relative ${className}`} data-testid={dataTestId}>
       <button
         type="button"
-        className="flex items-center space-x-3 rounded-full bg-white dark:bg-gray-800 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+        className="flex items-center justify-center p-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 hover:scale-105 transition-all duration-200 rounded-full"
         onClick={() => setIsOpen(!isOpen)}
         data-testid={`${dataTestId}-trigger`}
       >
-        {/* Avatar */}
-        <div className="h-8 w-8 rounded-full bg-primary-500 flex items-center justify-center">
+        {/* Avatar only */}
+        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
           {displayUser.avatar ? (
             <Image
-              className="h-8 w-8 rounded-full object-cover"
+              className="h-10 w-10 rounded-full object-cover"
               src={displayUser.avatar}
               alt={`${displayUser.firstName} ${displayUser.lastName}`}
-              width={32}
-              height={32}
+              width={40}
+              height={40}
             />
           ) : (
-            <span className="text-sm font-medium text-white">{initials}</span>
+            <span className="text-lg font-bold text-white">{initials}</span>
           )}
         </div>
-        
-        {/* User info */}
-        <div className="hidden md:block text-left">
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            {displayUser.firstName} {displayUser.lastName}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {(displayUser.roles[0] as { name?: string })?.name || 'Administrator'}
-          </p>
-        </div>
-
-        {/* Dropdown arrow */}
-        <svg
-          className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${
-            isOpen ? 'rotate-180' : ''
-          }`}
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={1.5}
-          stroke="currentColor"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-        </svg>
       </button>
 
       {/* Dropdown menu */}
@@ -126,13 +103,13 @@ export const UserProfile: React.FC<UserProfileProps> = ({
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 z-10"
+            className="fixed inset-0 z-[9998]"
             onClick={() => setIsOpen(false)}
           />
-          
+
           {/* Menu */}
           <div
-            className="absolute right-0 z-20 mt-2 w-80 origin-top-right rounded-md bg-white dark:bg-gray-800 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+            className="absolute right-0 z-[10001] mt-2 w-80 origin-top-right rounded-2xl bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl py-2 shadow-2xl border border-gray-200/50 dark:border-gray-700/50 focus:outline-none"
             data-testid={`${dataTestId}-menu`}
           >
             {/* User info section */}

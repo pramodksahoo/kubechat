@@ -453,3 +453,5 @@ bmad-temp/
 *.bmad-output
 .bmad-core/temp/
 .bmad-core/cache/
+playwright-report/
+tests/
