@@ -455,3 +455,4 @@ bmad-temp/
 .bmad-core/cache/
 playwright-report/
 tests/
+apps/api/server
