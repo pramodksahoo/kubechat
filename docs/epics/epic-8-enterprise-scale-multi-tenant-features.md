@@ -716,6 +716,25 @@ CREATE TABLE failover_events (
 3. **Integration Gate:** All enterprise integrations functional and tested
 4. **Availability Gate:** 99.99% uptime achieved through HA testing
 
+### Container-First Development Workflow ⚠️ CRITICAL FOR ALL TASKS
+**This workflow requirement applies to EVERY task in EVERY story:**
+
+**Task Completion Workflow (Required for ALL tasks):**
+1. **Code Implementation** - Complete the task requirements
+2. **Container Build** - `make dev-rebuild-api` or `make dev-rebuild-web` 
+3. **Deploy to Cluster** - `make dev-deploy` or `helm upgrade kubechat-dev`
+4. **End-to-End Testing** - Verify functionality works in deployed environment
+5. **Mark Complete** - Only after successful build, deploy, and E2E verification
+
+**CRITICAL RULE: No task is considered complete without successful container build, cluster deployment, and end-to-end verification.**
+
+This ensures:
+- Container-first development compliance
+- No untested code reaches completion
+- Continuous integration of changes
+- Early detection of deployment issues
+- Production parity maintenance
+
 ## Business Value and ROI
 
 ### Quantifiable Benefits

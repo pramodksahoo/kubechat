@@ -1,0 +1,186 @@
+# KubeChat Root .dockerignore
+# Comprehensive exclusion list for Docker builds
+
+#######################
+# Git and Version Control
+#######################
+.git
+.gitignore
+.gitattributes
+.gitmodules
+
+#######################
+# Documentation
+#######################
+README.md
+*.md
+docs/
+documentation/
+CHANGELOG.md
+LICENSE
+AUTHORS
+
+#######################
+# CI/CD and Development
+#######################
+.github/
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+.vscode/
+.idea/
+*.code-workspace
+
+#######################
+# Docker Related
+#######################
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+.docker/
+
+#######################
+# Node.js / Frontend
+#######################
+node_modules/
+.pnpm-store/
+.pnpm-debug.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
+.nyc_output
+coverage/
+.next/
+.nuxt/
+dist/
+build/
+out/
+
+#######################
+# Go / Backend
+#######################
+# Go build artifacts (keep source)
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+vendor/
+*.test
+*.out
+*.prof
+*.pprof
+coverage.txt
+coverage.html
+tmp/
+__debug_bin
+
+#######################
+# Environment & Config
+#######################
+.env*
+!.env.example
+*.local
+config.local.*
+secrets/
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+
+#######################
+# OS Generated
+#######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+#######################
+# Editor Files
+#######################
+*.swp
+*.swo
+*~
+*.tmp
+*.temp
+*.bak
+*.backup
+
+#######################
+# Logs and Runtime
+#######################
+logs/
+*.log
+*.pid
+*.seed
+*.pid.lock
+pids/
+
+#######################
+# Testing and Coverage
+#######################
+test-results/
+screenshots/
+videos/
+jest_coverage/
+.nyc_output/
+
+#######################
+# Kubernetes & Helm
+#######################
+manifests/
+rendered/
+*.kubeconfig
+.kube/
+
+#######################
+# Build Tools
+#######################
+Makefile.local
+.air.toml.local
+
+#######################
+# IDE and Temporary
+#######################
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+*.sublime-*
+.vscode/settings.json
+
+#######################
+# Package Managers
+#######################
+.yarn/
+.pnp.*
+pnpm-debug.log*
+
+#######################
+# Security
+#######################
+*.gpg
+*.pgp
+id_rsa*
+id_ed25519*
+known_hosts
+.ssh/
+
+#######################
+# Development Data
+#######################
+*.db
+*.sqlite
+*.sqlite3
+data/
+cache/

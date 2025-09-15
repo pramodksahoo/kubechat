@@ -129,27 +129,63 @@ Try these example queries:
 "Get resource usage for the kube-system namespace"
 ```
 
-## 🐳 Development Setup
+## 🐳 Container-First Development
 
-For local development without full Kubernetes deployment:
+KubeChat follows **container-first development principles** - all development happens inside containers deployed to Kubernetes.
 
+### Prerequisites
+- **Rancher Desktop** with Kubernetes enabled (recommended)
+- **Docker, kubectl, Helm 3.15+, PNPM 8+, Go 1.23+**
+
+### One-Command Setup
 ```bash
-# Prerequisites: Docker Desktop with Kubernetes enabled
-# Install Ollama locally for AI processing
-curl -fsSL https://ollama.ai/install.sh | sh
-ollama pull llama2
-
-# Clone and setup
+# Clone and initialize complete environment
 git clone https://github.com/pramodksahoo/kubechat.git
 cd kubechat
 
-# Quick development setup
-make quickstart
+# Initialize development environment (first time)
+make init
 
-# Run development servers (separate terminals)
-make dev-backend    # Go API server with hot reload
-make dev-frontend   # React development server
+# This will:
+# ✅ Validate all prerequisites 
+# ✅ Build application containers
+# ✅ Deploy to Kubernetes with PostgreSQL & Redis
+# ✅ Set up all development tools
 ```
+
+### Development Workflow
+```bash
+# Check deployment status
+make dev-status
+
+# Make code changes in your editor
+
+# Rebuild containers (choose one)
+make dev-rebuild-api    # For backend changes
+make dev-rebuild-web    # For frontend changes
+
+# Deploy changes to Kubernetes
+helm upgrade kubechat-dev infrastructure/helm/kubechat \
+  --namespace kubechat \
+  --values infrastructure/helm/kubechat/values-dev.yaml
+
+# View logs and test
+make dev-logs
+curl http://localhost:30080/health  # API
+curl http://localhost:30001         # Frontend
+```
+
+### Access URLs (Development)
+- **Frontend:** http://localhost:30001
+- **API:** http://localhost:30080  
+- **PgAdmin:** http://localhost:30050
+- **Redis Commander:** http://localhost:30081
+
+### Why Container-First?
+- **Production Parity:** Development matches production exactly
+- **No Local Dependencies:** No conflicting Node.js/Go versions
+- **Consistent Environment:** All developers work identically
+- **Air-Gap Ready:** Supports offline development
 
 ## ⚙️ Configuration Options
 
@@ -293,7 +329,7 @@ kubectl port-forward svc/kubechat 8080:8080 -n kubechat
 
 **For Developers:**
 ```bash
-make quickstart && make dev  # Start developing in minutes
+make init  # Container-first development setup
 ```
 
 **Key Features:**
