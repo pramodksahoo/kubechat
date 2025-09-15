@@ -1,19 +1,6 @@
 basePath: /api/v1
 definitions:
-  handlers.HealthResponse:
-    properties:
-      environment:
-        type: string
-      status:
-        type: string
-      timestamp:
-        type: string
-      uptime:
-        type: string
-      version:
-        type: string
-    type: object
-  models.AuditLogRequest:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.AuditLogRequest:
     properties:
       cluster_context:
         type: string
@@ -52,7 +39,7 @@ definitions:
     - query_text
     - safety_level
     type: object
-  models.BackupStatus:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.BackupStatus:
     enum:
     - running
     - completed
@@ -64,7 +51,7 @@ definitions:
     - BackupStatusCompleted
     - BackupStatusFailed
     - BackupStatusExpired
-  models.BackupType:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.BackupType:
     enum:
     - full
     - incremental
@@ -74,7 +61,7 @@ definitions:
     - BackupTypeFull
     - BackupTypeIncremental
     - BackupTypeDifferential
-  models.BroadcastMessage:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.BroadcastMessage:
     properties:
       headers:
         additionalProperties:
@@ -90,7 +77,130 @@ definitions:
         format: duration
         type: string
     type: object
-  models.ClusterHealth:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatContext:
+    properties:
+      clusterContext:
+        $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.KubernetesContext'
+      commandHistory:
+        items:
+          $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandExecution'
+        type: array
+      recentMessages:
+        items:
+          $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatMessage'
+        type: array
+      safetyConstraints:
+        $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.SafetyConstraints'
+      sessionId:
+        type: string
+      userId:
+        type: string
+      userPreferences:
+        additionalProperties: true
+        type: object
+    type: object
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatMessage:
+    properties:
+      content:
+        type: string
+      editedAt:
+        type: string
+      id:
+        type: string
+      isEdited:
+        type: boolean
+      metadata:
+        additionalProperties: true
+        type: object
+      parentId:
+        type: string
+      sessionId:
+        type: string
+      timestamp:
+        type: string
+      tokenCount:
+        type: integer
+      type:
+        description: '"user", "assistant", "system"'
+        type: string
+      userId:
+        type: string
+    type: object
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatMessageRequest:
+    properties:
+      clusterId:
+        type: string
+      content:
+        type: string
+      metadata:
+        additionalProperties: true
+        type: object
+      parentId:
+        type: string
+      type:
+        description: defaults to "user"
+        type: string
+    required:
+    - content
+    type: object
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse:
+    properties:
+      data: {}
+      error:
+        type: string
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatSession:
+    properties:
+      clusterId:
+        type: string
+      clusterName:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: string
+      isActive:
+        type: boolean
+      lastMessage:
+        type: string
+      messageCount:
+        type: integer
+      sessionType:
+        description: '"general", "kubernetes", "command"'
+        type: string
+      title:
+        type: string
+      updatedAt:
+        type: string
+      userId:
+        type: string
+    type: object
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatSessionRequest:
+    properties:
+      clusterId:
+        type: string
+      sessionType:
+        description: defaults to "general"
+        type: string
+      title:
+        type: string
+    type: object
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatSessionResponse:
+    properties:
+      context:
+        $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatContext'
+      messages:
+        items:
+          $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatMessage'
+        type: array
+      session:
+        $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatSession'
+    type: object
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.ClusterHealth:
     properties:
       checked_at:
         type: string
@@ -105,13 +215,13 @@ definitions:
       replicas_healthy:
         type: integer
       status:
-        $ref: '#/definitions/models.DatabaseStatus'
+        $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseStatus'
       total_connections:
         type: integer
       total_replicas:
         type: integer
     type: object
-  models.CommandApproval:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandApproval:
     properties:
       approved_by_user_id:
         type: string
@@ -133,7 +243,7 @@ definitions:
         description: pending, approved, rejected, expired
         type: string
     type: object
-  models.CommandApprovalRequest:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandApprovalRequest:
     properties:
       decision:
         description: approve, reject
@@ -145,10 +255,47 @@ definitions:
       user_id:
         type: string
     type: object
-  models.CommandExecutionRequest:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandExecution:
+    properties:
+      client_id:
+        type: string
+      command:
+        type: string
+      completed_at:
+        type: string
+      duration:
+        type: string
+      error:
+        type: string
+      execution_result:
+        additionalProperties: true
+        type: object
+      exit_code:
+        type: integer
+      id:
+        type: string
+      output:
+        type: string
+      query:
+        type: string
+      safety_level:
+        type: string
+      session_id:
+        type: string
+      started_at:
+        type: string
+      status:
+        description: '"queued", "running", "completed", "failed", "cancelled"'
+        type: string
+      stream_output:
+        type: boolean
+      user_id:
+        type: string
+    type: object
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandExecutionRequest:
     properties:
       command:
-        $ref: '#/definitions/models.KubernetesOperation'
+        $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.KubernetesOperation'
       safety_level:
         type: string
       session_id:
@@ -156,7 +303,66 @@ definitions:
       user_id:
         type: string
     type: object
-  models.ComponentHealth:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandPreview:
+    properties:
+      approvalRequired:
+        type: boolean
+      createdAt:
+        type: string
+      description:
+        type: string
+      estimatedImpact:
+        description: '"low", "medium", "high"'
+        type: string
+      expiresAt:
+        type: string
+      generatedCommand:
+        type: string
+      id:
+        type: string
+      naturalLanguage:
+        type: string
+      requiresApproval:
+        type: boolean
+      risks:
+        items:
+          type: string
+        type: array
+      safeguards:
+        items:
+          type: string
+        type: array
+      safetyLevel:
+        description: '"low", "medium", "high"'
+        type: string
+      sessionId:
+        type: string
+      status:
+        description: '"pending", "approved", "rejected", "executed"'
+        type: string
+      updatedAt:
+        type: string
+      userId:
+        type: string
+    type: object
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandPreviewRequest:
+    properties:
+      clusterId:
+        type: string
+      context:
+        additionalProperties: true
+        type: object
+      namespace:
+        type: string
+      naturalLanguage:
+        type: string
+      sessionId:
+        type: string
+    required:
+    - naturalLanguage
+    - sessionId
+    type: object
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.ComponentHealth:
     properties:
       message:
         type: string
@@ -166,11 +372,11 @@ definitions:
       name:
         type: string
       status:
-        $ref: '#/definitions/models.HealthStatusEnum'
+        $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.HealthStatusEnum'
       timestamp:
         type: string
     type: object
-  models.CreateUserRequest:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.CreateUserRequest:
     properties:
       email:
         type: string
@@ -192,7 +398,7 @@ definitions:
     - password
     - username
     type: object
-  models.DatabaseBackup:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseBackup:
     properties:
       completed_at:
         type: string
@@ -218,34 +424,34 @@ definitions:
       size:
         type: integer
       status:
-        $ref: '#/definitions/models.BackupStatus'
+        $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.BackupStatus'
       type:
-        $ref: '#/definitions/models.BackupType'
+        $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.BackupType'
     type: object
-  models.DatabaseCluster:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseCluster:
     properties:
       created_at:
         type: string
       failover_config:
-        $ref: '#/definitions/models.FailoverConfig'
+        $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.FailoverConfig'
       health:
-        $ref: '#/definitions/models.ClusterHealth'
+        $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ClusterHealth'
       id:
         type: string
       load_balancer:
-        $ref: '#/definitions/models.LoadBalancer'
+        $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.LoadBalancer'
       name:
         type: string
       primary:
-        $ref: '#/definitions/models.DatabaseInstance'
+        $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseInstance'
       replicas:
         items:
-          $ref: '#/definitions/models.DatabaseInstance'
+          $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseInstance'
         type: array
       updated_at:
         type: string
     type: object
-  models.DatabaseConfig:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseConfig:
     properties:
       conn_max_idle_time:
         example: 10m
@@ -284,7 +490,7 @@ definitions:
         format: duration
         type: string
     type: object
-  models.DatabaseHealthCheck:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseHealthCheck:
     properties:
       active_connections:
         type: integer
@@ -305,12 +511,12 @@ definitions:
       waiting_connections:
         type: integer
     type: object
-  models.DatabaseInstance:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseInstance:
     properties:
       config:
-        $ref: '#/definitions/models.DatabaseConfig'
+        $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseConfig'
       health:
-        $ref: '#/definitions/models.DatabaseHealthCheck'
+        $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseHealthCheck'
       host:
         type: string
       id:
@@ -327,12 +533,12 @@ definitions:
         type: integer
       role:
         allOf:
-        - $ref: '#/definitions/models.DatabaseRole'
+        - $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseRole'
         description: '"primary", "replica", "standby"'
       status:
-        $ref: '#/definitions/models.DatabaseStatus'
+        $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseStatus'
     type: object
-  models.DatabaseMigration:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseMigration:
     properties:
       applied:
         type: boolean
@@ -345,7 +551,7 @@ definitions:
       version:
         type: string
     type: object
-  models.DatabaseRole:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseRole:
     enum:
     - primary
     - replica
@@ -355,7 +561,7 @@ definitions:
     - DatabaseRolePrimary
     - DatabaseRoleReplica
     - DatabaseRoleStandby
-  models.DatabaseStatus:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseStatus:
     enum:
     - healthy
     - unhealthy
@@ -367,7 +573,7 @@ definitions:
     - DatabaseStatusUnhealthy
     - DatabaseStatusMaintenance
     - DatabaseStatusUnknown
-  models.ExecutionStats:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.ExecutionStats:
     properties:
       average_time_ms:
         type: number
@@ -386,7 +592,7 @@ definitions:
       user_id:
         type: string
     type: object
-  models.FailoverConfig:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.FailoverConfig:
     properties:
       auto_failover:
         type: boolean
@@ -409,7 +615,7 @@ definitions:
         format: duration
         type: string
     type: object
-  models.GeoLocation:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.GeoLocation:
     properties:
       asn:
         type: string
@@ -436,11 +642,11 @@ definitions:
       vpn:
         type: boolean
     type: object
-  models.HealthStatus:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.HealthStatus:
     properties:
       components:
         additionalProperties:
-          $ref: '#/definitions/models.ComponentHealth'
+          $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ComponentHealth'
         type: object
       message:
         type: string
@@ -448,11 +654,11 @@ definitions:
         additionalProperties: true
         type: object
       status:
-        $ref: '#/definitions/models.HealthStatusEnum'
+        $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.HealthStatusEnum'
       timestamp:
         type: string
     type: object
-  models.HealthStatusEnum:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.HealthStatusEnum:
     enum:
     - healthy
     - degraded
@@ -464,12 +670,12 @@ definitions:
     - HealthStatusDegraded
     - HealthStatusUnhealthy
     - HealthStatusUnknown
-  models.KubernetesCommandExecution:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.KubernetesCommandExecution:
     properties:
       approval_id:
         type: string
       command:
-        $ref: '#/definitions/models.KubernetesOperation'
+        $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.KubernetesOperation'
       completed_at:
         type: string
       created_at:
@@ -483,7 +689,7 @@ definitions:
       id:
         type: string
       result:
-        $ref: '#/definitions/models.KubernetesOperationResult'
+        $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.KubernetesOperationResult'
       safety_level:
         description: safe, warning, dangerous
         type: string
@@ -495,7 +701,33 @@ definitions:
       user_id:
         type: string
     type: object
-  models.KubernetesOperation:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.KubernetesContext:
+    properties:
+      allowedActions:
+        items:
+          type: string
+        type: array
+      clusterId:
+        type: string
+      clusterName:
+        type: string
+      namespace:
+        type: string
+      resources:
+        properties:
+          deployments:
+            type: integer
+          pods:
+            type: integer
+          services:
+            type: integer
+        type: object
+      restrictedModes:
+        items:
+          type: string
+        type: array
+    type: object
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.KubernetesOperation:
     properties:
       context:
         type: string
@@ -516,7 +748,7 @@ definitions:
       user_id:
         type: string
     type: object
-  models.KubernetesOperationResult:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.KubernetesOperationResult:
     properties:
       backup_data:
         additionalProperties: true
@@ -536,7 +768,7 @@ definitions:
       success:
         type: boolean
     type: object
-  models.LoadBalancer:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.LoadBalancer:
     properties:
       health_check_interval:
         example: 30s
@@ -551,9 +783,9 @@ definitions:
           type: integer
         type: object
       strategy:
-        $ref: '#/definitions/models.LoadBalancingStrategy'
+        $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.LoadBalancingStrategy'
     type: object
-  models.LoadBalancingStrategy:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.LoadBalancingStrategy:
     enum:
     - round_robin
     - random
@@ -567,7 +799,7 @@ definitions:
     - LoadBalancingLeastConnections
     - LoadBalancingWeighted
     - LoadBalancingIPHash
-  models.LoginRequest:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.LoginRequest:
     properties:
       password:
         type: string
@@ -577,7 +809,7 @@ definitions:
     - password
     - username
     type: object
-  models.PasswordPolicy:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.PasswordPolicy:
     properties:
       lockout_duration_minutes:
         type: integer
@@ -598,7 +830,7 @@ definitions:
       require_uppercase:
         type: boolean
     type: object
-  models.QueryInfo:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.QueryInfo:
     properties:
       args:
         items: {}
@@ -612,7 +844,7 @@ definitions:
       sql:
         type: string
     type: object
-  models.RollbackExecution:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.RollbackExecution:
     properties:
       completed_at:
         type: string
@@ -620,7 +852,7 @@ definitions:
         type: string
       execution_log:
         items:
-          $ref: '#/definitions/models.RollbackStepResult'
+          $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.RollbackStepResult'
         type: array
       id:
         type: string
@@ -634,7 +866,7 @@ definitions:
       user_id:
         type: string
     type: object
-  models.RollbackPlan:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.RollbackPlan:
     properties:
       command_execution_id:
         type: string
@@ -649,12 +881,12 @@ definitions:
       id:
         type: string
       original_command:
-        $ref: '#/definitions/models.KubernetesOperation'
+        $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.KubernetesOperation'
       reason:
         type: string
       rollback_steps:
         items:
-          $ref: '#/definitions/models.RollbackStep'
+          $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.RollbackStep'
         type: array
       session_id:
         type: string
@@ -664,9 +896,9 @@ definitions:
       user_id:
         type: string
       validation:
-        $ref: '#/definitions/models.RollbackValidation'
+        $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.RollbackValidation'
     type: object
-  models.RollbackStatus:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.RollbackStatus:
     properties:
       completed_at:
         type: string
@@ -686,10 +918,10 @@ definitions:
       total_steps:
         type: integer
     type: object
-  models.RollbackStep:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.RollbackStep:
     properties:
       data:
-        additionalProperties: true
+        additionalProperties: {}
         description: operation data (manifest, patch, etc.)
         type: object
       description:
@@ -710,7 +942,7 @@ definitions:
       step_number:
         type: integer
     type: object
-  models.RollbackStepResult:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.RollbackStepResult:
     properties:
       completed_at:
         type: string
@@ -734,7 +966,7 @@ definitions:
       step_number:
         type: integer
     type: object
-  models.RollbackValidation:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.RollbackValidation:
     properties:
       checked_at:
         type: string
@@ -753,7 +985,34 @@ definitions:
           type: string
         type: array
     type: object
-  models.SecurityAction:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.SafetyConstraints:
+    properties:
+      allowedNamespaces:
+        items:
+          type: string
+        type: array
+      autoRejectUnsafe:
+        type: boolean
+      blockedCommands:
+        items:
+          type: string
+        type: array
+      dangerousOperations:
+        items:
+          type: string
+        type: array
+      enableSafetyChecks:
+        type: boolean
+      maxConcurrentCommands:
+        type: integer
+      maxTokensPerMessage:
+        type: integer
+      requireApprovalFor:
+        items:
+          type: string
+        type: array
+    type: object
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.SecurityAction:
     enum:
     - allow
     - block
@@ -769,10 +1028,10 @@ definitions:
     - SecurityActionAlert
     - SecurityActionAudit
     - SecurityActionLockout
-  models.SecurityEvent:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.SecurityEvent:
     properties:
       action:
-        $ref: '#/definitions/models.SecurityAction'
+        $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.SecurityAction'
       blocked:
         type: boolean
       description:
@@ -785,7 +1044,7 @@ definitions:
       ip_address:
         type: string
       location:
-        $ref: '#/definitions/models.GeoLocation'
+        $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.GeoLocation'
       metadata:
         additionalProperties:
           type: string
@@ -800,7 +1059,7 @@ definitions:
       session_id:
         type: string
       severity:
-        $ref: '#/definitions/models.SecuritySeverity'
+        $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.SecuritySeverity'
       source:
         type: string
       target:
@@ -808,13 +1067,13 @@ definitions:
       timestamp:
         type: string
       type:
-        $ref: '#/definitions/models.SecurityEventType'
+        $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.SecurityEventType'
       user_agent:
         type: string
       user_id:
         type: string
     type: object
-  models.SecurityEventType:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.SecurityEventType:
     enum:
     - login_attempt
     - login_success
@@ -852,7 +1111,7 @@ definitions:
     - SecurityEventSecurityHeaderMissing
     - SecurityEventEncryptionFailure
     - SecurityEventCertificateExpiry
-  models.SecuritySeverity:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.SecuritySeverity:
     enum:
     - low
     - medium
@@ -864,7 +1123,7 @@ definitions:
     - SecuritySeverityMedium
     - SecuritySeverityHigh
     - SecuritySeverityCritical
-  models.ServiceEvent:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.ServiceEvent:
     properties:
       correlation_id:
         type: string
@@ -881,7 +1140,7 @@ definitions:
       type:
         type: string
     type: object
-  models.ServiceRegistration:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.ServiceRegistration:
     properties:
       host:
         type: string
@@ -905,7 +1164,7 @@ definitions:
       version:
         type: string
     type: object
-  models.ServiceRequest:
+  github_com_pramodksahoo_kubechat_apps_api_internal_models.ServiceRequest:
     properties:
       body: {}
       headers:
@@ -925,6 +1184,19 @@ definitions:
       timeout:
         example: 30s
         format: duration
+        type: string
+    type: object
+  handlers.HealthResponse:
+    properties:
+      environment:
+        type: string
+      status:
+        type: string
+      timestamp:
+        type: string
+      uptime:
+        type: string
+      version:
         type: string
     type: object
 host: localhost:8080
@@ -959,7 +1231,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/models.CommandApproval'
+              $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandApproval'
             type: array
         "401":
           description: Unauthorized
@@ -987,14 +1259,14 @@ paths:
         name: approval
         required: true
         schema:
-          $ref: '#/definitions/models.CommandApprovalRequest'
+          $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandApprovalRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.CommandApproval'
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandApproval'
         "400":
           description: Invalid request
           schema:
@@ -1033,18 +1305,18 @@ paths:
         name: command
         required: true
         schema:
-          $ref: '#/definitions/models.CommandExecutionRequest'
+          $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandExecutionRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/models.KubernetesCommandExecution'
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.KubernetesCommandExecution'
         "202":
           description: Command requires approval
           schema:
-            $ref: '#/definitions/models.CommandApproval'
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandApproval'
         "400":
           description: Invalid request
           schema:
@@ -1124,7 +1396,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/models.RollbackPlan'
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.RollbackPlan'
         "400":
           description: Invalid execution ID or execution not eligible for rollback
           schema:
@@ -1161,7 +1433,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.RollbackValidation'
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.RollbackValidation'
         "400":
           description: Invalid execution ID
           schema:
@@ -1198,7 +1470,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.KubernetesCommandExecution'
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.KubernetesCommandExecution'
         "400":
           description: Invalid execution ID
           schema:
@@ -1259,7 +1531,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.ExecutionStats'
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ExecutionStats'
         "400":
           description: Invalid date format
           schema:
@@ -1296,7 +1568,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.RollbackStatus'
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.RollbackStatus'
         "400":
           description: Invalid rollback ID
           schema:
@@ -1335,7 +1607,7 @@ paths:
         "202":
           description: Accepted
           schema:
-            $ref: '#/definitions/models.RollbackExecution'
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.RollbackExecution'
         "400":
           description: Invalid plan ID or plan not executable
           schema:
@@ -1537,7 +1809,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/models.AuditLogRequest'
+          $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.AuditLogRequest'
       produces:
       - application/json
       responses:
@@ -1746,7 +2018,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/models.LoginRequest'
+          $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.LoginRequest'
       produces:
       - application/json
       responses:
@@ -1893,7 +2165,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/models.CreateUserRequest'
+          $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.CreateUserRequest'
       produces:
       - application/json
       responses:
@@ -1920,6 +2192,410 @@ paths:
       summary: Register new user account
       tags:
       - Authentication
+  /chat/commands/preview:
+    post:
+      consumes:
+      - application/json
+      description: Generates a Kubernetes command preview from natural language input
+      parameters:
+      - description: Command preview request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandPreviewRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandPreview'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+      summary: Generate command preview
+      tags:
+      - chat
+  /chat/sessions:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all chat sessions for the current user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatSession'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+      summary: Get all chat sessions
+      tags:
+      - chat
+    post:
+      consumes:
+      - application/json
+      description: Creates a new chat conversation session
+      parameters:
+      - description: Chat session request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatSessionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatSession'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+      summary: Create a new chat session
+      tags:
+      - chat
+  /chat/sessions/{sessionId}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a chat session and all its messages
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+      summary: Delete a chat session
+      tags:
+      - chat
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a specific chat session by ID
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatSessionResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+      summary: Get a chat session
+      tags:
+      - chat
+    put:
+      consumes:
+      - application/json
+      description: Updates a chat session's properties
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Fields to update
+        in: body
+        name: updates
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatSession'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+      summary: Update a chat session
+      tags:
+      - chat
+  /chat/sessions/{sessionId}/commands:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves command previews for a specific chat session
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandPreview'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+      summary: Get command previews
+      tags:
+      - chat
+  /chat/sessions/{sessionId}/context:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves the current context for a chat session
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatContext'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+      summary: Get chat context
+      tags:
+      - chat
+  /chat/sessions/{sessionId}/messages:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves messages for a specific chat session
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - default: 50
+        description: Number of messages to retrieve
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Number of messages to skip
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatMessage'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+      summary: Get messages for a session
+      tags:
+      - chat
+    post:
+      consumes:
+      - application/json
+      description: Sends a message in a chat session and processes it
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Message to send
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatMessage'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse'
+      summary: Send a message
+      tags:
+      - chat
   /communication/broadcast:
     post:
       consumes:
@@ -1931,7 +2607,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/models.BroadcastMessage'
+          $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.BroadcastMessage'
       produces:
       - application/json
       responses:
@@ -1966,7 +2642,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/models.ServiceRequest'
+          $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ServiceRequest'
       produces:
       - application/json
       responses:
@@ -2044,7 +2720,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/models.ServiceEvent'
+          $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ServiceEvent'
       produces:
       - application/json
       responses:
@@ -2336,7 +3012,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/models.ServiceRegistration'
+          $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ServiceRegistration'
       produces:
       - application/json
       responses:
@@ -2371,7 +3047,7 @@ paths:
         name: backup
         required: true
         schema:
-          $ref: '#/definitions/models.DatabaseBackup'
+          $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseBackup'
       produces:
       - application/json
       responses:
@@ -2496,7 +3172,7 @@ paths:
         name: cluster
         required: true
         schema:
-          $ref: '#/definitions/models.DatabaseCluster'
+          $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseCluster'
       produces:
       - application/json
       responses:
@@ -2728,7 +3404,7 @@ paths:
         name: instance
         required: true
         schema:
-          $ref: '#/definitions/models.DatabaseInstance'
+          $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseInstance'
       produces:
       - application/json
       responses:
@@ -2853,7 +3529,7 @@ paths:
         name: migration
         required: true
         schema:
-          $ref: '#/definitions/models.DatabaseMigration'
+          $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseMigration'
       produces:
       - application/json
       responses:
@@ -2908,7 +3584,7 @@ paths:
         name: config
         required: true
         schema:
-          $ref: '#/definitions/models.DatabaseConfig'
+          $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseConfig'
       produces:
       - application/json
       responses:
@@ -3077,7 +3753,7 @@ paths:
           properties:
             operations:
               items:
-                $ref: '#/definitions/models.QueryInfo'
+                $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.QueryInfo'
               type: array
           type: object
       produces:
@@ -3405,7 +4081,7 @@ paths:
         "200":
           description: System healthy
           schema:
-            $ref: '#/definitions/models.HealthStatus'
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.HealthStatus'
         "500":
           description: Health check failed
           schema:
@@ -3414,7 +4090,7 @@ paths:
         "503":
           description: System degraded or unhealthy
           schema:
-            $ref: '#/definitions/models.HealthStatus'
+            $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.HealthStatus'
       summary: Get overall system health status
       tags:
       - Health
@@ -3941,7 +4617,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/models.KubernetesOperation'
+          $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.KubernetesOperation'
       produces:
       - application/json
       responses:
@@ -4410,7 +5086,7 @@ paths:
         name: event
         required: true
         schema:
-          $ref: '#/definitions/models.SecurityEvent'
+          $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.SecurityEvent'
       produces:
       - application/json
       responses:
@@ -4695,7 +5371,7 @@ paths:
             password:
               type: string
             policy:
-              $ref: '#/definitions/models.PasswordPolicy'
+              $ref: '#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.PasswordPolicy'
           type: object
       produces:
       - application/json

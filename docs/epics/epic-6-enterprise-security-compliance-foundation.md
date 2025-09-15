@@ -1,8 +1,8 @@
-# Epic 2: Enterprise Security & Compliance Foundation
+# Epic 6: Enterprise Security & Compliance Foundation
 
 ## Epic Overview
 
-**Epic ID:** EPIC-2
+**Epic ID:** EPIC-6
 **Epic Name:** Enterprise Security & Compliance Foundation
 **Priority:** High
 **Estimated Story Points:** 55

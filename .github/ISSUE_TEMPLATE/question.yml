@@ -1,0 +1,172 @@
+name: Question / Support
+description: Ask a question or get help with KubeChat
+title: "[Question]: "
+labels: ["question", "support"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Need help with KubeChat? 🤔
+
+        We're here to help! Please provide details about your question so we can assist you effectively.
+
+        ### Before asking:
+        - Check the [documentation](https://github.com/pramodksahoo/kubechat/tree/main/docs)
+        - Search [existing issues](https://github.com/pramodksahoo/kubechat/issues) and [discussions](https://github.com/pramodksahoo/kubechat/discussions)
+        - Try basic troubleshooting steps
+
+  - type: checkboxes
+    id: preliminary-checks
+    attributes:
+      label: Preliminary Checks
+      description: Please confirm you've done basic research
+      options:
+        - label: I have checked the documentation
+          required: true
+        - label: I have searched existing issues and discussions
+          required: true
+
+  - type: dropdown
+    id: question-category
+    attributes:
+      label: Question Category
+      description: What area is your question about?
+      options:
+        - Installation and Setup
+        - Configuration
+        - Usage and Features
+        - Troubleshooting
+        - Performance and Optimization
+        - Security and RBAC
+        - Development and Contributing
+        - Architecture and Design
+        - Integration with Other Tools
+        - Best Practices
+        - General Concepts
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: question-description
+    attributes:
+      label: Your Question
+      description: Clearly describe what you want to know or what you're trying to accomplish
+      placeholder: |
+        - What are you trying to do?
+        - What specific question do you have?
+        - What outcome are you looking for?
+    validations:
+      required: true
+
+  - type: textarea
+    id: context-details
+    attributes:
+      label: Context and Environment
+      description: Help us understand your setup and situation
+      value: |
+        **Environment:**
+        - KubeChat Version: [e.g., v1.0.0 or main branch]
+        - Kubernetes Version: [e.g., v1.28.0]
+        - Platform: [e.g., EKS, GKE, AKS, local, Rancher Desktop]
+        - Helm Version: [e.g., v3.15.0]
+        - AI Provider: [e.g., Ollama, OpenAI]
+
+        **Your Setup:**
+        - Installation method: [e.g., Helm chart, manual]
+        - Configuration: [any special settings]
+        - Scale: [number of users, clusters, etc.]
+
+        **Your Background:**
+        - Experience with Kubernetes: [beginner/intermediate/expert]
+        - Role: [developer/devops/admin/etc.]
+        - Use case: [learning/production/development/etc.]
+
+  - type: textarea
+    id: what-tried
+    attributes:
+      label: What Have You Tried?
+      description: What steps have you already taken to solve this?
+      placeholder: |
+        - Documentation sections you've read
+        - Commands you've run
+        - Configuration changes you've made
+        - Error messages you've encountered
+        - Troubleshooting steps you've followed
+
+  - type: textarea
+    id: expected-outcome
+    attributes:
+      label: Expected Outcome
+      description: What result are you hoping to achieve?
+      placeholder: |
+        - What should happen?
+        - What specific functionality do you need?
+        - What would success look like?
+
+  - type: textarea
+    id: current-behavior
+    attributes:
+      label: Current Behavior
+      description: What's happening now? (if applicable)
+      placeholder: |
+        - What actually happens?
+        - Any error messages or unexpected behavior?
+        - Screenshots or logs (redact sensitive info)
+
+  - type: textarea
+    id: logs-output
+    attributes:
+      label: Relevant Logs or Output
+      description: |
+        Include any relevant logs, error messages, or command output
+        (Please redact any sensitive information like passwords, tokens, etc.)
+      placeholder: |
+        ```
+        kubectl get pods -n kubechat
+        kubectl logs -n kubechat deployment/kubechat-api
+        ```
+      render: shell
+
+  - type: checkboxes
+    id: urgency-context
+    attributes:
+      label: Context and Urgency
+      description: Help us understand the urgency and context
+      options:
+        - label: This is blocking my work or project
+        - label: This is for learning/evaluation purposes
+        - label: This is for production deployment
+        - label: I have a deadline or time constraint
+        - label: This affects multiple team members
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: |
+        Any other information that might be relevant
+        - Screenshots (if helpful)
+        - Configuration files (redacted)
+        - Related issues or discussions
+        - Specific constraints or requirements
+      placeholder: Additional details...
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+
+        ### Community Guidelines:
+        - **Be specific**: The more details you provide, the better we can help
+        - **Be patient**: Our maintainers and community members volunteer their time
+        - **Be respectful**: Follow our [Code of Conduct](https://github.com/pramodksahoo/kubechat/blob/main/CODE_OF_CONDUCT.md)
+        - **Help others**: If you find a solution, please share it to help the community
+
+        ### Other Ways to Get Help:
+        - **GitHub Discussions**: For broader discussions and community Q&A
+        - **Documentation**: Check our [docs folder](https://github.com/pramodksahoo/kubechat/tree/main/docs)
+        - **Examples**: Look at our example configurations and use cases
+
+        **Thank you for being part of the KubeChat community! 🚀**

@@ -7,17 +7,17 @@
 ![KubeChat Banner](https://img.shields.io/badge/KubeChat-Natural_Language_K8s_Management-blue?style=for-the-badge&logo=kubernetes)
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Go Version](https://img.shields.io/badge/Go-1.21+-blue.svg)](https://golang.org/)
+[![Go Version](https://img.shields.io/badge/Go-1.23+-blue.svg)](https://golang.org/)
 [![React](https://img.shields.io/badge/React-18+-61DAFB.svg?logo=react)](https://reactjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6.svg?logo=typescript)](https://www.typescriptlang.org/)
-[![Kubernetes](https://img.shields.io/badge/Kubernetes-1.24+-blue.svg)](https://kubernetes.io/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.6+-3178C6.svg?logo=typescript)](https://www.typescriptlang.org/)
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-1.28+-blue.svg)](https://kubernetes.io/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker)](https://www.docker.com/)
-[![Helm](https://img.shields.io/badge/Helm-3.x-0F1689.svg?logo=helm)](https://helm.sh/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Ready-336791.svg?logo=postgresql)](https://www.postgresql.org/)
-[![Redis](https://img.shields.io/badge/Redis-Ready-DC382D.svg?logo=redis)](https://redis.io/)
+[![Helm](https://img.shields.io/badge/Helm-3.15+-0F1689.svg?logo=helm)](https://helm.sh/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16+-336791.svg?logo=postgresql)](https://www.postgresql.org/)
+[![Redis](https://img.shields.io/badge/Redis-7.4+-DC382D.svg?logo=redis)](https://redis.io/)
 [![Ollama](https://img.shields.io/badge/Ollama-Local_AI-000000.svg)](https://ollama.ai/)
 [![OpenAI](https://img.shields.io/badge/OpenAI-Optional-412991.svg?logo=openai)](https://openai.com/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.x-38B2AC.svg?logo=tailwind-css)](https://tailwindcss.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4+-38B2AC.svg?logo=tailwind-css)](https://tailwindcss.com/)
 
 ## 🌟 What is KubeChat?
 
@@ -295,6 +295,37 @@ We maintain a welcoming, inclusive community. Please review our [Code of Conduct
 - Advanced troubleshooting workflows
 - Performance optimization recommendations
 - Enhanced compliance reporting
+
+## 🔐 Security & Responsible Disclosure
+
+KubeChat takes security seriously. If you discover a security vulnerability, please follow our responsible disclosure process:
+
+### 🚨 Reporting Security Vulnerabilities
+
+**DO NOT** create public GitHub issues for security vulnerabilities. Instead:
+
+1. **Email:** security@kubechat.dev (GPG key available on request)
+2. **GitHub:** Use [private security reporting](https://github.com/pramodksahoo/kubechat/security/advisories/new)
+3. **Response Time:** We aim to respond within 24 hours
+
+### 🛡️ Security Best Practices
+
+When deploying KubeChat:
+- ✅ Use the latest stable release
+- ✅ Enable RBAC with least-privilege principles
+- ✅ Deploy in isolated namespaces
+- ✅ Regular security scanning with tools like Trivy
+- ✅ Monitor audit logs for suspicious activity
+- ✅ Keep Kubernetes cluster updated
+
+### 🔒 Compliance & Privacy
+
+- **Data Residency:** All AI processing can happen locally with Ollama
+- **Audit Trails:** Complete immutable logs for compliance (SOX, HIPAA, SOC 2)
+- **Zero Data Leakage:** No external API calls required
+- **Encryption:** All sensitive data encrypted at rest and in transit
+
+For detailed security architecture, see [docs/architecture/security.md](docs/architecture/security.md)
 
 ## 📄 License
 

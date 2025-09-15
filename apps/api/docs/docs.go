@@ -39,7 +39,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/models.CommandApproval"
+                                "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandApproval"
                             }
                         }
                     },
@@ -84,7 +84,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.CommandApprovalRequest"
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandApprovalRequest"
                         }
                     }
                 ],
@@ -92,7 +92,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.CommandApproval"
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandApproval"
                         }
                     },
                     "400": {
@@ -154,7 +154,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.CommandExecutionRequest"
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandExecutionRequest"
                         }
                     }
                 ],
@@ -162,13 +162,13 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/models.KubernetesCommandExecution"
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.KubernetesCommandExecution"
                         }
                     },
                     "202": {
                         "description": "Command requires approval",
                         "schema": {
-                            "$ref": "#/definitions/models.CommandApproval"
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandApproval"
                         }
                     },
                     "400": {
@@ -288,7 +288,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/models.RollbackPlan"
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.RollbackPlan"
                         }
                     },
                     "400": {
@@ -344,7 +344,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.RollbackValidation"
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.RollbackValidation"
                         }
                     },
                     "400": {
@@ -400,7 +400,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.KubernetesCommandExecution"
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.KubernetesCommandExecution"
                         }
                     },
                     "400": {
@@ -493,7 +493,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.ExecutionStats"
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ExecutionStats"
                         }
                     },
                     "400": {
@@ -549,7 +549,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.RollbackStatus"
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.RollbackStatus"
                         }
                     },
                     "400": {
@@ -608,7 +608,7 @@ const docTemplate = `{
                     "202": {
                         "description": "Accepted",
                         "schema": {
-                            "$ref": "#/definitions/models.RollbackExecution"
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.RollbackExecution"
                         }
                     },
                     "400": {
@@ -920,7 +920,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.AuditLogRequest"
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.AuditLogRequest"
                         }
                     }
                 ],
@@ -1236,7 +1236,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.LoginRequest"
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.LoginRequest"
                         }
                     }
                 ],
@@ -1459,7 +1459,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.CreateUserRequest"
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.CreateUserRequest"
                         }
                     }
                 ],
@@ -1495,6 +1495,655 @@ const docTemplate = `{
                 }
             }
         },
+        "/chat/commands/preview": {
+            "post": {
+                "description": "Generates a Kubernetes command preview from natural language input",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chat"
+                ],
+                "summary": "Generate command preview",
+                "parameters": [
+                    {
+                        "description": "Command preview request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandPreviewRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandPreview"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/chat/sessions": {
+            "get": {
+                "description": "Retrieves all chat sessions for the current user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chat"
+                ],
+                "summary": "Get all chat sessions",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatSession"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Creates a new chat conversation session",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chat"
+                ],
+                "summary": "Create a new chat session",
+                "parameters": [
+                    {
+                        "description": "Chat session request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatSessionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatSession"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/chat/sessions/{sessionId}": {
+            "get": {
+                "description": "Retrieves a specific chat session by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chat"
+                ],
+                "summary": "Get a chat session",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatSessionResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates a chat session's properties",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chat"
+                ],
+                "summary": "Update a chat session",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Fields to update",
+                        "name": "updates",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatSession"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a chat session and all its messages",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chat"
+                ],
+                "summary": "Delete a chat session",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/chat/sessions/{sessionId}/commands": {
+            "get": {
+                "description": "Retrieves command previews for a specific chat session",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chat"
+                ],
+                "summary": "Get command previews",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandPreview"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/chat/sessions/{sessionId}/context": {
+            "get": {
+                "description": "Retrieves the current context for a chat session",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chat"
+                ],
+                "summary": "Get chat context",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatContext"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/chat/sessions/{sessionId}/messages": {
+            "get": {
+                "description": "Retrieves messages for a specific chat session",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chat"
+                ],
+                "summary": "Get messages for a session",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Number of messages to retrieve",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Number of messages to skip",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatMessage"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Sends a message in a chat session and processes it",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chat"
+                ],
+                "summary": "Send a message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Message to send",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatMessage"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/communication/broadcast": {
             "post": {
                 "security": [
@@ -1520,7 +2169,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.BroadcastMessage"
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.BroadcastMessage"
                         }
                     }
                 ],
@@ -1574,7 +2223,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.ServiceRequest"
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ServiceRequest"
                         }
                     }
                 ],
@@ -1696,7 +2345,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.ServiceEvent"
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ServiceEvent"
                         }
                     }
                 ],
@@ -2100,7 +2749,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.ServiceRegistration"
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ServiceRegistration"
                         }
                     }
                 ],
@@ -2203,7 +2852,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.DatabaseBackup"
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseBackup"
                         }
                     }
                 ],
@@ -2396,7 +3045,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.DatabaseCluster"
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseCluster"
                         }
                     }
                 ],
@@ -2754,7 +3403,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.DatabaseInstance"
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseInstance"
                         }
                     }
                 ],
@@ -2949,7 +3598,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.DatabaseMigration"
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseMigration"
                         }
                     }
                 ],
@@ -3034,7 +3683,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.DatabaseConfig"
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseConfig"
                         }
                     }
                 ],
@@ -3294,7 +3943,7 @@ const docTemplate = `{
                                 "operations": {
                                     "type": "array",
                                     "items": {
-                                        "$ref": "#/definitions/models.QueryInfo"
+                                        "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.QueryInfo"
                                     }
                                 }
                             }
@@ -3789,7 +4438,7 @@ const docTemplate = `{
                     "200": {
                         "description": "System healthy",
                         "schema": {
-                            "$ref": "#/definitions/models.HealthStatus"
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.HealthStatus"
                         }
                     },
                     "500": {
@@ -3802,7 +4451,7 @@ const docTemplate = `{
                     "503": {
                         "description": "System degraded or unhealthy",
                         "schema": {
-                            "$ref": "#/definitions/models.HealthStatus"
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.HealthStatus"
                         }
                     }
                 }
@@ -4617,7 +5266,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.KubernetesOperation"
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.KubernetesOperation"
                         }
                     }
                 ],
@@ -5342,7 +5991,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.SecurityEvent"
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.SecurityEvent"
                         }
                     }
                 ],
@@ -5787,7 +6436,7 @@ const docTemplate = `{
                                     "type": "string"
                                 },
                                 "policy": {
-                                    "$ref": "#/definitions/models.PasswordPolicy"
+                                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.PasswordPolicy"
                                 }
                             }
                         }
@@ -6442,27 +7091,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handlers.HealthResponse": {
-            "type": "object",
-            "properties": {
-                "environment": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "timestamp": {
-                    "type": "string"
-                },
-                "uptime": {
-                    "type": "string"
-                },
-                "version": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.AuditLogRequest": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.AuditLogRequest": {
             "type": "object",
             "required": [
                 "execution_status",
@@ -6517,7 +7146,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.BackupStatus": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.BackupStatus": {
             "type": "string",
             "enum": [
                 "running",
@@ -6532,7 +7161,7 @@ const docTemplate = `{
                 "BackupStatusExpired"
             ]
         },
-        "models.BackupType": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.BackupType": {
             "type": "string",
             "enum": [
                 "full",
@@ -6545,7 +7174,7 @@ const docTemplate = `{
                 "BackupTypeDifferential"
             ]
         },
-        "models.BroadcastMessage": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.BroadcastMessage": {
             "type": "object",
             "properties": {
                 "headers": {
@@ -6568,7 +7197,191 @@ const docTemplate = `{
                 }
             }
         },
-        "models.ClusterHealth": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatContext": {
+            "type": "object",
+            "properties": {
+                "clusterContext": {
+                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.KubernetesContext"
+                },
+                "commandHistory": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandExecution"
+                    }
+                },
+                "recentMessages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatMessage"
+                    }
+                },
+                "safetyConstraints": {
+                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.SafetyConstraints"
+                },
+                "sessionId": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "string"
+                },
+                "userPreferences": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        },
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatMessage": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "editedAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isEdited": {
+                    "type": "boolean"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "parentId": {
+                    "type": "string"
+                },
+                "sessionId": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "tokenCount": {
+                    "type": "integer"
+                },
+                "type": {
+                    "description": "\"user\", \"assistant\", \"system\"",
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatMessageRequest": {
+            "type": "object",
+            "required": [
+                "content"
+            ],
+            "properties": {
+                "clusterId": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "parentId": {
+                    "type": "string"
+                },
+                "type": {
+                    "description": "defaults to \"user\"",
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatResponse": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatSession": {
+            "type": "object",
+            "properties": {
+                "clusterId": {
+                    "type": "string"
+                },
+                "clusterName": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "lastMessage": {
+                    "type": "string"
+                },
+                "messageCount": {
+                    "type": "integer"
+                },
+                "sessionType": {
+                    "description": "\"general\", \"kubernetes\", \"command\"",
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatSessionRequest": {
+            "type": "object",
+            "properties": {
+                "clusterId": {
+                    "type": "string"
+                },
+                "sessionType": {
+                    "description": "defaults to \"general\"",
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatSessionResponse": {
+            "type": "object",
+            "properties": {
+                "context": {
+                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatContext"
+                },
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatMessage"
+                    }
+                },
+                "session": {
+                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ChatSession"
+                }
+            }
+        },
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.ClusterHealth": {
             "type": "object",
             "properties": {
                 "checked_at": {
@@ -6590,7 +7403,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "status": {
-                    "$ref": "#/definitions/models.DatabaseStatus"
+                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseStatus"
                 },
                 "total_connections": {
                     "type": "integer"
@@ -6600,7 +7413,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.CommandApproval": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandApproval": {
             "type": "object",
             "properties": {
                 "approved_by_user_id": {
@@ -6633,7 +7446,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.CommandApprovalRequest": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandApprovalRequest": {
             "type": "object",
             "properties": {
                 "decision": {
@@ -6651,11 +7464,66 @@ const docTemplate = `{
                 }
             }
         },
-        "models.CommandExecutionRequest": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandExecution": {
+            "type": "object",
+            "properties": {
+                "client_id": {
+                    "type": "string"
+                },
+                "command": {
+                    "type": "string"
+                },
+                "completed_at": {
+                    "type": "string"
+                },
+                "duration": {
+                    "type": "string"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "execution_result": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "exit_code": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "output": {
+                    "type": "string"
+                },
+                "query": {
+                    "type": "string"
+                },
+                "safety_level": {
+                    "type": "string"
+                },
+                "session_id": {
+                    "type": "string"
+                },
+                "started_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "\"queued\", \"running\", \"completed\", \"failed\", \"cancelled\"",
+                    "type": "string"
+                },
+                "stream_output": {
+                    "type": "boolean"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandExecutionRequest": {
             "type": "object",
             "properties": {
                 "command": {
-                    "$ref": "#/definitions/models.KubernetesOperation"
+                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.KubernetesOperation"
                 },
                 "safety_level": {
                     "type": "string"
@@ -6668,7 +7536,94 @@ const docTemplate = `{
                 }
             }
         },
-        "models.ComponentHealth": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandPreview": {
+            "type": "object",
+            "properties": {
+                "approvalRequired": {
+                    "type": "boolean"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "estimatedImpact": {
+                    "description": "\"low\", \"medium\", \"high\"",
+                    "type": "string"
+                },
+                "expiresAt": {
+                    "type": "string"
+                },
+                "generatedCommand": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "naturalLanguage": {
+                    "type": "string"
+                },
+                "requiresApproval": {
+                    "type": "boolean"
+                },
+                "risks": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "safeguards": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "safetyLevel": {
+                    "description": "\"low\", \"medium\", \"high\"",
+                    "type": "string"
+                },
+                "sessionId": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "\"pending\", \"approved\", \"rejected\", \"executed\"",
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.CommandPreviewRequest": {
+            "type": "object",
+            "required": [
+                "naturalLanguage",
+                "sessionId"
+            ],
+            "properties": {
+                "clusterId": {
+                    "type": "string"
+                },
+                "context": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "naturalLanguage": {
+                    "type": "string"
+                },
+                "sessionId": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.ComponentHealth": {
             "type": "object",
             "properties": {
                 "message": {
@@ -6682,14 +7637,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "status": {
-                    "$ref": "#/definitions/models.HealthStatusEnum"
+                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.HealthStatusEnum"
                 },
                 "timestamp": {
                     "type": "string"
                 }
             }
         },
-        "models.CreateUserRequest": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.CreateUserRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -6719,7 +7674,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.DatabaseBackup": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseBackup": {
             "type": "object",
             "properties": {
                 "completed_at": {
@@ -6757,41 +7712,41 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "status": {
-                    "$ref": "#/definitions/models.BackupStatus"
+                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.BackupStatus"
                 },
                 "type": {
-                    "$ref": "#/definitions/models.BackupType"
+                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.BackupType"
                 }
             }
         },
-        "models.DatabaseCluster": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseCluster": {
             "type": "object",
             "properties": {
                 "created_at": {
                     "type": "string"
                 },
                 "failover_config": {
-                    "$ref": "#/definitions/models.FailoverConfig"
+                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.FailoverConfig"
                 },
                 "health": {
-                    "$ref": "#/definitions/models.ClusterHealth"
+                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ClusterHealth"
                 },
                 "id": {
                     "type": "string"
                 },
                 "load_balancer": {
-                    "$ref": "#/definitions/models.LoadBalancer"
+                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.LoadBalancer"
                 },
                 "name": {
                     "type": "string"
                 },
                 "primary": {
-                    "$ref": "#/definitions/models.DatabaseInstance"
+                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseInstance"
                 },
                 "replicas": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.DatabaseInstance"
+                        "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseInstance"
                     }
                 },
                 "updated_at": {
@@ -6799,7 +7754,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.DatabaseConfig": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseConfig": {
             "type": "object",
             "properties": {
                 "conn_max_idle_time": {
@@ -6853,7 +7808,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.DatabaseHealthCheck": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseHealthCheck": {
             "type": "object",
             "properties": {
                 "active_connections": {
@@ -6884,14 +7839,14 @@ const docTemplate = `{
                 }
             }
         },
-        "models.DatabaseInstance": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseInstance": {
             "type": "object",
             "properties": {
                 "config": {
-                    "$ref": "#/definitions/models.DatabaseConfig"
+                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseConfig"
                 },
                 "health": {
-                    "$ref": "#/definitions/models.DatabaseHealthCheck"
+                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseHealthCheck"
                 },
                 "host": {
                     "type": "string"
@@ -6918,16 +7873,16 @@ const docTemplate = `{
                     "description": "\"primary\", \"replica\", \"standby\"",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/models.DatabaseRole"
+                            "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseRole"
                         }
                     ]
                 },
                 "status": {
-                    "$ref": "#/definitions/models.DatabaseStatus"
+                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseStatus"
                 }
             }
         },
-        "models.DatabaseMigration": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseMigration": {
             "type": "object",
             "properties": {
                 "applied": {
@@ -6947,7 +7902,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.DatabaseRole": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseRole": {
             "type": "string",
             "enum": [
                 "primary",
@@ -6960,7 +7915,7 @@ const docTemplate = `{
                 "DatabaseRoleStandby"
             ]
         },
-        "models.DatabaseStatus": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.DatabaseStatus": {
             "type": "string",
             "enum": [
                 "healthy",
@@ -6975,7 +7930,7 @@ const docTemplate = `{
                 "DatabaseStatusUnknown"
             ]
         },
-        "models.ExecutionStats": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.ExecutionStats": {
             "type": "object",
             "properties": {
                 "average_time_ms": {
@@ -7004,7 +7959,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.FailoverConfig": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.FailoverConfig": {
             "type": "object",
             "properties": {
                 "auto_failover": {
@@ -7036,7 +7991,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.GeoLocation": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.GeoLocation": {
             "type": "object",
             "properties": {
                 "asn": {
@@ -7077,13 +8032,13 @@ const docTemplate = `{
                 }
             }
         },
-        "models.HealthStatus": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.HealthStatus": {
             "type": "object",
             "properties": {
                 "components": {
                     "type": "object",
                     "additionalProperties": {
-                        "$ref": "#/definitions/models.ComponentHealth"
+                        "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.ComponentHealth"
                     }
                 },
                 "message": {
@@ -7094,14 +8049,14 @@ const docTemplate = `{
                     "additionalProperties": true
                 },
                 "status": {
-                    "$ref": "#/definitions/models.HealthStatusEnum"
+                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.HealthStatusEnum"
                 },
                 "timestamp": {
                     "type": "string"
                 }
             }
         },
-        "models.HealthStatusEnum": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.HealthStatusEnum": {
             "type": "string",
             "enum": [
                 "healthy",
@@ -7116,14 +8071,14 @@ const docTemplate = `{
                 "HealthStatusUnknown"
             ]
         },
-        "models.KubernetesCommandExecution": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.KubernetesCommandExecution": {
             "type": "object",
             "properties": {
                 "approval_id": {
                     "type": "string"
                 },
                 "command": {
-                    "$ref": "#/definitions/models.KubernetesOperation"
+                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.KubernetesOperation"
                 },
                 "completed_at": {
                     "type": "string"
@@ -7144,7 +8099,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "result": {
-                    "$ref": "#/definitions/models.KubernetesOperationResult"
+                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.KubernetesOperationResult"
                 },
                 "safety_level": {
                     "description": "safe, warning, dangerous",
@@ -7162,7 +8117,47 @@ const docTemplate = `{
                 }
             }
         },
-        "models.KubernetesOperation": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.KubernetesContext": {
+            "type": "object",
+            "properties": {
+                "allowedActions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "clusterId": {
+                    "type": "string"
+                },
+                "clusterName": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "resources": {
+                    "type": "object",
+                    "properties": {
+                        "deployments": {
+                            "type": "integer"
+                        },
+                        "pods": {
+                            "type": "integer"
+                        },
+                        "services": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "restrictedModes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.KubernetesOperation": {
             "type": "object",
             "properties": {
                 "context": {
@@ -7194,7 +8189,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.KubernetesOperationResult": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.KubernetesOperationResult": {
             "type": "object",
             "properties": {
                 "backup_data": {
@@ -7222,7 +8217,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.LoadBalancer": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.LoadBalancer": {
             "type": "object",
             "properties": {
                 "health_check_interval": {
@@ -7243,11 +8238,11 @@ const docTemplate = `{
                     }
                 },
                 "strategy": {
-                    "$ref": "#/definitions/models.LoadBalancingStrategy"
+                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.LoadBalancingStrategy"
                 }
             }
         },
-        "models.LoadBalancingStrategy": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.LoadBalancingStrategy": {
             "type": "string",
             "enum": [
                 "round_robin",
@@ -7264,7 +8259,7 @@ const docTemplate = `{
                 "LoadBalancingIPHash"
             ]
         },
-        "models.LoginRequest": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.LoginRequest": {
             "type": "object",
             "required": [
                 "password",
@@ -7279,7 +8274,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.PasswordPolicy": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.PasswordPolicy": {
             "type": "object",
             "properties": {
                 "lockout_duration_minutes": {
@@ -7311,7 +8306,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.QueryInfo": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.QueryInfo": {
             "type": "object",
             "properties": {
                 "args": {
@@ -7331,7 +8326,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.RollbackExecution": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.RollbackExecution": {
             "type": "object",
             "properties": {
                 "completed_at": {
@@ -7343,7 +8338,7 @@ const docTemplate = `{
                 "execution_log": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.RollbackStepResult"
+                        "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.RollbackStepResult"
                     }
                 },
                 "id": {
@@ -7364,7 +8359,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.RollbackPlan": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.RollbackPlan": {
             "type": "object",
             "properties": {
                 "command_execution_id": {
@@ -7385,7 +8380,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "original_command": {
-                    "$ref": "#/definitions/models.KubernetesOperation"
+                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.KubernetesOperation"
                 },
                 "reason": {
                     "type": "string"
@@ -7393,7 +8388,7 @@ const docTemplate = `{
                 "rollback_steps": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.RollbackStep"
+                        "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.RollbackStep"
                     }
                 },
                 "session_id": {
@@ -7407,11 +8402,11 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "validation": {
-                    "$ref": "#/definitions/models.RollbackValidation"
+                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.RollbackValidation"
                 }
             }
         },
-        "models.RollbackStatus": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.RollbackStatus": {
             "type": "object",
             "properties": {
                 "completed_at": {
@@ -7441,13 +8436,13 @@ const docTemplate = `{
                 }
             }
         },
-        "models.RollbackStep": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.RollbackStep": {
             "type": "object",
             "properties": {
                 "data": {
                     "description": "operation data (manifest, patch, etc.)",
                     "type": "object",
-                    "additionalProperties": true
+                    "additionalProperties": {}
                 },
                 "description": {
                     "description": "human readable description",
@@ -7474,7 +8469,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.RollbackStepResult": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.RollbackStepResult": {
             "type": "object",
             "properties": {
                 "completed_at": {
@@ -7510,7 +8505,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.RollbackValidation": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.RollbackValidation": {
             "type": "object",
             "properties": {
                 "checked_at": {
@@ -7538,7 +8533,48 @@ const docTemplate = `{
                 }
             }
         },
-        "models.SecurityAction": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.SafetyConstraints": {
+            "type": "object",
+            "properties": {
+                "allowedNamespaces": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "autoRejectUnsafe": {
+                    "type": "boolean"
+                },
+                "blockedCommands": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "dangerousOperations": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "enableSafetyChecks": {
+                    "type": "boolean"
+                },
+                "maxConcurrentCommands": {
+                    "type": "integer"
+                },
+                "maxTokensPerMessage": {
+                    "type": "integer"
+                },
+                "requireApprovalFor": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.SecurityAction": {
             "type": "string",
             "enum": [
                 "allow",
@@ -7557,11 +8593,11 @@ const docTemplate = `{
                 "SecurityActionLockout"
             ]
         },
-        "models.SecurityEvent": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.SecurityEvent": {
             "type": "object",
             "properties": {
                 "action": {
-                    "$ref": "#/definitions/models.SecurityAction"
+                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.SecurityAction"
                 },
                 "blocked": {
                     "type": "boolean"
@@ -7580,7 +8616,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "location": {
-                    "$ref": "#/definitions/models.GeoLocation"
+                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.GeoLocation"
                 },
                 "metadata": {
                     "type": "object",
@@ -7602,7 +8638,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "severity": {
-                    "$ref": "#/definitions/models.SecuritySeverity"
+                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.SecuritySeverity"
                 },
                 "source": {
                     "type": "string"
@@ -7614,7 +8650,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "type": {
-                    "$ref": "#/definitions/models.SecurityEventType"
+                    "$ref": "#/definitions/github_com_pramodksahoo_kubechat_apps_api_internal_models.SecurityEventType"
                 },
                 "user_agent": {
                     "type": "string"
@@ -7624,7 +8660,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.SecurityEventType": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.SecurityEventType": {
             "type": "string",
             "enum": [
                 "login_attempt",
@@ -7665,7 +8701,7 @@ const docTemplate = `{
                 "SecurityEventCertificateExpiry"
             ]
         },
-        "models.SecuritySeverity": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.SecuritySeverity": {
             "type": "string",
             "enum": [
                 "low",
@@ -7680,7 +8716,7 @@ const docTemplate = `{
                 "SecuritySeverityCritical"
             ]
         },
-        "models.ServiceEvent": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.ServiceEvent": {
             "type": "object",
             "properties": {
                 "correlation_id": {
@@ -7705,7 +8741,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.ServiceRegistration": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.ServiceRegistration": {
             "type": "object",
             "properties": {
                 "host": {
@@ -7741,7 +8777,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.ServiceRequest": {
+        "github_com_pramodksahoo_kubechat_apps_api_internal_models.ServiceRequest": {
             "type": "object",
             "properties": {
                 "body": {},
@@ -7770,6 +8806,26 @@ const docTemplate = `{
                     "type": "string",
                     "format": "duration",
                     "example": "30s"
+                }
+            }
+        },
+        "handlers.HealthResponse": {
+            "type": "object",
+            "properties": {
+                "environment": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "uptime": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
                 }
             }
         }
