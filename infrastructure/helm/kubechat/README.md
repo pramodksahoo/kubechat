@@ -1,43 +1,72 @@
 # KubeChat Helm Chart
 
-This Helm chart deploys KubeChat, a Natural Language Kubernetes Management Platform, to a Kubernetes cluster.
+This Helm chart deploys KubeChat, a Natural Language Kubernetes Management Platform with Enterprise Production Features, to a Kubernetes cluster.
 
 ## Prerequisites
 
-- Kubernetes 1.25+
-- Helm 3.15+
-- cert-manager (for TLS certificates)
-- Ingress controller (nginx recommended)
-- StorageClass for persistent volumes
+- **Kubernetes**: 1.25+ (tested with 1.28+)
+- **Helm**: 3.15+
+- **cert-manager**: Required for TLS certificate management (production)
+- **Ingress Controller**:
+  - Production: nginx with SSL/TLS support
+  - Development: traefik (default for local k8s)
+- **StorageClass**:
+  - Production: `fast-ssd` for high-performance storage
+  - Development: `local-path` (Rancher Desktop default)
+
+## Chart Components
+
+- **Web Frontend**: Next.js application (port 3000)
+- **API Backend**: Go-based REST API (port 8080)
+- **PostgreSQL**: Primary database with HA support (Bitnami chart)
+- **Redis**: Caching and session storage with replication (Bitnami chart)
+- **Ollama**: AI service for natural language processing (enabled in development)
+- **Dev Tools**: pgAdmin and Redis Commander (development only)
 
 ## Installation
 
-### Quick Start (Development)
+### Development Environment
 
 ```bash
 # Add required Helm repositories
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm repo update
 
-# Install with default development settings
-helm install kubechat ./kubechat
+# Update chart dependencies
+helm dependency update
+
+# Install with development configuration
+helm install kubechat-dev ./kubechat -f values-dev.yaml
+
+# Access services (NodePort configuration):
+# Web UI: http://localhost:30001 or http://kubechat.local
+# API: http://localhost:30080
+# pgAdmin: http://localhost:30050 (admin@kubechat.dev / dev-admin)
+# Redis Commander: http://localhost:30081
+# Ollama: http://localhost:30434
 ```
 
 ### Production Deployment
 
 ```bash
-# Install with production values
-helm install kubechat ./kubechat -f values.yaml
+# Update dependencies
+helm dependency update
 
-# Or use staging configuration
-helm install kubechat-staging ./kubechat -f values-staging.yaml
+# Install with production configuration
+helm install kubechat ./kubechat -f values.yaml \
+  --namespace kubechat-production \
+  --create-namespace
+
+# Access via configured ingress:
+# Web UI: https://kubechat.com
+# API: https://kubechat.com/api
 ```
 
-### Custom Installation
+### Custom Domain Installation
 
 ```bash
 # Install with custom domain and TLS
-helm install kubechat ./kubechat \
+helm install kubechat ./kubechat -f values.yaml \
   --set ingress.hosts[0].host=kubechat.yourdomain.com \
   --set tls.certManager.issuer.email=admin@yourdomain.com \
   --set ingress.tls[0].hosts[0]=kubechat.yourdomain.com
@@ -62,63 +91,135 @@ tls:
 
 ### Environment-Specific Configurations
 
-The chart includes three pre-configured value files:
+The chart includes two pre-configured value files:
 
-- `values.yaml` - Production configuration
-- `values-staging.yaml` - Staging configuration
-- `values-production.yaml` - Alternative production configuration
+- `values.yaml` - Production configuration with high availability, security, and TLS
+- `values-dev.yaml` - Development configuration with debugging tools and relaxed security
 
 ### Key Configuration Sections
 
 #### Web Frontend
+**Development:**
 ```yaml
 web:
-  enabled: true
-  replicaCount: 2
+  replicaCount: 1
+  image:
+    repository: kubechat/web
+    tag: "dev"
+  service:
+    type: NodePort
+    nodePort: 30001
+  env:
+    NODE_ENV: "development"
+    NEXT_PUBLIC_API_BASE_URL: http://localhost:30080/api
+```
+
+**Production:**
+```yaml
+web:
+  replicaCount: 5
   image:
     repository: kubechat/web
     tag: "1.0.0"
-  resources:
-    limits:
-      cpu: 1000m
-      memory: 1Gi
+  service:
+    type: ClusterIP
+  env:
+    NODE_ENV: "production"
+    NEXT_PUBLIC_API_BASE_URL: https://api.kubechat.com
 ```
 
 #### API Backend
+**Development:**
 ```yaml
 api:
-  enabled: true
-  replicaCount: 3
+  replicaCount: 1
+  image:
+    repository: kubechat/api
+    tag: "dev"
+  service:
+    type: NodePort
+    nodePort: 30080
+  env:
+    GIN_MODE: "debug"
+    LOG_LEVEL: debug
+```
+
+**Production:**
+```yaml
+api:
+  replicaCount: 5
   image:
     repository: kubechat/api
     tag: "1.0.0"
-  resources:
-    limits:
-      cpu: 2000m
-      memory: 2Gi
+  service:
+    type: ClusterIP
+  env:
+    GIN_MODE: "release"
+    LOG_LEVEL: warn
 ```
 
 #### Database (PostgreSQL)
+**Development:**
 ```yaml
 postgresql:
   enabled: true
   auth:
-    database: kubechat
+    postgresPassword: "dev-postgres"
     username: kubechat
+    password: "dev-password"
+    database: kubechat
   primary:
     persistence:
-      size: 20Gi
+      size: 5Gi
+      storageClass: "local-path"
+```
+
+**Production:**
+```yaml
+postgresql:
+  enabled: true
+  architecture: repmgr  # High availability
+  auth:
+    existingSecret: kubechat-postgresql-secret
+    database: kubechat_production
+  primary:
+    persistence:
+      size: 100Gi
+      storageClass: "fast-ssd"
+  readReplicas:
+    replicaCount: 2
 ```
 
 #### Redis Cache
+**Development:**
 ```yaml
 redis:
   enabled: true
   auth:
     enabled: true
+    password: "dev-redis"
   master:
     persistence:
-      size: 8Gi
+      size: 2Gi
+      storageClass: "local-path"
+  replica:
+    replicaCount: 1
+```
+
+**Production:**
+```yaml
+redis:
+  enabled: true
+  architecture: replication  # High availability
+  auth:
+    enabled: true
+    existingSecret: kubechat-redis-secret
+  master:
+    persistence:
+      size: 20Gi
+      storageClass: "fast-ssd"
+  replica:
+    replicaCount: 2
 ```
 
 ## Monitoring
@@ -287,9 +388,27 @@ kubectl delete pvc -l app.kubernetes.io/instance=kubechat
 ## Values Reference
 
 For a complete list of configurable values, see:
-- `values.yaml` - All available options with defaults
-- `values-staging.yaml` - Staging-specific overrides
-- `values-production.yaml` - Production-specific overrides
+- `values.yaml` - Production configuration with HA, security, and enterprise features
+- `values-dev.yaml` - Development configuration with debugging tools and relaxed security
+
+### Key Differences Between Environments
+
+| Feature | Development | Production |
+|---------|-------------|------------|
+| **Replicas** | 1 per service | 5 web, 5 api |
+| **Image Tags** | `dev` | `1.0.0` |
+| **Service Type** | NodePort | ClusterIP |
+| **Storage** | `local-path` (5-10Gi) | `fast-ssd` (100Gi+) |
+| **Security** | Relaxed | Strict (Pod Security Standards) |
+| **TLS/HTTPS** | Disabled | Let's Encrypt + cert-manager |
+| **Ingress** | traefik (kubechat.local) | nginx (kubechat.com) |
+| **Database** | Single instance | HA with read replicas |
+| **Redis** | Single master + 1 replica | Master + 2 replicas |
+| **Backup** | Disabled | Daily with 30-day retention |
+| **Monitoring** | Basic | Full Prometheus integration |
+| **Dev Tools** | pgAdmin, Redis Commander | Disabled |
+| **Ollama AI** | Enabled | Disabled |
+| **Autoscaling** | Disabled | Enabled (3-50 pods) |
 
 ## Support
 
