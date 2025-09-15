@@ -1,6 +1,7 @@
 package audit
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -30,7 +31,7 @@ func (h *Handler) RegisterRoutes(router *gin.RouterGroup) {
 	auditRoutes := router.Group("/audit")
 	auditRoutes.Use(auth.RequireWritePermission()) // Require user role for audit operations
 	{
-		// Audit log endpoints
+		// Core audit log endpoints
 		auditRoutes.GET("/logs", h.GetAuditLogs)
 		auditRoutes.GET("/logs/:id", h.GetAuditLogByID)
 		auditRoutes.POST("/logs", h.CreateAuditLog)
@@ -40,8 +41,29 @@ func (h *Handler) RegisterRoutes(router *gin.RouterGroup) {
 		auditRoutes.GET("/dangerous", h.GetDangerousOperations)
 		auditRoutes.GET("/failed", h.GetFailedOperations)
 
-		// Integrity and health endpoints
+		// Enhanced integrity endpoints
 		auditRoutes.POST("/verify-integrity", h.VerifyIntegrity)
+		auditRoutes.GET("/chain-integrity", h.VerifyChainIntegrity)
+		auditRoutes.GET("/suspicious-activities", h.GetSuspiciousActivities)
+
+		// Export and compliance endpoints
+		auditRoutes.GET("/export", h.ExportAuditLogs)
+		auditRoutes.POST("/compliance-report", h.GenerateComplianceReport)
+
+		// Legal hold endpoints
+		auditRoutes.POST("/legal-hold", h.CreateLegalHold)
+		auditRoutes.DELETE("/legal-hold/:id", h.ReleaseLegalHold)
+		auditRoutes.GET("/legal-holds", h.GetLegalHolds)
+
+		// Retention and archival endpoints
+		auditRoutes.POST("/retention-policy", h.ApplyRetentionPolicy)
+		auditRoutes.POST("/archive", h.ArchiveOldLogs)
+		auditRoutes.POST("/restore/:archive_id", h.RestoreArchivedLogs)
+
+		// Real-time monitoring endpoints
+		auditRoutes.GET("/monitor", h.StartRealTimeMonitoring)
+
+		// Health and metrics endpoints
 		auditRoutes.GET("/health", h.HealthCheck)
 		auditRoutes.GET("/metrics", h.GetMetrics)
 	}
@@ -507,6 +529,271 @@ func (h *Handler) GetMetrics(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"data": metrics,
+	})
+}
+
+// VerifyChainIntegrity verifies the entire audit chain integrity
+func (h *Handler) VerifyChainIntegrity(c *gin.Context) {
+	result, err := h.auditService.VerifyChainIntegrity(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to verify chain integrity",
+			"code":  "CHAIN_INTEGRITY_ERROR",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": result,
+	})
+}
+
+// GetSuspiciousActivities retrieves suspicious activities
+func (h *Handler) GetSuspiciousActivities(c *gin.Context) {
+	timeWindowStr := c.DefaultQuery("time_window", "24h")
+	timeWindow, err := time.ParseDuration(timeWindowStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid time_window format",
+			"code":  "INVALID_TIME_WINDOW",
+		})
+		return
+	}
+
+	activities, err := h.auditService.GetSuspiciousActivities(c.Request.Context(), timeWindow)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get suspicious activities",
+			"code":  "SUSPICIOUS_ACTIVITIES_ERROR",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data":  activities,
+		"count": len(activities),
+	})
+}
+
+// ExportAuditLogs exports audit logs in specified format
+func (h *Handler) ExportAuditLogs(c *gin.Context) {
+	format := audit.ExportFormat(c.DefaultQuery("format", "json"))
+
+	filter := models.AuditLogFilter{}
+	h.parseCommonFilterParams(c, &filter)
+
+	data, err := h.auditService.ExportAuditLogs(c.Request.Context(), filter, format)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to export audit logs",
+			"code":  "EXPORT_ERROR",
+		})
+		return
+	}
+
+	var contentType string
+	var filename string
+	switch format {
+	case audit.ExportFormatJSON:
+		contentType = "application/json"
+		filename = fmt.Sprintf("audit-logs-%s.json", time.Now().Format("2006-01-02"))
+	case audit.ExportFormatCSV:
+		contentType = "text/csv"
+		filename = fmt.Sprintf("audit-logs-%s.csv", time.Now().Format("2006-01-02"))
+	case audit.ExportFormatPDF:
+		contentType = "application/pdf"
+		filename = fmt.Sprintf("audit-logs-%s.pdf", time.Now().Format("2006-01-02"))
+	default:
+		contentType = "application/octet-stream"
+		filename = "audit-logs"
+	}
+
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+	c.Data(http.StatusOK, contentType, data)
+}
+
+// GenerateComplianceReport generates compliance reports
+func (h *Handler) GenerateComplianceReport(c *gin.Context) {
+	var req struct {
+		Framework string    `json:"framework" binding:"required"`
+		StartTime time.Time `json:"start_time" binding:"required"`
+		EndTime   time.Time `json:"end_time" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request format",
+			"code":  "INVALID_REQUEST",
+		})
+		return
+	}
+
+	framework := audit.ComplianceFramework(req.Framework)
+	report, err := h.auditService.GenerateComplianceReport(c.Request.Context(), framework, req.StartTime, req.EndTime)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to generate compliance report",
+			"code":  "COMPLIANCE_REPORT_ERROR",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": report,
+	})
+}
+
+// CreateLegalHold creates a new legal hold
+func (h *Handler) CreateLegalHold(c *gin.Context) {
+	var req audit.LegalHoldRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request format",
+			"code":  "INVALID_REQUEST",
+		})
+		return
+	}
+
+	hold, err := h.auditService.CreateLegalHold(c.Request.Context(), req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to create legal hold",
+			"code":  "LEGAL_HOLD_CREATION_ERROR",
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"data": hold,
+	})
+}
+
+// ReleaseLegalHold releases a legal hold
+func (h *Handler) ReleaseLegalHold(c *gin.Context) {
+	holdID := c.Param("id")
+
+	err := h.auditService.ReleaseLegalHold(c.Request.Context(), holdID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to release legal hold",
+			"code":  "LEGAL_HOLD_RELEASE_ERROR",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Legal hold released successfully",
+	})
+}
+
+// GetLegalHolds retrieves all legal holds
+func (h *Handler) GetLegalHolds(c *gin.Context) {
+	holds, err := h.auditService.GetLegalHolds(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get legal holds",
+			"code":  "LEGAL_HOLDS_ERROR",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data":  holds,
+		"count": len(holds),
+	})
+}
+
+// ApplyRetentionPolicy applies a retention policy
+func (h *Handler) ApplyRetentionPolicy(c *gin.Context) {
+	var policy audit.RetentionPolicy
+
+	if err := c.ShouldBindJSON(&policy); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request format",
+			"code":  "INVALID_REQUEST",
+		})
+		return
+	}
+
+	err := h.auditService.ApplyRetentionPolicy(c.Request.Context(), policy)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to apply retention policy",
+			"code":  "RETENTION_POLICY_ERROR",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Retention policy applied successfully",
+	})
+}
+
+// ArchiveOldLogs archives old audit logs
+func (h *Handler) ArchiveOldLogs(c *gin.Context) {
+	var req struct {
+		CutoffDate time.Time `json:"cutoff_date" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request format",
+			"code":  "INVALID_REQUEST",
+		})
+		return
+	}
+
+	result, err := h.auditService.ArchiveOldLogs(c.Request.Context(), req.CutoffDate)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to archive logs",
+			"code":  "ARCHIVE_ERROR",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": result,
+	})
+}
+
+// RestoreArchivedLogs restores archived audit logs
+func (h *Handler) RestoreArchivedLogs(c *gin.Context) {
+	archiveID := c.Param("archive_id")
+
+	err := h.auditService.RestoreArchivedLogs(c.Request.Context(), archiveID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to restore archived logs",
+			"code":  "RESTORE_ERROR",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Archived logs restored successfully",
+	})
+}
+
+// StartRealTimeMonitoring starts real-time monitoring
+func (h *Handler) StartRealTimeMonitoring(c *gin.Context) {
+	// This would typically establish a WebSocket connection
+	// For now, return a success message
+	eventChannel := make(chan audit.AuditEvent, 100)
+
+	err := h.auditService.StartRealTimeMonitoring(c.Request.Context(), eventChannel)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to start real-time monitoring",
+			"code":  "MONITORING_START_ERROR",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Real-time monitoring started",
+		"status":  "active",
 	})
 }
 

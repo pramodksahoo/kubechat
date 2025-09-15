@@ -48,7 +48,7 @@ export const SystemStatusIndicators: React.FC<SystemStatusIndicatorsProps> = ({
   const defaultSystems: SystemStatus[] = [
     {
       id: 'kubernetes-api',
-      name: 'Kubernetes API',
+      name: 'Kubernetes Cluster',
       status: 'online',
       lastChecked: new Date().toISOString(),
       responseTime: 45,
@@ -56,17 +56,8 @@ export const SystemStatusIndicators: React.FC<SystemStatusIndicatorsProps> = ({
       message: 'All clusters responding normally'
     },
     {
-      id: 'llm-service',
-      name: 'LLM Service',
-      status: 'online',
-      lastChecked: new Date().toISOString(),
-      responseTime: 120,
-      uptime: 98.5,
-      message: 'OpenAI GPT-4 responding'
-    },
-    {
       id: 'database',
-      name: 'Database',
+      name: 'Database Service',
       status: 'online',
       lastChecked: new Date().toISOString(),
       responseTime: 12,
@@ -75,21 +66,39 @@ export const SystemStatusIndicators: React.FC<SystemStatusIndicatorsProps> = ({
     },
     {
       id: 'redis-cache',
-      name: 'Cache Layer',
-      status: 'degraded',
-      lastChecked: new Date().toISOString(),
-      responseTime: 200,
-      uptime: 97.2,
-      message: 'High latency detected'
-    },
-    {
-      id: 'auth-service',
-      name: 'Authentication',
+      name: 'Redis Cache',
       status: 'online',
       lastChecked: new Date().toISOString(),
-      responseTime: 35,
+      responseTime: 8,
       uptime: 99.8,
-      message: 'RBAC and JWT services operational'
+      message: 'Cache layer operational'
+    },
+    {
+      id: 'llm-service',
+      name: 'LLM/NLP Service',
+      status: 'online',
+      lastChecked: new Date().toISOString(),
+      responseTime: 120,
+      uptime: 98.5,
+      message: 'AI language model responding'
+    },
+    {
+      id: 'api-gateway',
+      name: 'API Gateway',
+      status: 'online',
+      lastChecked: new Date().toISOString(),
+      responseTime: 25,
+      uptime: 99.9,
+      message: 'API endpoints responding'
+    },
+    {
+      id: 'websocket-service',
+      name: 'WebSocket Service',
+      status: 'online',
+      lastChecked: new Date().toISOString(),
+      responseTime: 15,
+      uptime: 99.7,
+      message: 'Real-time connections active'
     }
   ];
 

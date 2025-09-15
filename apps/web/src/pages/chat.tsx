@@ -76,10 +76,7 @@ export default function ChatPage() {
 
           <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
             <ChatInterface
-              session={currentSession as any}
-              messages={messages as any}
-              onSendMessage={handleSendMessage}
-              loading={loading}
+              sessionId={currentSession?.id}
             />
           </div>
         </div>

@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Icon } from '@/components/ui';
+import { ClusterInfo } from '@/services/clusterService';
+import { useRealTimeUpdates } from '@/services/realTimeService';
 
 interface BaseComponentProps {
   className?: string;
@@ -7,39 +9,8 @@ interface BaseComponentProps {
   'data-testid'?: string;
 }
 
-interface ClusterHealthData {
-  id: string;
-  name: string;
-  status: 'healthy' | 'warning' | 'critical' | 'unknown';
-  uptime: string;
-  nodes: {
-    total: number;
-    ready: number;
-    notReady: number;
-  };
-  pods: {
-    total: number;
-    running: number;
-    pending: number;
-    failed: number;
-  };
-  resources: {
-    cpu: {
-      used: number;
-      total: number;
-      percentage: number;
-    };
-    memory: {
-      used: number;
-      total: number;
-      percentage: number;
-    };
-  };
-  lastChecked: string;
-}
-
 export interface ClusterHealthWidgetProps extends BaseComponentProps {
-  clusters?: ClusterHealthData[];
+  clusters?: ClusterInfo[];
   isLoading?: boolean;
   onRefresh?: () => void;
   onClusterClick?: (clusterId: string) => void;
@@ -53,36 +24,24 @@ export const ClusterHealthWidget: React.FC<ClusterHealthWidgetProps> = ({
   className = '',
   'data-testid': dataTestId = 'cluster-health-widget'
 }) => {
-  const defaultClusters: ClusterHealthData[] = [
-    {
-      id: 'prod-cluster-1',
-      name: 'Production Cluster',
-      status: 'healthy',
-      uptime: '45 days',
-      nodes: { total: 5, ready: 5, notReady: 0 },
-      pods: { total: 127, running: 125, pending: 2, failed: 0 },
-      resources: {
-        cpu: { used: 2.4, total: 8.0, percentage: 30 },
-        memory: { used: 14.2, total: 32.0, percentage: 44 }
-      },
-      lastChecked: new Date().toISOString()
-    },
-    {
-      id: 'staging-cluster-1',
-      name: 'Staging Cluster',
-      status: 'warning',
-      uptime: '12 days',
-      nodes: { total: 3, ready: 2, notReady: 1 },
-      pods: { total: 45, running: 42, pending: 2, failed: 1 },
-      resources: {
-        cpu: { used: 1.8, total: 4.0, percentage: 45 },
-        memory: { used: 6.8, total: 16.0, percentage: 42 }
-      },
-      lastChecked: new Date().toISOString()
-    }
-  ];
+  const [realtimeClusters, setRealtimeClusters] = useState<ClusterInfo[]>(clusters);
+  const { lastUpdate, isConnected } = useRealTimeUpdates(['cluster', 'system']);
 
-  const displayClusters = clusters.length > 0 ? clusters : defaultClusters;
+  // Update clusters from props
+  useEffect(() => {
+    setRealtimeClusters(clusters);
+  }, [clusters]);
+
+  // Handle real-time updates
+  useEffect(() => {
+    if (lastUpdate && lastUpdate.type === 'cluster') {
+      if (lastUpdate.action === 'update' && lastUpdate.data?.clusters) {
+        setRealtimeClusters(lastUpdate.data.clusters);
+      }
+    }
+  }, [lastUpdate]);
+
+  const displayClusters = realtimeClusters;
 
   const getStatusConfig = (status: string) => {
     switch (status) {
@@ -184,8 +143,16 @@ export const ClusterHealthWidget: React.FC<ClusterHealthWidgetProps> = ({
               <h3 className="text-xl font-bold bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 dark:from-white dark:via-gray-200 dark:to-white bg-clip-text text-transparent">
                 Cluster Health
               </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                {displayClusters.length} {displayClusters.length === 1 ? 'cluster' : 'clusters'} monitored
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 flex items-center space-x-2">
+                <span>{displayClusters.length} {displayClusters.length === 1 ? 'cluster' : 'clusters'} monitored</span>
+                <div className={`flex items-center space-x-1 ${
+                  isConnected ? 'text-emerald-500' : 'text-amber-500'
+                }`}>
+                  <div className={`h-1.5 w-1.5 rounded-full ${
+                    isConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500 animate-bounce'
+                  }`} />
+                  <span className="text-xs">{isConnected ? 'Live' : 'Sync...'}</span>
+                </div>
               </p>
             </div>
           </div>

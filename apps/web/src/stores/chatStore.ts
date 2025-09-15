@@ -149,9 +149,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const tempMessage: ChatMessage = {
       id: `temp-${Date.now()}`,
       sessionId: currentSession.id,
+      userId: 'current-user',
       type: 'user',
       content,
-      timestamp: new Date(),
+      timestamp: new Date().toISOString(),
     };
 
     // Optimistically add message
@@ -214,9 +215,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
         const approvalMessage: ChatMessage = {
           id: `approval-${Date.now()}`,
           sessionId: currentSession.id,
+          userId: 'system',
           type: 'system',
           content: 'Approval request sent. Waiting for administrator approval.',
-          timestamp: new Date(),
+          timestamp: new Date().toISOString(),
         };
 
         set(state => ({
@@ -232,9 +234,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
         const executionMessage: ChatMessage = {
           id: `execution-${Date.now()}`,
           sessionId: currentSession.id,
+          userId: 'assistant',
           type: 'assistant',
           content: `Command executed successfully. Result: ${execution.result || 'No output'}`,
-          timestamp: new Date(),
+          timestamp: new Date().toISOString(),
           metadata: {
             command: currentPreview.generatedCommand,
             executionId: execution.id,
@@ -255,9 +258,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const errorMessage: ChatMessage = {
         id: `error-${Date.now()}`,
         sessionId: currentSession.id,
+        userId: 'system',
         type: 'system',
         content: `Failed to execute command: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(),
       };
 
       set(state => ({
@@ -275,9 +279,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const rejectMessage: ChatMessage = {
         id: `reject-${Date.now()}`,
         sessionId: currentSession.id,
+        userId: 'system',
         type: 'system',
         content: `Command cancelled${reason ? `: ${reason}` : '.'}`,
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(),
       };
 
       set(state => ({
@@ -303,41 +308,20 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
 
     try {
-      const ws = chatService.createWebSocket(sessionId);
-      
-      ws.onopen = () => {
-        set({ wsConnected: true });
-        console.log('WebSocket connected');
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          
-          if (data.type === 'message') {
-            set(state => ({
-              messages: [...state.messages, data.message],
-            }));
-          } else if (data.type === 'command_status') {
-            // Handle command execution status updates
-            console.log('Command status update:', data);
-          }
-        } catch (error) {
-          console.error('Failed to parse WebSocket message:', error);
+      chatService.connectWebSocket(sessionId, (data) => {
+        // Handle WebSocket messages
+        if (data.type === 'new_message') {
+          set(state => ({
+            messages: [...state.messages, data.message],
+          }));
+        } else if (data.type === 'command_status') {
+          // Handle command execution status updates
+          console.log('Command status update:', data);
         }
-      };
+      });
 
-      ws.onclose = () => {
-        set({ wsConnected: false });
-        console.log('WebSocket disconnected');
-      };
-
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        set({ wsConnected: false });
-      };
-
-      set({ wsConnection: ws });
+      set({ wsConnected: true });
+      console.log('WebSocket connected');
     } catch (error) {
       console.error('Failed to create WebSocket connection:', error);
     }

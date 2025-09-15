@@ -142,13 +142,30 @@ dev-deploy: ## Deploy complete development stack
 	@echo "Use 'make dev-logs' to view application logs"
 	@echo "Use 'make dev-status' to check deployment status"
 
-dev-upgrade: ## Upgrade existing deployment
+dev-upgrade: ## Upgrade existing deployment (rebuilds containers + upgrades)
 	@echo "=== Upgrading KubeChat Deployment ==="
+	@echo ""
+	@echo "Step 1: Rebuilding containers with latest code..."
+	@make --no-print-directory dev-build
+	@echo ""
+	@echo "Step 2: Upgrading Helm deployment..."
 	@helm upgrade kubechat-dev infrastructure/helm/kubechat \
 		--namespace kubechat \
 		--values infrastructure/helm/kubechat/values-dev.yaml \
 		--wait
-	@echo "✅ Deployment upgraded successfully"
+	@echo ""
+	@echo "Step 3: Restarting deployments to pick up new images..."
+	@kubectl rollout restart deployment/kubechat-dev-web -n kubechat
+	@kubectl rollout restart deployment/kubechat-dev-api -n kubechat
+	@kubectl rollout status deployment/kubechat-dev-web -n kubechat
+	@kubectl rollout status deployment/kubechat-dev-api -n kubechat
+	@echo ""
+	@echo "✅ Deployment upgraded successfully with latest code!"
+	@echo ""
+	@echo "Access URLs:"
+	@echo "============"
+	@echo "Frontend: http://localhost:30001"
+	@echo "API:      http://localhost:30080"
 
 dev-status: ## Show deployment status
 	@echo "=== KubeChat Deployment Status ==="
@@ -268,6 +285,18 @@ dev-test-unit: ## Run unit tests only
 	@echo "Backend tests:"
 	@kubectl exec -n kubechat $$(kubectl get pod -n kubechat -l app.kubernetes.io/component=api -o jsonpath='{.items[0].metadata.name}') -- go test ./...
 
+test: ## Run Jest tests locally (container-first alternative)
+	@echo "=== Running Jest Tests Locally ==="
+	@pnpm test
+
+test-watch: ## Run Jest tests in watch mode locally
+	@echo "=== Running Jest Tests in Watch Mode ==="
+	@pnpm test:watch
+
+test-coverage: ## Run Jest tests with coverage locally
+	@echo "=== Running Jest Tests with Coverage ==="
+	@pnpm test:coverage
+
 dev-test-e2e: ## Run end-to-end tests
 	@echo "=== Running End-to-End Tests ==="
 	@echo "Note: E2E tests will be implemented with Playwright"
@@ -347,6 +376,32 @@ quick-web: dev-rebuild-web dev-restart ## Quick web rebuild and restart
 
 quick-api: dev-rebuild-api dev-restart ## Quick API rebuild and restart
 	@echo "✅ API application updated"
+
+dev-upgrade-web: ## Upgrade web container only (faster for frontend changes)
+	@echo "=== Upgrading Web Container Only ==="
+	@echo ""
+	@echo "Step 1: Rebuilding web container..."
+	@make --no-print-directory dev-rebuild-web
+	@echo ""
+	@echo "Step 2: Restarting web deployment..."
+	@kubectl rollout restart deployment/kubechat-dev-web -n kubechat
+	@kubectl rollout status deployment/kubechat-dev-web -n kubechat
+	@echo ""
+	@echo "✅ Web container upgraded successfully!"
+	@echo "Frontend: http://localhost:30001"
+
+dev-upgrade-api: ## Upgrade API container only (faster for backend changes)
+	@echo "=== Upgrading API Container Only ==="
+	@echo ""
+	@echo "Step 1: Rebuilding API container..."
+	@make --no-print-directory dev-rebuild-api
+	@echo ""
+	@echo "Step 2: Restarting API deployment..."
+	@kubectl rollout restart deployment/kubechat-dev-api -n kubechat
+	@kubectl rollout status deployment/kubechat-dev-api -n kubechat
+	@echo ""
+	@echo "✅ API container upgraded successfully!"
+	@echo "API: http://localhost:30080"
 
 # Project initialization (run once)
 init: ## Initialize project for first-time setup

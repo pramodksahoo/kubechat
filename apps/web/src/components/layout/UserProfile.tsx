@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 
 interface BaseComponentProps {
@@ -39,6 +40,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   'data-testid': dataTestId = 'user-profile'
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const defaultUser: UserType = {
     id: 'demo-user',
@@ -74,12 +77,41 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   const displayUser = user || defaultUser;
   const initials = `${displayUser.firstName?.[0] || 'K'}${displayUser.lastName?.[0] || 'A'}`;
 
+  // Calculate dropdown position when opening
+  const updateDropdownPosition = () => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + window.scrollY + 8, // 8px gap below the button
+        right: window.innerWidth - rect.right // Right-align with button's right edge
+      });
+    }
+  };
+
+  // Handle dropdown toggle
+  const handleToggle = () => {
+    if (!isOpen) {
+      updateDropdownPosition();
+    }
+    setIsOpen(!isOpen);
+  };
+
+  // Update position on window resize
+  useEffect(() => {
+    if (isOpen) {
+      const handleResize = () => updateDropdownPosition();
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, [isOpen]);
+
   return (
     <div className={`relative ${className}`} data-testid={dataTestId}>
       <button
+        ref={buttonRef}
         type="button"
         className="flex items-center justify-center p-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 hover:scale-105 transition-all duration-200 rounded-full"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggle}
         data-testid={`${dataTestId}-trigger`}
       >
         {/* Avatar only */}
@@ -98,18 +130,24 @@ export const UserProfile: React.FC<UserProfileProps> = ({
         </div>
       </button>
 
-      {/* Dropdown menu */}
-      {isOpen && (
+      {/* Dropdown menu using Portal */}
+      {isOpen && typeof window !== 'undefined' && createPortal(
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 z-[9998]"
+            className="fixed inset-0 z-[9999999]"
             onClick={() => setIsOpen(false)}
+            style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}
           />
 
           {/* Menu */}
           <div
-            className="absolute right-0 z-[10001] mt-2 w-80 origin-top-right rounded-2xl bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl py-2 shadow-2xl border border-gray-200/50 dark:border-gray-700/50 focus:outline-none"
+            className="fixed z-[10000000] w-80 rounded-2xl bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl py-2 shadow-2xl border border-gray-200/50 dark:border-gray-700/50 focus:outline-none"
+            style={{
+              top: `${dropdownPosition.top}px`,
+              right: `${dropdownPosition.right}px`,
+              transform: 'translateX(0)'
+            }}
             data-testid={`${dataTestId}-menu`}
           >
             {/* User info section */}
@@ -193,7 +231,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({
               </button>
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );

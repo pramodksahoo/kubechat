@@ -125,7 +125,7 @@ dist
 # Temporary folders
 tmp/
 temp/
-
+__mocks__/
 #######################
 # Docker & Containers
 #######################
@@ -229,7 +229,7 @@ testing.db
 *.swp
 *.swo
 *~
-
+.swc
 # Emacs
 *~
 \#*\#
@@ -456,3 +456,4 @@ bmad-temp/
 playwright-report/
 tests/
 apps/api/server
+apps/web/tests/

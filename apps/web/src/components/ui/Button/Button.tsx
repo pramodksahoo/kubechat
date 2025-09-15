@@ -18,6 +18,7 @@ export const Button: React.FC<ButtonProps> = ({
     primary: 'bg-primary-600 hover:bg-primary-700 focus:ring-primary-500 text-white shadow-sm',
     secondary: 'bg-secondary-100 hover:bg-secondary-200 focus:ring-secondary-500 text-secondary-900 border border-secondary-300 dark:bg-secondary-800 dark:text-secondary-100 dark:border-secondary-600 dark:hover:bg-secondary-700',
     danger: 'bg-danger-600 hover:bg-danger-700 focus:ring-danger-500 text-white shadow-sm',
+    warning: 'bg-yellow-500 hover:bg-yellow-600 focus:ring-yellow-400 text-white shadow-sm',
     ghost: 'hover:bg-gray-100 focus:ring-gray-500 text-gray-700 dark:text-gray-300 dark:hover:bg-gray-800'
   };
 

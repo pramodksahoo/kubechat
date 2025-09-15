@@ -1,8 +1,98 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import Head from 'next/head';
 import { MainLayout } from '@/components/layout';
+import { AuditTrailSummary } from '@/components/compliance';
+import { auditService, AuditExportOptions } from '@/services/auditService';
+import { AuditLogEntry, AuditSummary, AuditFilter } from '@kubechat/shared/types';
 
 export default function AuditPage() {
+  const [auditEntries, setAuditEntries] = useState<AuditLogEntry[]>([]);
+  const [auditSummary, setAuditSummary] = useState<AuditSummary>({
+    totalEvents: 0,
+    successEvents: 0,
+    failureEvents: 0,
+    errorEvents: 0,
+    criticalEvents: 0,
+    topUsers: [],
+    topActions: [],
+    timeline: []
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadAuditData = useCallback(async (filters: AuditFilter) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [entries, summary] = await Promise.all([
+        auditService.getAuditLogs(filters),
+        auditService.getAuditSummary(filters)
+      ]);
+
+      setAuditEntries(entries);
+      setAuditSummary(summary);
+    } catch (error) {
+      console.error('Failed to load audit data:', error);
+      setError('Failed to load audit data');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const handleExportAuditLog = useCallback(async (filters: AuditFilter) => {
+    try {
+      const exportOptions: AuditExportOptions = {
+        format: 'csv', // Default format
+        filters,
+        includeMetadata: true,
+        startDate: filters.startDate,
+        endDate: filters.endDate
+      };
+
+      const blob = await auditService.exportAuditLogs(exportOptions);
+      const filename = auditService.generateFilename('csv', filters);
+      auditService.downloadBlob(blob, filename);
+    } catch (error) {
+      console.error('Failed to export audit log:', error);
+      setError('Failed to export audit data');
+    }
+  }, []);
+
+  const handleViewEntryDetails = useCallback(async (entryId: string): Promise<AuditLogEntry> => {
+    try {
+      const entry = await auditService.getAuditLogEntry(entryId);
+      if (entry) {
+        return entry;
+      }
+
+      // Fallback to finding in current entries
+      const existingEntry = auditEntries.find(e => e.id === entryId);
+      if (existingEntry) {
+        return existingEntry;
+      }
+
+      // Return default entry if not found
+      return {
+        id: entryId,
+        timestamp: new Date().toISOString(),
+        userId: 'unknown',
+        userName: 'Unknown User',
+        sessionId: '',
+        action: 'unknown_action',
+        resource: 'unknown_resource',
+        method: 'GET',
+        result: 'success',
+        ipAddress: '',
+        userAgent: '',
+        metadata: {},
+        severity: 'low'
+      };
+    } catch (error) {
+      console.error('Failed to fetch entry details:', error);
+      throw error;
+    }
+  }, [auditEntries]);
+
   return (
     <>
       <Head>
@@ -19,19 +109,46 @@ export default function AuditPage() {
             </p>
           </div>
 
-          <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-            <div className="text-center py-12">
-              <div className="h-16 w-16 mx-auto bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
-                <svg className="h-8 w-8 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
-                </svg>
+          {error && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+                    Unable to load audit data
+                  </h3>
+                  <div className="mt-2 text-sm text-red-700 dark:text-red-300">
+                    <p>{error}</p>
+                  </div>
+                  <div className="mt-4">
+                    <button
+                      type="button"
+                      onClick={() => loadAuditData({
+                        startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+                        endDate: new Date().toISOString()
+                      })}
+                      className="bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-md text-sm font-medium text-red-800 dark:text-red-200 hover:bg-red-100 dark:hover:bg-red-900/30"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                </div>
               </div>
-              <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">Audit Trail</h3>
-              <p className="mt-2 text-gray-500 dark:text-gray-400">
-                Comprehensive audit logging will be available here. Track all system activities and changes.
-              </p>
             </div>
-          </div>
+          )}
+
+          <AuditTrailSummary
+            auditEntries={auditEntries}
+            auditSummary={auditSummary}
+            onLoadAuditData={loadAuditData}
+            onExportAuditLog={handleExportAuditLog}
+            onViewEntryDetails={handleViewEntryDetails}
+            loading={loading}
+          />
         </div>
       </MainLayout>
     </>

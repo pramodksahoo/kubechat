@@ -13,13 +13,19 @@ const customJestConfig = {
     '**/tests/**/*.(test|spec).(ts|tsx|js|jsx)',
     '**/*.(test|spec).(ts|tsx|js|jsx)'
   ],
-  moduleNameMapping: {
+  testPathIgnorePatterns: [
+    '<rootDir>/node_modules/',
+    '<rootDir>/tests/e2e/',
+    '<rootDir>/apps/web/node_modules/',
+  ],
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/apps/web/src/$1',
-    '^@kubechat/(.*)$': '<rootDir>/apps/$1/src',
+    '^@kubechat/(.*)$': '<rootDir>/packages/$1/src',
+    '\\.(css|less|scss|sass)$': '<rootDir>/__mocks__/styleMock.js',
+    '\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$': '<rootDir>/__mocks__/fileMock.js',
   },
   collectCoverageFrom: [
     'apps/web/src/**/*.{ts,tsx}',
-    'apps/api/src/**/*.{ts,go}',
     '!**/*.d.ts',
     '!**/*.stories.{ts,tsx}',
     '!**/index.ts',
@@ -28,10 +34,10 @@ const customJestConfig = {
   ],
   coverageThreshold: {
     global: {
-      branches: 80,
-      functions: 80,
-      lines: 80,
-      statements: 80,
+      branches: 85,
+      functions: 85,
+      lines: 85,
+      statements: 85,
     },
   },
   testTimeout: 10000,
@@ -44,11 +50,7 @@ const customJestConfig = {
   transformIgnorePatterns: [
     'node_modules/(?!(.*\\.mjs$))',
   ],
-  testPathIgnorePatterns: [
-    '<rootDir>/node_modules/',
-    '<rootDir>/apps/web/node_modules/',
-  ],
-  roots: ['<rootDir>/tests/', '<rootDir>/apps/'],
+  roots: ['<rootDir>/apps/web/tests/', '<rootDir>/tests/unit/', '<rootDir>/tests/integration/'],
 }
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

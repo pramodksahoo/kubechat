@@ -26,7 +26,7 @@ export function UserProfileManager({
   loading = false,
   className = '',
 }: UserProfileManagerProps) {
-  const [activeTab, setActiveTab] = useState<'profile' | 'preferences' | 'security' | 'clusters'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'permissions' | 'sessions' | 'preferences' | 'security' | 'clusters'>('profile');
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [profileData, setProfileData] = useState({
     firstName: user.firstName || '',
@@ -113,6 +113,8 @@ export function UserProfileManager({
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: '👤' },
+    { id: 'permissions', label: 'Permissions', icon: '🛡️' },
+    { id: 'sessions', label: 'Sessions', icon: '📱' },
     { id: 'preferences', label: 'Preferences', icon: '⚙️' },
     { id: 'security', label: 'Security', icon: '🔒' },
     { id: 'clusters', label: 'Cluster Access', icon: '☸️' },
@@ -282,6 +284,239 @@ export function UserProfileManager({
                 >
                   Change Password
                 </Button>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Permissions Tab */}
+        {activeTab === 'permissions' && (
+          <Card>
+            <div className="p-6 space-y-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                User Permissions & Roles
+              </h2>
+
+              {/* Current Roles */}
+              <div className="space-y-4">
+                <h3 className="text-md font-medium text-gray-900 dark:text-white">
+                  Current Roles
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {user.roles.map((role: any, index: number) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                    >
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                          {role.name || role}
+                        </h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {role.description || 'No description available'}
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                          Active
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  {user.roles.length === 0 && (
+                    <div className="col-span-2 text-center py-8 text-gray-500 dark:text-gray-400">
+                      No roles assigned
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Individual Permissions */}
+              <div className="space-y-4">
+                <h3 className="text-md font-medium text-gray-900 dark:text-white">
+                  Individual Permissions ({getPermissionCount()})
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {user.permissions.map((permission: any, index: number) => (
+                    <div
+                      key={index}
+                      className="flex items-center space-x-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800"
+                    >
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-sm text-gray-900 dark:text-white">
+                        {permission.name || permission}
+                      </span>
+                    </div>
+                  ))}
+                  {user.permissions.length === 0 && (
+                    <div className="col-span-3 text-center py-8 text-gray-500 dark:text-gray-400">
+                      No individual permissions granted
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Permission Summary */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                <h4 className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-2">
+                  Permission Summary
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <span className="text-blue-600 dark:text-blue-400 font-medium">
+                      {user.roles.length}
+                    </span>
+                    <span className="text-gray-600 dark:text-gray-300 ml-1">Roles</span>
+                  </div>
+                  <div>
+                    <span className="text-blue-600 dark:text-blue-400 font-medium">
+                      {getPermissionCount()}
+                    </span>
+                    <span className="text-gray-600 dark:text-gray-300 ml-1">Permissions</span>
+                  </div>
+                  <div>
+                    <span className="text-blue-600 dark:text-blue-400 font-medium">
+                      {getClusterCount()}
+                    </span>
+                    <span className="text-gray-600 dark:text-gray-300 ml-1">Clusters</span>
+                  </div>
+                  <div>
+                    <span className="text-blue-600 dark:text-blue-400 font-medium">
+                      {user.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                    <span className="text-gray-600 dark:text-gray-300 ml-1">Status</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Sessions Tab */}
+        {activeTab === 'sessions' && (
+          <Card>
+            <div className="p-6 space-y-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Active Sessions & Security
+              </h2>
+
+              {/* Current Session */}
+              <div className="space-y-4">
+                <h3 className="text-md font-medium text-gray-900 dark:text-white">
+                  Current Session
+                </h3>
+                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                          This Session (Current)
+                        </h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Started {new Date().toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        IP: {typeof window !== 'undefined' ? '192.168.1.100' : 'Unknown'}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Browser: {typeof window !== 'undefined' ? navigator.userAgent.split(' ').slice(-1)[0] : 'Unknown'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Recent Sessions */}
+              <div className="space-y-4">
+                <h3 className="text-md font-medium text-gray-900 dark:text-white">
+                  Recent Sessions
+                </h3>
+                <div className="space-y-3">
+                  {/* Mock recent sessions - in real app would come from API */}
+                  {[
+                    { id: '1', ip: '192.168.1.100', device: 'Chrome on Windows', lastActive: '2 hours ago', status: 'expired' },
+                    { id: '2', ip: '10.0.0.50', device: 'Firefox on macOS', lastActive: '1 day ago', status: 'expired' },
+                    { id: '3', ip: '172.16.0.25', device: 'Safari on iPhone', lastActive: '3 days ago', status: 'expired' }
+                  ].map((session) => (
+                    <div
+                      key={session.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-2 h-2 rounded-full ${
+                          session.status === 'active' ? 'bg-green-500' : 'bg-gray-400'
+                        }`}></div>
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                            {session.device}
+                          </h4>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {session.ip} • Last active {session.lastActive}
+                          </p>
+                        </div>
+                      </div>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        session.status === 'active'
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                          : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                      }`}>
+                        {session.status === 'active' ? 'Active' : 'Expired'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Security Actions */}
+              <div className="space-y-4">
+                <h3 className="text-md font-medium text-gray-900 dark:text-white">
+                  Security Actions
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Button
+                    variant="danger"
+                    onClick={() => {
+                      // In real implementation, this would terminate all other sessions
+                      alert('All other sessions have been terminated');
+                    }}
+                  >
+                    Terminate All Other Sessions
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      // In real implementation, this would download session log
+                      alert('Session activity log download started');
+                    }}
+                  >
+                    Download Session Log
+                  </Button>
+                </div>
+              </div>
+
+              {/* Session Settings */}
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
+                <h4 className="text-sm font-medium text-yellow-900 dark:text-yellow-200 mb-2">
+                  Session Settings
+                </h4>
+                <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                  <div className="flex justify-between">
+                    <span>Session timeout:</span>
+                    <span className="font-medium">8 hours</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Maximum concurrent sessions:</span>
+                    <span className="font-medium">3 sessions</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Two-factor authentication:</span>
+                    <span className="font-medium text-green-600 dark:text-green-400">Enabled</span>
+                  </div>
+                </div>
               </div>
             </div>
           </Card>

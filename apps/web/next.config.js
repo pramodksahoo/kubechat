@@ -89,23 +89,97 @@ const nextConfig = {
   // API proxying for Kubernetes service-to-service communication
   async rewrites() {
     // Use environment variable for backend service URL - no hardcoding
-    const apiUrl = process.env.API_URL;
-    
+    const apiUrl = process.env.API_URL || process.env.BACKEND_SERVICE_URL;
+
     if (!apiUrl) {
-      console.warn('API_URL environment variable not set - API proxying will not work');
+      console.warn('API_URL or BACKEND_SERVICE_URL environment variable not set - API proxying will not work');
       return [];
     }
-    
+
     return [
-      // Proxy all API calls to the backend service
+      // WebSocket endpoint (handled by ingress, but included for completeness)
+      {
+        source: '/ws',
+        destination: `${apiUrl}/ws`
+      },
+      // API v1 endpoints
+      {
+        source: '/api/v1/:path*',
+        destination: `${apiUrl}/api/v1/:path*`
+      },
+      // Auth endpoints
+      {
+        source: '/auth/:path*',
+        destination: `${apiUrl}/auth/:path*`
+      },
+      // Audit endpoints
+      {
+        source: '/audit/:path*',
+        destination: `${apiUrl}/audit/:path*`
+      },
+      // Kubernetes endpoints
+      {
+        source: '/kubernetes/:path*',
+        destination: `${apiUrl}/kubernetes/:path*`
+      },
+      // Security endpoints
+      {
+        source: '/security/:path*',
+        destination: `${apiUrl}/security/:path*`
+      },
+      // NLP endpoints
+      {
+        source: '/nlp/:path*',
+        destination: `${apiUrl}/nlp/:path*`
+      },
+      // Database endpoints
+      {
+        source: '/database/:path*',
+        destination: `${apiUrl}/database/:path*`
+      },
+      // Performance endpoints
+      {
+        source: '/performance/:path*',
+        destination: `${apiUrl}/performance/:path*`
+      },
+      // WebSocket endpoints
+      {
+        source: '/websocket/:path*',
+        destination: `${apiUrl}/websocket/:path*`
+      },
+      // Communication endpoints
+      {
+        source: '/communication/:path*',
+        destination: `${apiUrl}/communication/:path*`
+      },
+      // Gateway endpoints
+      {
+        source: '/gateway/:path*',
+        destination: `${apiUrl}/gateway/:path*`
+      },
+      // External API endpoints
+      {
+        source: '/external/:path*',
+        destination: `${apiUrl}/external/:path*`
+      },
+      // General API endpoints (fallback)
       {
         source: '/api/:path*',
         destination: `${apiUrl}/api/:path*`
       },
-      // Health check endpoint
+      // Health check endpoints
+      {
+        source: '/health/:path*',
+        destination: `${apiUrl}/health/:path*`
+      },
       {
         source: '/health',
-        destination: `${apiUrl}/api/health`
+        destination: `${apiUrl}/health`
+      },
+      // Status endpoint
+      {
+        source: '/status',
+        destination: `${apiUrl}/status`
       }
     ];
   }

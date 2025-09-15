@@ -375,12 +375,14 @@ CREATE TABLE cluster_configs (
 8. **Automated upgrade and rollback procedures** documented and tested
 
 #### 🆕 Additional Requirements (Addressing Checklist Gaps)
-9. **Blue-Green Deployment Support** with traffic switching capabilities
-10. **Health Check Integration** with readiness and liveness probes for all services
-11. **Monitoring Integration** with Prometheus metrics and Grafana dashboards
-12. **Backup Automation** with scheduled database backups and retention policies
-13. **Security Scanning** integration with container vulnerability scanning
-14. **Multi-Environment Configuration** with environment-specific settings and secrets
+9. **Health Check Integration** with readiness and liveness probes for all services
+10. **Monitoring Integration** with Prometheus metrics and Grafana dashboards
+11. **Backup Automation** with scheduled database backups and retention policies
+12. **Security Scanning** integration with container vulnerability scanning
+13. **Multi-Environment Configuration** with environment-specific settings and secrets
+
+#### 🔄 Deferred to Epic 6
+- **Blue-Green Deployment Support** with traffic switching capabilities (moved to Epic 6: Multi-LLM Integration Intelligence for advanced deployment strategies)
 
 #### Technical Requirements
 - Production-ready Helm chart with comprehensive configurations

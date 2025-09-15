@@ -1,8 +1,42 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { MainLayout } from '@/components/layout';
+import { ClusterHealthWidget } from '@/components/dashboard';
+import { clusterService, ClusterInfo } from '@/services/clusterService';
 
 export default function ClustersPage() {
+  const [clusters, setClusters] = useState<ClusterInfo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadClusters();
+  }, []);
+
+  const loadClusters = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const clusterData = await clusterService.getClusters();
+      setClusters(clusterData);
+    } catch (error) {
+      console.error('Failed to load clusters:', error);
+      setError('Failed to load cluster data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    await loadClusters();
+  };
+
+  const handleClusterClick = (clusterId: string) => {
+    console.log('Viewing cluster details for:', clusterId);
+    // TODO: Navigate to cluster detail page
+    // router.push(`/clusters/${clusterId}`);
+  };
+
   return (
     <>
       <Head>
@@ -19,17 +53,45 @@ export default function ClustersPage() {
             </p>
           </div>
 
-          <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-            <div className="text-center py-12">
-              <div className="h-16 w-16 mx-auto bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
-                <svg className="h-8 w-8 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7m0 0a3 3 0 01-3 3m0 3h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008zm-3 6h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008z" />
-                </svg>
+          {error && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+                    Unable to load cluster data
+                  </h3>
+                  <div className="mt-2 text-sm text-red-700 dark:text-red-300">
+                    <p>{error}</p>
+                  </div>
+                  <div className="mt-4">
+                    <div className="-mx-2 -my-1.5 flex">
+                      <button
+                        type="button"
+                        onClick={handleRefresh}
+                        className="bg-red-50 dark:bg-red-900/20 px-2 py-1.5 rounded-md text-sm font-medium text-red-800 dark:text-red-200 hover:bg-red-100 dark:hover:bg-red-900/30"
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">Cluster Explorer</h3>
-              <p className="mt-2 text-gray-500 dark:text-gray-400">
-                Detailed cluster management interface coming soon. View cluster details, nodes, pods, and services.
-              </p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 xl:col-span-3">
+              <ClusterHealthWidget
+                clusters={clusters}
+                isLoading={loading}
+                onRefresh={handleRefresh}
+                onClusterClick={handleClusterClick}
+              />
             </div>
           </div>
         </div>

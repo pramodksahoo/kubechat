@@ -570,3 +570,51 @@ export function withCircuitBreaker<T>(
   const circuitBreaker = new CircuitBreaker(operation, config);
   return () => circuitBreaker.execute();
 }
+
+// Error reporting interface for external monitoring systems
+export interface ErrorReport {
+  error: Error;
+  context: {
+    component?: string;
+    errorId?: string;
+    timestamp?: number;
+    userAgent?: string;
+    url?: string;
+    [key: string]: any;
+  };
+}
+
+// Error reporting function for centralized error handling
+export function reportError(error: Error, context: ErrorReport['context'] = {}): void {
+  const report: ErrorReport = {
+    error,
+    context: {
+      timestamp: Date.now(),
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Server',
+      url: typeof window !== 'undefined' ? window.location.href : 'Unknown',
+      errorId: `error-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+      ...context,
+    },
+  };
+
+  // Log to console in development
+  if (process.env.NODE_ENV === 'development') {
+    console.error('Error Report:', report);
+  }
+
+  // In production, this would send to monitoring services like Sentry, DataDog, etc.
+  if (process.env.NODE_ENV === 'production') {
+    // Example: Send to monitoring service
+    // monitoringService.captureError(report);
+    console.error('Production Error:', report.error.message, report.context);
+  }
+
+  // Also report to accessibility tools for screen readers
+  if (context.component && typeof ScreenReaderUtils !== 'undefined') {
+    try {
+      ScreenReaderUtils.announce(`Error in ${context.component}: ${error.message}`, 'assertive');
+    } catch (a11yError) {
+      console.warn('Failed to announce error to screen readers:', a11yError);
+    }
+  }
+}

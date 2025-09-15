@@ -1,37 +1,42 @@
 export interface ChatMessage {
   id: string;
   sessionId: string;
-  userId?: string;
+  userId: string;
   type: 'user' | 'assistant' | 'system';
   content: string;
-  timestamp: Date;
-  metadata?: Record<string, unknown>;
+  timestamp: string;
+  metadata?: {
+    command?: string;
+    safetyLevel?: 'safe' | 'warning' | 'dangerous';
+    executionId?: string;
+    approvalRequired?: boolean;
+  };
 }
 
 export interface ChatSession {
   id: string;
-  title: string;
+  userId: string;
+  title?: string;
   clusterId?: string;
   clusterName?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
+  status: 'active' | 'completed' | 'archived';
   messageCount: number;
-  lastMessage?: string;
+  lastMessage?: ChatMessage;
 }
 
 export interface CommandPreview {
   id: string;
-  sessionId: string;
-  command: string;
-  description: string;
-  risks: string[];
-  safeguards: string[];
-  estimatedImpact: 'low' | 'medium' | 'high';
-  requiresApproval: boolean;
-  approvalRequired: boolean;
+  naturalLanguage: string;
   generatedCommand: string;
-  safetyLevel: 'low' | 'medium' | 'high';
-  createdAt: Date;
+  safetyLevel: 'safe' | 'warning' | 'dangerous';
+  confidence: number;
+  explanation: string;
+  potentialImpact: string[];
+  requiredPermissions: string[];
+  clusterId: string;
+  approvalRequired: boolean;
 }
 
 export interface CommandExecution {
