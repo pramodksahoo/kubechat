@@ -127,8 +127,87 @@ export function CommandPreviewCard({
             </p>
           </div>
 
-          {/* Impact Assessment */}
-          {preview.potentialImpact.length > 0 && (
+          {/* Enhanced Impact Assessment for Dangerous Operations */}
+          {preview.safetyLevel === 'dangerous' && (
+            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/10 border-l-4 border-red-400 rounded-r-lg">
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0">
+                  <svg className="w-6 h-6 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-red-800 dark:text-red-200 font-semibold text-sm mb-2">
+                    ⚠️ DANGEROUS OPERATION - PROCEED WITH EXTREME CAUTION
+                  </h4>
+                  <div className="space-y-3">
+                    {/* Risk Level */}
+                    <div>
+                      <span className="text-red-700 dark:text-red-300 text-sm font-medium">Risk Level: </span>
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-red-600 text-white">
+                        HIGH RISK
+                      </span>
+                    </div>
+
+                    {/* Potential Impact */}
+                    <div>
+                      <span className="text-red-700 dark:text-red-300 text-sm font-medium mb-1 block">
+                        Potential Impact:
+                      </span>
+                      <ul className="space-y-1 ml-4">
+                        {preview.potentialImpact.map((impact, index) => (
+                          <li key={index} className="flex items-start space-x-2 text-sm">
+                            <span className="text-red-500 mt-1.5 w-1.5 h-1.5 bg-current rounded-full flex-shrink-0"></span>
+                            <span className="text-red-700 dark:text-red-300">{impact}</span>
+                          </li>
+                        ))}
+                        <li className="flex items-start space-x-2 text-sm">
+                          <span className="text-red-500 mt-1.5 w-1.5 h-1.5 bg-current rounded-full flex-shrink-0"></span>
+                          <span className="text-red-700 dark:text-red-300">This operation may cause service disruption</span>
+                        </li>
+                        <li className="flex items-start space-x-2 text-sm">
+                          <span className="text-red-500 mt-1.5 w-1.5 h-1.5 bg-current rounded-full flex-shrink-0"></span>
+                          <span className="text-red-700 dark:text-red-300">Recovery may require manual intervention</span>
+                        </li>
+                        <li className="flex items-start space-x-2 text-sm">
+                          <span className="text-red-500 mt-1.5 w-1.5 h-1.5 bg-current rounded-full flex-shrink-0"></span>
+                          <span className="text-red-700 dark:text-red-300">Data loss is possible</span>
+                        </li>
+                      </ul>
+                    </div>
+
+                    {/* Safety Checklist */}
+                    <div>
+                      <span className="text-red-700 dark:text-red-300 text-sm font-medium mb-1 block">
+                        Safety Checklist:
+                      </span>
+                      <ul className="space-y-1 ml-4 text-sm">
+                        <li className="flex items-start space-x-2">
+                          <span className="text-red-500 mt-1">•</span>
+                          <span className="text-red-700 dark:text-red-300">Have you backed up critical data?</span>
+                        </li>
+                        <li className="flex items-start space-x-2">
+                          <span className="text-red-500 mt-1">•</span>
+                          <span className="text-red-700 dark:text-red-300">Are you in a maintenance window?</span>
+                        </li>
+                        <li className="flex items-start space-x-2">
+                          <span className="text-red-500 mt-1">•</span>
+                          <span className="text-red-700 dark:text-red-300">Do you have a rollback plan?</span>
+                        </li>
+                        <li className="flex items-start space-x-2">
+                          <span className="text-red-500 mt-1">•</span>
+                          <span className="text-red-700 dark:text-red-300">Have you notified relevant stakeholders?</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Standard Impact Assessment */}
+          {preview.safetyLevel !== 'dangerous' && preview.potentialImpact.length > 0 && (
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Potential Impact:
@@ -164,35 +243,101 @@ export function CommandPreviewCard({
           )}
 
           {/* Action Buttons */}
-          <div className="flex space-x-3">
-            <Button
-              onClick={onApprove}
-              variant="primary"
-              className="flex-1"
-              disabled={preview.safetyLevel === 'dangerous' && preview.approvalRequired}
-            >
-              <div className="flex items-center justify-center space-x-2">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>
-                  {preview.approvalRequired ? 'Request Approval' : 'Execute Command'}
-                </span>
-              </div>
-            </Button>
+          <div className="space-y-3">
+            {/* Dangerous Operation Approval Flow */}
+            {preview.safetyLevel === 'dangerous' && (
+              <div className="p-3 bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800 rounded-lg">
+                <div className="flex items-start space-x-2 mb-3">
+                  <svg className="w-5 h-5 text-orange-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                  </svg>
+                  <div>
+                    <h5 className="text-orange-800 dark:text-orange-200 font-medium text-sm">
+                      Multi-Step Approval Required
+                    </h5>
+                    <p className="text-orange-700 dark:text-orange-300 text-xs mt-1">
+                      This dangerous operation requires additional confirmation steps
+                    </p>
+                  </div>
+                </div>
 
-            <Button
-              onClick={() => setShowRejectModal(true)}
-              variant="secondary"
-              className="flex-1"
-            >
-              <div className="flex items-center justify-center space-x-2">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                <span>Cancel</span>
+                <div className="space-y-2 text-xs">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs font-bold">1</div>
+                    <span className="text-orange-700 dark:text-orange-300">Senior admin approval</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs font-bold">2</div>
+                    <span className="text-orange-700 dark:text-orange-300">Impact assessment review</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs font-bold">3</div>
+                    <span className="text-orange-700 dark:text-orange-300">Final execution approval</span>
+                  </div>
+                </div>
               </div>
-            </Button>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex space-x-3">
+              {preview.safetyLevel === 'dangerous' ? (
+                <Button
+                  onClick={onApprove}
+                  variant="danger"
+                  className="flex-1"
+                >
+                  <div className="flex items-center justify-center space-x-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.99-.833-2.76 0L3.054 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <span>Request Approval for Dangerous Operation</span>
+                  </div>
+                </Button>
+              ) : preview.safetyLevel === 'warning' ? (
+                <Button
+                  onClick={onApprove}
+                  variant="warning"
+                  className="flex-1"
+                >
+                  <div className="flex items-center justify-center space-x-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.99-.833-2.76 0L3.054 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <span>
+                      {preview.approvalRequired ? 'Request Approval' : 'Execute with Caution'}
+                    </span>
+                  </div>
+                </Button>
+              ) : (
+                <Button
+                  onClick={onApprove}
+                  variant="primary"
+                  className="flex-1"
+                >
+                  <div className="flex items-center justify-center space-x-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>
+                      {preview.approvalRequired ? 'Request Approval' : 'Execute Command'}
+                    </span>
+                  </div>
+                </Button>
+              )}
+
+              <Button
+                onClick={() => setShowRejectModal(true)}
+                variant="secondary"
+                className="flex-1"
+              >
+                <div className="flex items-center justify-center space-x-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  <span>Cancel</span>
+                </div>
+              </Button>
+            </div>
           </div>
         </div>
       </Card>

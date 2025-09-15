@@ -5,7 +5,7 @@ export interface BaseComponentProps {
 }
 
 export interface ButtonProps extends BaseComponentProps {
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'danger' | 'warning' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;
   loading?: boolean;
@@ -25,7 +25,7 @@ export interface InputProps extends BaseComponentProps {
   placeholder?: string;
   value?: string;
   onChange?: (value: string) => void;
-  type?: 'text' | 'password' | 'email' | 'search';
+  type?: 'text' | 'password' | 'email' | 'search' | 'datetime-local' | 'date' | 'time' | 'number' | 'tel' | 'url';
   error?: string;
   disabled?: boolean;
   required?: boolean;

@@ -126,7 +126,7 @@ kubectl wait --for=condition=ready pod -l app.kubernetes.io/instance=kubechat-de
 make dev-logs
 
 # 6. Test changes
-curl http://localhost:30080/health  # API health check
+curl http://localhost:30080/ # API health check
 curl http://localhost:30001         # Frontend check
 ```
 

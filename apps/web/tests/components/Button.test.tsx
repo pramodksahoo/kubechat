@@ -1,6 +1,5 @@
 // KubeChat Button Component Tests
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
 import { Button } from '@kubechat/ui';
 
 describe('Button Component', () => {
@@ -21,9 +20,9 @@ describe('Button Component', () => {
   });
 
   it('handles click events', () => {
-    const handleClick = vi.fn();
+    const handleClick = jest.fn();
     render(<Button onClick={handleClick}>Click me</Button>);
-    
+
     fireEvent.click(screen.getByRole('button'));
     expect(handleClick).toHaveBeenCalledTimes(1);
   });

@@ -91,3 +91,154 @@ export interface AuditSummary {
     successRate: number;
   }[];
 }
+
+// Enhanced types for Story 1.8 implementation
+
+export type ExportFormat = 'csv' | 'json' | 'pdf';
+
+export type ComplianceFramework = 'sox' | 'hipaa' | 'soc2';
+
+export interface AuditEvent {
+  id: string;
+  timestamp: string;
+  userId?: string;
+  eventType: string;
+  severity: string;
+  metadata: Record<string, any>;
+}
+
+export interface TamperAlert {
+  id: string;
+  detectedAt: string;
+  affectedLogId: string;
+  violationType: string;
+  description: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+}
+
+export interface SuspiciousActivity {
+  id: string;
+  type: string;
+  description: string;
+  userId?: string;
+  detectedAt: string;
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
+  metadata: Record<string, any>;
+}
+
+export interface ChainIntegrityResult {
+  isValid: boolean;
+  totalChecked: number;
+  violations?: string[];
+  lastValidated: string;
+  integrityScore: number;
+}
+
+export interface LegalHold {
+  id: string;
+  caseNumber: string;
+  description: string;
+  createdBy: string;
+  createdAt: string;
+  startTime: string;
+  endTime?: string;
+  status: 'active' | 'released' | 'expired';
+  recordCount: number;
+}
+
+export interface LegalHoldRequest {
+  caseNumber: string;
+  description: string;
+  startTime: string;
+  endTime?: string;
+}
+
+export interface ComplianceReport {
+  id: string;
+  framework: ComplianceFramework;
+  generatedAt: string;
+  periodStart: string;
+  periodEnd: string;
+  complianceScore: number;
+  totalEvents: number;
+  violations: ComplianceViolation[];
+  recommendations: string[];
+  executiveSummary: string;
+  detailedFindings: Record<string, any>;
+}
+
+export interface ComplianceViolation {
+  id: string;
+  type: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  description: string;
+  affectedLogIds: string[];
+  detectedAt: string;
+}
+
+export interface SuspiciousActivity {
+  id: string;
+  detectedAt: string;
+  activityType: string;
+  userId?: string;
+  description: string;
+  riskScore: number;
+  affectedRecords: string[];
+  patternMatched: string;
+}
+
+export interface RetentionPolicy {
+  id: string;
+  name: string;
+  retentionDays: number;
+  appliesTo: string;
+  createdAt: string;
+  lastApplied?: string;
+  automatic: boolean;
+}
+
+export interface ArchivalResult {
+  archiveId: string;
+  archivedCount: number;
+  archiveSize: number;
+  startDate: string;
+  endDate: string;
+  storageLocation: string;
+  createdAt: string;
+}
+
+export interface AuditMetrics {
+  totalLogsCreated: number;
+  totalDangerousOps: number;
+  totalFailedOps: number;
+  averageResponseTime: number;
+  successRate: number;
+  integrityChecksPassed: number;
+  integrityChecksFailed: number;
+  lastIntegrityCheck?: string;
+  queueSize: number;
+  processedCount: number;
+  errorCount: number;
+  activeMonitoringSessions: number;
+  tamperAlertsTriggered: number;
+  activeLegalHolds: number;
+  complianceScore: number;
+}
+
+export interface ExportRequest {
+  format: ExportFormat;
+  filter: AuditFilter;
+}
+
+export interface ComplianceReportRequest {
+  framework: ComplianceFramework;
+  startTime: string;
+  endTime: string;
+}
+
+export interface RealTimeMonitoringStatus {
+  isActive: boolean;
+  connectedSessions: number;
+  eventsPerSecond: number;
+  lastEventAt?: string;
+}

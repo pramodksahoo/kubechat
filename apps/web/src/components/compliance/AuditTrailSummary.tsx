@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
 import { formatDistanceToNow, format } from 'date-fns';
+import { useRealTimeUpdates, useSystemNotifications } from '../../services/realTimeService';
 
 interface AuditTrailSummaryProps {
   auditEntries: AuditLogEntry[];
@@ -33,10 +34,29 @@ export function AuditTrailSummary({
   const [showEntryDetails, setShowEntryDetails] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<AuditLogEntry | null>(null);
   const [timeRange, setTimeRange] = useState<'1h' | '24h' | '7d' | '30d' | 'custom'>('7d');
+  const [realtimeEntries, setRealtimeEntries] = useState<AuditLogEntry[]>(auditEntries);
+
+  // Real-time updates
+  const { lastUpdate, isConnected } = useRealTimeUpdates(['audit', 'system']);
+  const { notifications } = useSystemNotifications();
 
   useEffect(() => {
     onLoadAuditData(filters);
   }, [filters, onLoadAuditData]);
+
+  // Update entries from props
+  useEffect(() => {
+    setRealtimeEntries(auditEntries);
+  }, [auditEntries]);
+
+  // Handle real-time updates
+  useEffect(() => {
+    if (lastUpdate && lastUpdate.type === 'audit') {
+      if (lastUpdate.action === 'create' && lastUpdate.data) {
+        setRealtimeEntries(prev => [lastUpdate.data, ...prev.slice(0, 49)]);
+      }
+    }
+  }, [lastUpdate]);
 
   const updateTimeRange = (range: '1h' | '24h' | '7d' | '30d' | 'custom') => {
     setTimeRange(range);
@@ -152,6 +172,25 @@ export function AuditTrailSummary({
 
   return (
     <div className={`space-y-6 ${className}`}>
+      {/* Real-time Audit Notifications */}
+      {notifications.length > 0 && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <span className="text-blue-500 text-xl">📋</span>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                Audit Activity
+              </h3>
+              <div className="mt-1 text-sm text-blue-700 dark:text-blue-300">
+                {notifications.filter(n => n.category === 'audit').length} new audit events
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="p-4">
@@ -268,7 +307,15 @@ export function AuditTrailSummary({
 
         <div className="flex items-center space-x-2">
           <span className="text-sm text-gray-600 dark:text-gray-400">
-            {auditEntries.length} entries shown
+            {realtimeEntries.length} entries shown
+            <div className={`flex items-center space-x-1 ml-2 ${
+              isConnected ? 'text-emerald-600' : 'text-amber-600'
+            }`}>
+              <div className={`h-1.5 w-1.5 rounded-full ${
+                isConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500 animate-bounce'
+              }`} />
+              <span className="text-xs">{isConnected ? 'Live' : 'Sync...'}</span>
+            </div>
           </span>
           
           <Button
@@ -479,7 +526,7 @@ export function AuditTrailSummary({
           </h3>
 
           <div className="space-y-3">
-            {auditEntries.slice(0, 20).map((entry) => (
+            {realtimeEntries.slice(0, 20).map((entry) => (
               <div
                 key={entry.id}
                 className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
@@ -533,7 +580,7 @@ export function AuditTrailSummary({
             ))}
           </div>
 
-          {auditEntries.length === 0 && (
+          {realtimeEntries.length === 0 && (
             <div className="text-center py-8">
               <div className="text-gray-500 dark:text-gray-400">
                 <span className="text-4xl mb-4 block">🔍</span>

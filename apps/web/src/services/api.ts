@@ -3,12 +3,12 @@
 
 import { withRetry, withCircuitBreaker } from '../lib/resilience';
 
-// API Configuration
+// API Configuration - Using environment variables for Kubernetes-native configuration
 const API_CONFIG = {
-  baseURL: '', // Use relative URLs for Kubernetes service communication
-  timeout: 30000,
-  retries: 3,
-  retryDelay: 1000,
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || '', // Empty for relative URLs in K8s
+  timeout: parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || '30000'),
+  retries: parseInt(process.env.NEXT_PUBLIC_API_RETRIES || '3'),
+  retryDelay: parseInt(process.env.NEXT_PUBLIC_API_RETRY_DELAY || '1000'),
 } as const;
 
 // API Response Types
@@ -131,21 +131,33 @@ export const httpClient = new HttpClient();
 // Health Check API
 export const healthApi = {
   check: () => httpClient.get<{ status: string; timestamp: number }>('/health'),
+  live: () => httpClient.get<{ status: string }>('/health/live'),
+  status: () => httpClient.get('/status'),
 };
 
-// Authentication API
+// Authentication API - Updated to match backend endpoints
 export const authApi = {
   login: (credentials: { username: string; password: string }) =>
-    httpClient.post<{ user: unknown; token: string }>('/api/auth/login', credentials),
-  
-  logout: () => httpClient.post('/api/auth/logout'),
-  
-  me: () => httpClient.get<{ id: string; username: string; email: string; role: string }>('/api/auth/me'),
-  
-  refresh: () => httpClient.post<{ token: string }>('/api/auth/refresh'),
+    httpClient.post<{ user: unknown; token: string }>('/auth/login', credentials),
+
+  logout: () => httpClient.post('/auth/logout'),
+
+  register: (userData: { username: string; email: string; password: string }) =>
+    httpClient.post('/auth/register', userData),
+
+  me: () => httpClient.get<{ id: string; username: string; email: string; role: string }>('/auth/me'),
+
+  profile: () => httpClient.get('/auth/profile'),
+
+  refresh: () => httpClient.post<{ token: string }>('/auth/refresh'),
+
+  // Admin user management
+  getUsers: () => httpClient.get('/auth/admin/users'),
+
+  getUser: (id: string) => httpClient.get(`/auth/admin/users/${id}`),
 };
 
-// Commands API
+// Commands API - Updated to match backend endpoints
 export const commandsApi = {
   execute: (command: { command: string; cluster?: string }) =>
     httpClient.post<{
@@ -155,7 +167,7 @@ export const commandsApi = {
       output: string;
       exitCode: number | null;
       executedAt: number;
-    }>('/api/commands/execute', command),
+    }>('/api/v1/commands/execute', command),
 
   getExecution: (id: string) =>
     httpClient.get<{
@@ -166,78 +178,137 @@ export const commandsApi = {
       exitCode: number | null;
       executedAt: number;
       completedAt?: number;
-    }>(`/api/commands/${id}`),
+    }>(`/api/v1/commands/executions/${id}`),
 
   listExecutions: (params?: { page?: number; limit?: number; status?: string }) => {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
     if (params?.limit) searchParams.set('limit', params.limit.toString());
     if (params?.status) searchParams.set('status', params.status);
-    
+
     const query = searchParams.toString();
     return httpClient.get<{
       executions: unknown[];
       pagination: { page: number; limit: number; total: number; pages: number };
-    }>(`/api/commands/executions${query ? `?${query}` : ''}`);
+    }>(`/api/v1/commands/executions${query ? `?${query}` : ''}`);
   },
 
-  approve: (id: string) =>
-    httpClient.post(`/api/commands/${id}/approve`),
+  // Command approval endpoints
+  getPendingApprovals: () =>
+    httpClient.get('/api/v1/commands/approvals/pending'),
 
-  reject: (id: string, reason?: string) =>
-    httpClient.post(`/api/commands/${id}/reject`, { reason }),
+  approve: (approvalData: unknown) =>
+    httpClient.post('/api/v1/commands/approve', approvalData),
+
+  // Command stats and health
+  getStats: () => httpClient.get('/api/v1/commands/stats'),
+
+  getHealth: () => httpClient.get('/api/v1/commands/health'),
+
+  // Rollback operations
+  createRollbackPlan: (executionId: string) =>
+    httpClient.post(`/api/v1/commands/executions/${executionId}/rollback/plan`),
+
+  validateRollback: (executionId: string) =>
+    httpClient.get(`/api/v1/commands/executions/${executionId}/rollback/validate`),
+
+  executeRollback: (planId: string) =>
+    httpClient.post(`/api/v1/rollback/plans/${planId}/execute`),
+
+  getRollbackStatus: (rollbackId: string) =>
+    httpClient.get(`/api/v1/rollback/executions/${rollbackId}/status`),
 };
 
-// Clusters API
+// Kubernetes/Clusters API - Updated to match backend endpoints
 export const clustersApi = {
-  list: () =>
-    httpClient.get<{
-      clusters: Array<{
-        id: string;
-        name: string;
-        status: string;
-        version: string;
-        nodes: number;
-        pods: number;
-      }>;
-    }>('/api/kubernetes/clusters'),
+  // Cluster information
+  getCluster: () => httpClient.get('/kubernetes/cluster'),
 
-  getNamespaces: (clusterId?: string) => {
-    const params = clusterId ? `?cluster=${clusterId}` : '';
-    return httpClient.get<{ namespaces: string[] }>(`/api/kubernetes/namespaces${params}`);
-  },
+  getHealth: () => httpClient.get('/kubernetes/health'),
 
-  getResources: (type: string, namespace?: string) => {
-    const params = new URLSearchParams();
-    if (namespace) params.set('namespace', namespace);
-    const query = params.toString();
-    return httpClient.get(`/api/kubernetes/resources/${type}${query ? `?${query}` : ''}`);
-  },
+  validate: (data: unknown) => httpClient.post('/kubernetes/validate', data),
+
+  // Namespace operations
+  getNamespaces: () => httpClient.get('/kubernetes/namespaces'),
+
+  // Pod operations
+  getPods: (namespace: string) =>
+    httpClient.get(`/kubernetes/namespaces/${namespace}/pods`),
+
+  getPod: (namespace: string, name: string) =>
+    httpClient.get(`/kubernetes/namespaces/${namespace}/pods/${name}`),
+
+  deletePod: (namespace: string, name: string) =>
+    httpClient.delete(`/kubernetes/namespaces/${namespace}/pods/${name}`),
+
+  getPodLogs: (namespace: string, name: string) =>
+    httpClient.get(`/kubernetes/namespaces/${namespace}/pods/${name}/logs`),
+
+  // Deployment operations
+  getDeployments: (namespace: string) =>
+    httpClient.get(`/kubernetes/namespaces/${namespace}/deployments`),
+
+  getDeployment: (namespace: string, name: string) =>
+    httpClient.get(`/kubernetes/namespaces/${namespace}/deployments/${name}`),
+
+  restartDeployment: (namespace: string, name: string) =>
+    httpClient.post(`/kubernetes/namespaces/${namespace}/deployments/${name}/restart`),
+
+  scaleDeployment: (namespace: string, name: string, replicas: number) =>
+    httpClient.put(`/kubernetes/namespaces/${namespace}/deployments/${name}/scale`, { replicas }),
+
+  // Service operations
+  getServices: (namespace: string) =>
+    httpClient.get(`/kubernetes/namespaces/${namespace}/services`),
+
+  getService: (namespace: string, name: string) =>
+    httpClient.get(`/kubernetes/namespaces/${namespace}/services/${name}`),
+
+  // ConfigMap operations
+  getConfigMaps: (namespace: string) =>
+    httpClient.get(`/kubernetes/namespaces/${namespace}/configmaps`),
+
+  getConfigMap: (namespace: string, name: string) =>
+    httpClient.get(`/kubernetes/namespaces/${namespace}/configmaps/${name}`),
+
+  // Secret operations
+  getSecrets: (namespace: string) =>
+    httpClient.get(`/kubernetes/namespaces/${namespace}/secrets`),
 };
 
-// Audit API
+// Audit API - Updated to match backend endpoints
 export const auditApi = {
-  getEvents: (params?: { page?: number; limit?: number; startTime?: string; endTime?: string }) => {
+  // Audit logs
+  getLogs: (params?: { page?: number; limit?: number; startTime?: string; endTime?: string }) => {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
     if (params?.limit) searchParams.set('limit', params.limit.toString());
     if (params?.startTime) searchParams.set('startTime', params.startTime);
     if (params?.endTime) searchParams.set('endTime', params.endTime);
-    
+
     const query = searchParams.toString();
-    return httpClient.get<{
-      events: Array<{
-        id: string;
-        timestamp: number;
-        user: string;
-        action: string;
-        resource: string;
-        status: string;
-        ip: string;
-      }>;
-      pagination: { page: number; limit: number; total: number; pages: number };
-    }>(`/api/audit/events${query ? `?${query}` : ''}`);
+    return httpClient.get(`/audit/logs${query ? `?${query}` : ''}`);
   },
+
+  createLog: (logData: unknown) => httpClient.post('/audit/logs', logData),
+
+  getLog: (id: string) => httpClient.get(`/audit/logs/${id}`),
+
+  // Audit metrics and summaries
+  getMetrics: () => httpClient.get('/audit/metrics'),
+
+  getSummary: () => httpClient.get('/audit/summary'),
+
+  // Specialized audit queries
+  getDangerousCommands: () => httpClient.get('/audit/dangerous'),
+
+  getFailedCommands: () => httpClient.get('/audit/failed'),
+
+  // Audit system health
+  getHealth: () => httpClient.get('/audit/health'),
+
+  // Integrity verification
+  verifyIntegrity: () => httpClient.post('/audit/verify-integrity'),
 };
 
 // WebSocket Service for real-time updates
@@ -250,11 +321,11 @@ export class WebSocketService {
   private isManualClose = false;
 
   connect(onMessage?: (data: unknown) => void, onError?: (error: Event) => void) {
-    // In Kubernetes, WebSocket connections go directly to the backend service via ingress
+    // In Kubernetes, WebSocket connections use relative URLs resolved by ingress
     // The ingress controller handles WebSocket upgrades to the backend service
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/api/v1/commands/ws`;
-    
+    const wsUrl = `${protocol}//${window.location.host}/ws`; // Match backend /ws endpoint
+
     this.ws = new WebSocket(wsUrl);
     this.isManualClose = false;
 
@@ -325,6 +396,153 @@ export class WebSocketService {
 // Singleton WebSocket service instance
 export const webSocketService = new WebSocketService();
 
+// Security API
+export const securityApi = {
+  getAlerts: () => httpClient.get('/security/alerts'),
+
+  getEvents: () => httpClient.get('/security/events'),
+
+  createEvent: (eventData: unknown) => httpClient.post('/security/events', eventData),
+
+  analyzeRequest: (requestData: unknown) => httpClient.post('/security/analyze-request', requestData),
+
+  generateToken: (tokenData: unknown) => httpClient.post('/security/generate-token', tokenData),
+
+  hashPassword: (password: string) => httpClient.post('/security/hash-password', { password }),
+
+  validatePassword: (passwordData: unknown) => httpClient.post('/security/validate-password', passwordData),
+
+  validateHeaders: (headers: unknown) => httpClient.post('/security/validate-headers', headers),
+
+  scan: (scanData: unknown) => httpClient.post('/security/scan', scanData),
+
+  getRateLimit: (identifier: string) => httpClient.get(`/security/rate-limit/${identifier}`),
+
+  checkRateLimit: (identifier: string, data: unknown) =>
+    httpClient.post(`/security/rate-limit/${identifier}/check`, data),
+
+  deleteRateLimit: (identifier: string) => httpClient.delete(`/security/rate-limit/${identifier}`),
+
+  cleanupSessions: () => httpClient.delete('/security/sessions/cleanup'),
+
+  getHealth: () => httpClient.get('/security/health'),
+};
+
+// NLP API
+export const nlpApi = {
+  process: (text: string, options?: Record<string, unknown>) =>
+    httpClient.post('/nlp/process', { text, ...(options || {}) }),
+
+  classify: (text: string) => httpClient.post('/nlp/classify', { text }),
+
+  validate: (data: unknown) => httpClient.post('/nlp/validate', data),
+
+  getProviders: () => httpClient.get('/nlp/providers'),
+
+  getMetrics: () => httpClient.get('/nlp/metrics'),
+
+  getHealth: () => httpClient.get('/nlp/health'),
+};
+
+// Database API
+export const databaseApi = {
+  getHealth: () => httpClient.get('/database/health'),
+
+  getMetrics: () => httpClient.get('/database/metrics'),
+
+  // Cluster management
+  getClusters: () => httpClient.get('/database/clusters'),
+
+  createCluster: (clusterData: unknown) => httpClient.post('/database/clusters', clusterData),
+
+  getCluster: (clusterId: string) => httpClient.get(`/database/clusters/${clusterId}`),
+
+  getClusterHealth: (clusterId: string) => httpClient.get(`/database/clusters/${clusterId}/health`),
+
+  triggerFailover: (clusterId: string) => httpClient.post(`/database/clusters/${clusterId}/failover`),
+
+  getFailoverStatus: (clusterId: string) => httpClient.get(`/database/clusters/${clusterId}/failover-status`),
+
+  // Connection management
+  getReadConnection: (clusterId: string) => httpClient.get(`/database/clusters/${clusterId}/connection/read`),
+
+  getWriteConnection: (clusterId: string) => httpClient.get(`/database/clusters/${clusterId}/connection/write`),
+
+  // Backup operations
+  createBackup: (backupData: unknown) => httpClient.post('/database/backups', backupData),
+
+  getBackup: (backupId: string) => httpClient.get(`/database/backups/${backupId}`),
+
+  restoreBackup: (backupId: string) => httpClient.post(`/database/backups/${backupId}/restore`),
+
+  // Migration management
+  getMigrations: () => httpClient.get('/database/migrations'),
+
+  runMigration: (migrationData: unknown) => httpClient.post('/database/migrations', migrationData),
+
+  // Pool management
+  getPools: () => httpClient.get('/database/pools'),
+
+  createPool: (poolData: unknown) => httpClient.post('/database/pools', poolData),
+
+  getPool: (poolId: string) => httpClient.get(`/database/pools/${poolId}`),
+
+  deletePool: (poolId: string) => httpClient.delete(`/database/pools/${poolId}`),
+
+  getPoolStats: (poolId: string) => httpClient.get(`/database/pools/${poolId}/stats`),
+
+  queryPool: (poolId: string, query: unknown) => httpClient.post(`/database/pools/${poolId}/query`, query),
+
+  startTransaction: (poolId: string, transactionData: unknown) =>
+    httpClient.post(`/database/pools/${poolId}/transaction`, transactionData),
+};
+
+// Performance API
+export const performanceApi = {
+  getHealth: () => httpClient.get('/performance/health'),
+
+  getMetrics: () => httpClient.get('/performance/metrics'),
+
+  // Cache operations
+  getCache: (key: string) => httpClient.get(`/performance/cache/${key}`),
+
+  setCache: (key: string, value: unknown) => httpClient.post(`/performance/cache/${key}`, value),
+
+  deleteCache: (key: string) => httpClient.delete(`/performance/cache/${key}`),
+
+  getCacheStats: () => httpClient.get('/performance/cache/stats'),
+};
+
+// WebSocket API
+export const webSocketApi = {
+  getHealth: () => httpClient.get('/websocket/health'),
+
+  getMetrics: () => httpClient.get('/websocket/metrics'),
+
+  getClients: () => httpClient.get('/websocket/clients'),
+
+  getClientCount: () => httpClient.get('/websocket/clients/count'),
+
+  deleteClient: (id: string) => httpClient.delete(`/websocket/clients/${id}`),
+
+  getClientSubscriptions: (id: string) => httpClient.get(`/websocket/clients/${id}/subscriptions`),
+
+  getTopicSubscriptions: (topic: string) => httpClient.get(`/websocket/subscriptions/${topic}`),
+
+  broadcast: (message: unknown) => httpClient.post('/websocket/broadcast', message),
+
+  broadcastToTopic: (topic: string, message: unknown) =>
+    httpClient.post('/websocket/broadcast/topics', { topic, message }),
+
+  broadcastToUser: (userId: string, message: unknown) =>
+    httpClient.post(`/websocket/broadcast/user/${userId}`, message),
+
+  notifySystem: (notification: unknown) => httpClient.post('/websocket/notify/system', notification),
+
+  notifyUser: (userId: string, notification: unknown) =>
+    httpClient.post(`/websocket/notify/user/${userId}`, notification),
+};
+
 // Combined API object for easy importing
 export const api = {
   health: healthApi,
@@ -332,5 +550,10 @@ export const api = {
   commands: commandsApi,
   clusters: clustersApi,
   audit: auditApi,
+  security: securityApi,
+  nlp: nlpApi,
+  database: databaseApi,
+  performance: performanceApi,
+  websocket: webSocketApi,
   ws: webSocketService,
 };

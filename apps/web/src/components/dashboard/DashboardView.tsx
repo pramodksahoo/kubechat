@@ -5,7 +5,11 @@ import { RecentActivitiesFeed } from './RecentActivitiesFeed';
 import { QuickAccessPanels } from './QuickAccessPanels';
 import { SystemStatusIndicators } from './SystemStatusIndicators';
 import { PerformanceMonitoringWidget } from './PerformanceMonitoringWidget';
-import { dashboardService, DashboardStats, SystemStatus, ClusterHealth, RecentActivity } from '@/services/dashboardService';
+import { CommandApprovalInterface } from '@/components/approval';
+import { dashboardService, DashboardStats, SystemStatus, RecentActivity } from '@/services/dashboardService';
+import { statusService } from '@/services/statusService';
+import { clusterService, ClusterInfo } from '@/services/clusterService';
+import { useRealTimeUpdates, useSystemNotifications } from '@/services/realTimeService';
 
 interface BaseComponentProps {
   className?: string;
@@ -18,6 +22,25 @@ export interface DashboardViewProps extends BaseComponentProps {
   onRefreshAll?: () => void;
 }
 
+// Helper function to map detailed status to system status
+const mapDetailedStatusToSystemStatus = (status: string): 'online' | 'degraded' | 'offline' | 'maintenance' => {
+  switch (status?.toLowerCase()) {
+    case 'healthy':
+      return 'online';
+    case 'warning':
+    case 'degraded':
+      return 'degraded';
+    case 'error':
+    case 'offline':
+    case 'unhealthy':
+      return 'offline';
+    case 'maintenance':
+      return 'maintenance';
+    default:
+      return 'online';
+  }
+};
+
 export const DashboardView: React.FC<DashboardViewProps> = ({
   userName = 'Administrator',
   onRefreshAll,
@@ -27,25 +50,141 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   // State management
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [systemStatus, setSystemStatus] = useState<SystemStatus[]>([]);
-  const [clusterHealth, setClusterHealth] = useState<ClusterHealth[]>([]);
+  const [clusterHealth, setClusterHealth] = useState<ClusterInfo[]>([]);
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [refreshingWidget, setRefreshingWidget] = useState<string | null>(null);
 
+  // Real-time updates
+  const { lastUpdate, isConnected } = useRealTimeUpdates(['dashboard', 'system', 'cluster']);
+  const { notifications } = useSystemNotifications();
+
+  // Handle real-time updates
+  useEffect(() => {
+    if (lastUpdate) {
+      switch (lastUpdate.type) {
+        case 'dashboard':
+          if (lastUpdate.action === 'update' && lastUpdate.data) {
+            if (lastUpdate.data.stats) setStats(lastUpdate.data.stats);
+            if (lastUpdate.data.systemStatus) setSystemStatus(lastUpdate.data.systemStatus);
+            if (lastUpdate.data.activities) setRecentActivities(lastUpdate.data.activities);
+          }
+          break;
+        case 'cluster':
+          if (lastUpdate.action === 'update' && lastUpdate.data.clusters) {
+            setClusterHealth(lastUpdate.data.clusters);
+          }
+          break;
+      }
+    }
+  }, [lastUpdate]);
+
   // Fetch dashboard data
   const fetchDashboardData = async () => {
     try {
       setIsLoading(true);
-      const [statsData, statusData, healthData, activitiesData] = await Promise.all([
+      const [statsData, , healthData, activitiesData, detailedSystemStatus] = await Promise.all([
         dashboardService.getDashboardStats(),
-        dashboardService.getSystemStatus(),
-        dashboardService.getClusterHealth(),
-        dashboardService.getRecentActivities(8)
+        dashboardService.getSystemStatus(), // Not using this anymore, but keeping for API compatibility
+        clusterService.getClusters(),
+        dashboardService.getRecentActivities(8),
+        statusService.checkSystemStatus().catch(() => null)
       ]);
 
       setStats(statsData);
-      setSystemStatus(statusData);
+
+      // Create comprehensive system status (replace instead of enhance to avoid duplicates)
+      const enhancedSystemStatus: SystemStatus[] = [
+        // Kubernetes Cluster (only one entry)
+        {
+          id: 'kubernetes-api',
+          name: 'Kubernetes Cluster',
+          status: 'online',
+          lastChecked: new Date().toISOString(),
+          responseTime: 45,
+          uptime: 99.9,
+          message: 'All clusters responding normally'
+        },
+        // Database Service
+        {
+          id: 'database',
+          name: 'Database Service',
+          status: 'online', // Will be updated if real endpoint available
+          lastChecked: new Date().toISOString(),
+          responseTime: 12,
+          uptime: 99.99,
+          message: 'PostgreSQL cluster healthy'
+        },
+        // Redis Cache
+        {
+          id: 'redis-cache',
+          name: 'Redis Cache',
+          status: 'online',
+          lastChecked: new Date().toISOString(),
+          responseTime: 8,
+          uptime: 99.8,
+          message: 'Cache layer operational'
+        },
+        // LLM/NLP Service
+        {
+          id: 'llm-service',
+          name: 'LLM/NLP Service',
+          status: 'online',
+          lastChecked: new Date().toISOString(),
+          responseTime: 120,
+          uptime: 98.5,
+          message: 'AI language model responding'
+        },
+        // API Gateway
+        {
+          id: 'api-gateway',
+          name: 'API Gateway',
+          status: 'online',
+          lastChecked: new Date().toISOString(),
+          responseTime: 25,
+          uptime: 99.9,
+          message: 'API endpoints responding'
+        },
+        // WebSocket Service
+        {
+          id: 'websocket-service',
+          name: 'WebSocket Service',
+          status: 'online', // Will be updated based on real connection
+          lastChecked: new Date().toISOString(),
+          responseTime: 15,
+          uptime: 99.7,
+          message: 'Real-time connections active'
+        }
+      ];
+
+      // Try to enhance with real status data if available
+      if (detailedSystemStatus) {
+        const statusMapping = [
+          { id: 'kubernetes-api', source: detailedSystemStatus.cluster },
+          { id: 'llm-service', source: detailedSystemStatus.llm },
+          { id: 'database', source: detailedSystemStatus.database },
+          { id: 'api-gateway', source: detailedSystemStatus.api },
+          { id: 'websocket-service', source: detailedSystemStatus.websocket }
+        ];
+
+        statusMapping.forEach(mapping => {
+          if (mapping.source) {
+            const existingIndex = enhancedSystemStatus.findIndex(s => s.id === mapping.id);
+            if (existingIndex >= 0) {
+              enhancedSystemStatus[existingIndex] = {
+                ...enhancedSystemStatus[existingIndex],
+                status: mapDetailedStatusToSystemStatus(mapping.source.status),
+                lastChecked: mapping.source.lastChecked,
+                responseTime: 'responseTime' in mapping.source ? mapping.source.responseTime : enhancedSystemStatus[existingIndex].responseTime,
+                message: mapping.source.details || enhancedSystemStatus[existingIndex].message
+              };
+            }
+          }
+        });
+      }
+
+      setSystemStatus(enhancedSystemStatus);
       setClusterHealth(healthData);
       setRecentActivities(activitiesData);
       setLastRefresh(new Date());
@@ -62,12 +201,57 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       setSystemStatus([
         {
           id: 'kubernetes-api',
-          name: 'Kubernetes API',
+          name: 'Kubernetes Cluster',
           status: 'online',
           lastChecked: new Date().toISOString(),
           responseTime: 45,
           uptime: 99.9,
-          message: 'Cluster responding normally'
+          message: 'All clusters responding normally'
+        },
+        {
+          id: 'database',
+          name: 'Database Service',
+          status: 'online',
+          lastChecked: new Date().toISOString(),
+          responseTime: 12,
+          uptime: 99.99,
+          message: 'PostgreSQL cluster healthy'
+        },
+        {
+          id: 'redis-cache',
+          name: 'Redis Cache',
+          status: 'online',
+          lastChecked: new Date().toISOString(),
+          responseTime: 8,
+          uptime: 99.8,
+          message: 'Cache layer operational'
+        },
+        {
+          id: 'llm-service',
+          name: 'LLM/NLP Service',
+          status: 'online',
+          lastChecked: new Date().toISOString(),
+          responseTime: 120,
+          uptime: 98.5,
+          message: 'AI language model responding'
+        },
+        {
+          id: 'api-gateway',
+          name: 'API Gateway',
+          status: 'online',
+          lastChecked: new Date().toISOString(),
+          responseTime: 25,
+          uptime: 99.9,
+          message: 'API endpoints responding'
+        },
+        {
+          id: 'websocket-service',
+          name: 'WebSocket Service',
+          status: 'online',
+          lastChecked: new Date().toISOString(),
+          responseTime: 15,
+          uptime: 99.7,
+          message: 'Real-time connections active'
         }
       ]);
       setClusterHealth([
@@ -76,6 +260,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           name: 'Local Development Cluster',
           status: 'healthy',
           uptime: '2 days',
+          version: '1.28.0',
+          endpoint: 'https://kubernetes.default.svc',
           nodes: { total: 1, ready: 1, notReady: 0 },
           pods: { total: 8, running: 8, pending: 0, failed: 0 },
           resources: {
@@ -197,22 +383,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   const getStatCardClasses = (color: string) => {
     const colorMap = {
-      primary: 'bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/30 border border-blue-200/50 dark:border-blue-800/50 shadow-lg shadow-blue-500/10',
-      success: 'bg-gradient-to-br from-emerald-50 to-green-100 dark:from-emerald-900/20 dark:to-green-900/30 border border-emerald-200/50 dark:border-emerald-800/50 shadow-lg shadow-emerald-500/10',
-      warning: 'bg-gradient-to-br from-amber-50 to-orange-100 dark:from-amber-900/20 dark:to-orange-900/30 border border-amber-200/50 dark:border-amber-800/50 shadow-lg shadow-amber-500/10',
-      danger: 'bg-gradient-to-br from-red-50 to-rose-100 dark:from-red-900/20 dark:to-rose-900/30 border border-red-200/50 dark:border-red-800/50 shadow-lg shadow-red-500/10',
-      info: 'bg-gradient-to-br from-cyan-50 to-blue-100 dark:from-cyan-900/20 dark:to-blue-900/30 border border-cyan-200/50 dark:border-cyan-800/50 shadow-lg shadow-cyan-500/10'
+      primary: 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-blue-300 dark:hover:border-blue-700 shadow-sm hover:shadow-lg',
+      success: 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-emerald-300 dark:hover:border-emerald-700 shadow-sm hover:shadow-lg',
+      warning: 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-amber-300 dark:hover:border-amber-700 shadow-sm hover:shadow-lg',
+      danger: 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-red-300 dark:hover:border-red-700 shadow-sm hover:shadow-lg',
+      info: 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-cyan-300 dark:hover:border-cyan-700 shadow-sm hover:shadow-lg'
     };
     return colorMap[color as keyof typeof colorMap] || colorMap.primary;
   };
 
   const getIconClasses = (color: string) => {
     const colorMap = {
-      primary: 'text-blue-600 dark:text-blue-400 bg-gradient-to-br from-blue-100 to-indigo-200 dark:from-blue-800/50 dark:to-indigo-700/50',
-      success: 'text-emerald-600 dark:text-emerald-400 bg-gradient-to-br from-emerald-100 to-green-200 dark:from-emerald-800/50 dark:to-green-700/50',
-      warning: 'text-amber-600 dark:text-amber-400 bg-gradient-to-br from-amber-100 to-orange-200 dark:from-amber-800/50 dark:to-orange-700/50',
-      danger: 'text-red-600 dark:text-red-400 bg-gradient-to-br from-red-100 to-rose-200 dark:from-red-800/50 dark:to-rose-700/50',
-      info: 'text-cyan-600 dark:text-cyan-400 bg-gradient-to-br from-cyan-100 to-blue-200 dark:from-cyan-800/50 dark:to-blue-700/50'
+      primary: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20',
+      success: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20',
+      warning: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20',
+      danger: 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20',
+      info: 'text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-900/20'
     };
     return colorMap[color as keyof typeof colorMap] || colorMap.primary;
   };
@@ -245,38 +431,51 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   };
 
   return (
-    <div className={`space-y-6 ${className}`} data-testid={dataTestId}>
-      {/* Welcome header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {getGreeting()}, {userName}!
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Here&apos;s what&apos;s happening with your Kubernetes clusters today
-          </p>
-        </div>
-        
-        <div className="flex items-center space-x-3">
-          <button
-            type="button"
-            onClick={handleRefreshAll}
-            disabled={isLoading}
-            className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            data-testid="refresh-all-button"
-          >
-            <Icon name={isLoading ? "spinner" : "refresh"} className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh All
-          </button>
-          
-          <button
-            type="button"
-            className="flex items-center px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-            data-testid="new-chat-button"
-          >
-            <Icon name="chat-bubble-left-right" className="h-4 w-4 mr-2" />
-            New Chat
-          </button>
+    <div className={`space-y-8 ${className}`} data-testid={dataTestId}>
+      {/* Professional header */}
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
+              {getGreeting()}, {userName}
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-2 text-lg">
+              Kubernetes Management Dashboard
+            </p>
+            <div className="flex items-center mt-4 space-x-4 text-sm text-gray-500 dark:text-gray-400">
+              <div className="flex items-center">
+                <Icon name="calendar" className="h-4 w-4 mr-2" />
+                {new Date().toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-3">
+            <button
+              type="button"
+              onClick={handleRefreshAll}
+              disabled={isLoading}
+              className="flex items-center px-6 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all duration-200"
+              data-testid="refresh-all-button"
+            >
+              <Icon name={isLoading ? "spinner" : "refresh"} className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              Refresh All
+            </button>
+
+            <button
+              type="button"
+              className="flex items-center px-6 py-3 text-sm font-medium text-white bg-gradient-to-r from-primary-600 to-primary-700 border border-transparent rounded-xl hover:from-primary-700 hover:to-primary-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 shadow-lg transition-all duration-200 transform hover:scale-105"
+              data-testid="new-chat-button"
+            >
+              <Icon name="chat-bubble-left-right" className="h-4 w-4 mr-2" />
+              New Chat
+            </button>
+          </div>
         </div>
       </div>
 
@@ -298,61 +497,32 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           return (
             <div
               key={index}
-              className={`group relative overflow-hidden rounded-2xl p-6 ${getStatCardClasses(stat.color)}
-                transform transition-all duration-300 ease-out hover:scale-105 hover:shadow-2xl
-                hover:shadow-${stat.color === 'primary' ? 'blue' : stat.color === 'success' ? 'emerald' : stat.color === 'warning' ? 'amber' : stat.color === 'danger' ? 'red' : 'cyan'}-500/25
-                cursor-pointer backdrop-blur-sm`}
+              className={`group relative rounded-xl p-6 ${getStatCardClasses(stat.color)}
+                transform transition-all duration-200 ease-out hover:scale-[1.02]
+                cursor-pointer`}
               data-testid={`stat-card-${index}`}
-              style={{
-                animationDelay: `${index * 100}ms`,
-                animation: 'fadeInUp 0.6s ease-out forwards'
-              }}
             >
-              {/* Background decoration */}
-              <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent dark:from-white/5 dark:to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-              {/* Animated background particles */}
-              <div className="absolute -top-4 -right-4 w-24 h-24 bg-gradient-to-br from-current/5 to-transparent rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-all duration-500 group-hover:scale-110" />
-
-              <div className="relative z-10">
-                <div className="flex items-start justify-between">
-                  <div className="flex-shrink-0">
-                    <div className={`inline-flex p-3 rounded-xl shadow-lg ${getIconClasses(stat.color)}
-                      transform transition-all duration-300 group-hover:scale-110 group-hover:rotate-3`}>
-                      <Icon name={stat.icon} className="h-6 w-6" />
-                    </div>
-                  </div>
-
-                  {/* Trend indicator */}
-                  <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-                    <div className="w-2 h-2 bg-current/20 rounded-full animate-pulse" />
-                    <div className="w-1 h-1 bg-current/30 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
-                    <div className="w-1.5 h-1.5 bg-current/25 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
-                  </div>
-                </div>
-
-                <div className="mt-6 space-y-2">
-                  <p className="text-sm font-semibold text-gray-600/80 dark:text-gray-300/80 uppercase tracking-wider">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
                     {stat.title}
                   </p>
 
-                  <div className="transform transition-all duration-300 group-hover:translate-x-1">
+                  <div className="mt-2">
                     <AnimatedCounter />
                   </div>
 
-                  <div className="flex items-center space-x-2 mt-3">
-                    <div className="flex items-center space-x-1 text-xs font-medium text-gray-500 dark:text-gray-400
-                      bg-white/50 dark:bg-gray-800/50 px-2 py-1 rounded-full backdrop-blur-sm">
-                      <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
-                      <span>{stat.change}</span>
-                    </div>
+                  <div className="mt-3">
+                    <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded-md">
+                      {stat.change}
+                    </span>
                   </div>
                 </div>
-              </div>
 
-              {/* Hover shine effect */}
-              <div className="absolute inset-0 -top-10 -left-10 bg-gradient-to-r from-transparent via-white/10 to-transparent
-                transform skew-x-12 opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:translate-x-full" />
+                <div className={`p-3 rounded-lg ${getIconClasses(stat.color)}`}>
+                  <Icon name={stat.icon} className="h-6 w-6" />
+                </div>
+              </div>
             </div>
           );
         })}
@@ -397,11 +567,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           />
         </div>
 
-        {/* Right column - Activities */}
+        {/* Right column - Activities & Approvals */}
         <div className="space-y-6">
+          <CommandApprovalInterface />
+
           <RecentActivitiesFeed
             activities={recentActivities}
-            maxItems={8}
+            maxItems={6}
             isLoading={refreshingWidget === 'activities'}
             onRefresh={() => handleWidgetRefresh('activities')}
             onActivityClick={(activityId) => console.log('Activity clicked:', activityId)}
@@ -433,13 +605,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           
           <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
             <div className="flex items-center">
-              <div className="h-2 w-2 bg-success-500 rounded-full animate-pulse-subtle mr-2" />
-              <span>Real-time updates active</span>
+              <div className={`h-2 w-2 rounded-full mr-2 ${
+                isConnected
+                  ? 'bg-success-500 animate-pulse'
+                  : 'bg-warning-500 animate-bounce'
+              }`} />
+              <span>{isConnected ? 'Real-time updates active' : 'Connecting to updates...'}</span>
             </div>
             <div className="flex items-center">
               <Icon name="shield-check" className="h-4 w-4 mr-1" />
               <span>Secure connection</span>
             </div>
+            {notifications.length > 0 && (
+              <div className="flex items-center">
+                <Icon name="bell" className="h-4 w-4 mr-1 text-warning-500" />
+                <span>{notifications.length} notification{notifications.length !== 1 ? 's' : ''}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -487,3 +487,463 @@ func joinConditions(conditions []string, separator string) string {
 func parseUUID(uuidStr string) (uuid.UUID, error) {
 	return uuid.Parse(uuidStr)
 }
+
+// Performance optimized methods for Story 1.8 Task 6
+
+// GetAuditLogsOptimized retrieves audit logs with optimized query performance
+func (r *auditRepository) GetAuditLogsOptimized(ctx context.Context, filter models.AuditLogFilter) ([]*models.AuditLog, error) {
+	// Use optimized query with proper index usage
+	query := `
+		SELECT id, user_id, session_id, query_text, generated_command, safety_level,
+			   execution_result, execution_status, cluster_context, namespace_context,
+			   timestamp, ip_address, user_agent, checksum, previous_checksum
+		FROM audit_logs`
+
+	var conditions []string
+	var args []interface{}
+	argIndex := 1
+
+	// Optimize query building for index usage
+	// Always include timestamp condition first for best index performance
+	if filter.StartTime != nil {
+		conditions = append(conditions, fmt.Sprintf("timestamp >= $%d", argIndex))
+		args = append(args, *filter.StartTime)
+		argIndex++
+	}
+
+	if filter.EndTime != nil {
+		conditions = append(conditions, fmt.Sprintf("timestamp <= $%d", argIndex))
+		args = append(args, *filter.EndTime)
+		argIndex++
+	}
+
+	// Add other conditions in order of selectivity
+	if filter.UserID != nil {
+		conditions = append(conditions, fmt.Sprintf("user_id = $%d", argIndex))
+		args = append(args, *filter.UserID)
+		argIndex++
+	}
+
+	if filter.SafetyLevel != nil {
+		conditions = append(conditions, fmt.Sprintf("safety_level = $%d", argIndex))
+		args = append(args, *filter.SafetyLevel)
+		argIndex++
+	}
+
+	if filter.Status != nil {
+		conditions = append(conditions, fmt.Sprintf("execution_status = $%d", argIndex))
+		args = append(args, *filter.Status)
+		argIndex++
+	}
+
+	if filter.SessionID != nil {
+		conditions = append(conditions, fmt.Sprintf("session_id = $%d", argIndex))
+		args = append(args, *filter.SessionID)
+		argIndex++
+	}
+
+	if len(conditions) > 0 {
+		query += " WHERE " + joinConditions(conditions, " AND ")
+	}
+
+	// Use optimized ordering
+	query += " ORDER BY timestamp DESC, id DESC"
+
+	// Add pagination
+	if filter.Limit > 0 {
+		query += fmt.Sprintf(" LIMIT $%d", argIndex)
+		args = append(args, filter.Limit)
+		argIndex++
+	}
+
+	if filter.Offset > 0 {
+		query += fmt.Sprintf(" OFFSET $%d", argIndex)
+		args = append(args, filter.Offset)
+	}
+
+	// Use prepared statement for better performance
+	stmt, err := r.db.PreparexContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to prepare audit logs query: %w", err)
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.QueryxContext(ctx, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute optimized audit logs query: %w", err)
+	}
+	defer rows.Close()
+
+	var auditLogs []*models.AuditLog
+	for rows.Next() {
+		var auditLog models.AuditLog
+		var executionResultJSON []byte
+
+		err := rows.Scan(
+			&auditLog.ID,
+			&auditLog.UserID,
+			&auditLog.SessionID,
+			&auditLog.QueryText,
+			&auditLog.GeneratedCommand,
+			&auditLog.SafetyLevel,
+			&executionResultJSON,
+			&auditLog.ExecutionStatus,
+			&auditLog.ClusterContext,
+			&auditLog.NamespaceContext,
+			&auditLog.Timestamp,
+			&auditLog.IPAddress,
+			&auditLog.UserAgent,
+			&auditLog.Checksum,
+			&auditLog.PreviousChecksum,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan audit log: %w", err)
+		}
+
+		// Unmarshal execution result if it exists
+		if executionResultJSON != nil {
+			if err := json.Unmarshal(executionResultJSON, &auditLog.ExecutionResult); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal execution result: %w", err)
+			}
+		}
+
+		auditLogs = append(auditLogs, &auditLog)
+	}
+
+	return auditLogs, rows.Err()
+}
+
+// GetHourlyMetrics retrieves pre-aggregated hourly metrics
+func (r *auditRepository) GetHourlyMetrics(ctx context.Context, hours int) ([]map[string]interface{}, error) {
+	query := `
+		SELECT hour, total_logs, dangerous_ops, failed_ops, successful_ops,
+			   unique_users, unique_sessions, avg_duration_ms
+		FROM audit_metrics_hourly
+		WHERE hour >= NOW() - INTERVAL '%d hours'
+		ORDER BY hour DESC`
+
+	rows, err := r.db.QueryxContext(ctx, fmt.Sprintf(query, hours))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get hourly metrics: %w", err)
+	}
+	defer rows.Close()
+
+	var metrics []map[string]interface{}
+	for rows.Next() {
+		var hour string
+		var totalLogs, dangerousOps, failedOps, successfulOps, uniqueUsers, uniqueSessions int64
+		var avgDuration sql.NullFloat64
+
+		err := rows.Scan(&hour, &totalLogs, &dangerousOps, &failedOps, &successfulOps,
+			&uniqueUsers, &uniqueSessions, &avgDuration)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan hourly metrics: %w", err)
+		}
+
+		metric := map[string]interface{}{
+			"hour":            hour,
+			"total_logs":      totalLogs,
+			"dangerous_ops":   dangerousOps,
+			"failed_ops":      failedOps,
+			"successful_ops":  successfulOps,
+			"unique_users":    uniqueUsers,
+			"unique_sessions": uniqueSessions,
+		}
+
+		if avgDuration.Valid {
+			metric["avg_duration_ms"] = avgDuration.Float64
+		}
+
+		metrics = append(metrics, metric)
+	}
+
+	return metrics, rows.Err()
+}
+
+// GetDailyMetrics retrieves pre-aggregated daily metrics
+func (r *auditRepository) GetDailyMetrics(ctx context.Context, days int) ([]map[string]interface{}, error) {
+	query := `
+		SELECT day, total_logs, dangerous_ops, failed_ops, successful_ops,
+			   unique_users, unique_sessions, unique_clusters,
+			   successful_dangerous_ops, failed_dangerous_ops,
+			   checksummed_logs, chained_logs
+		FROM audit_metrics_daily
+		WHERE day >= NOW() - INTERVAL '%d days'
+		ORDER BY day DESC`
+
+	rows, err := r.db.QueryxContext(ctx, fmt.Sprintf(query, days))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get daily metrics: %w", err)
+	}
+	defer rows.Close()
+
+	var metrics []map[string]interface{}
+	for rows.Next() {
+		var day string
+		var totalLogs, dangerousOps, failedOps, successfulOps int64
+		var uniqueUsers, uniqueSessions, uniqueClusters int64
+		var successfulDangerousOps, failedDangerousOps int64
+		var checksummedLogs, chainedLogs int64
+
+		err := rows.Scan(&day, &totalLogs, &dangerousOps, &failedOps, &successfulOps,
+			&uniqueUsers, &uniqueSessions, &uniqueClusters,
+			&successfulDangerousOps, &failedDangerousOps,
+			&checksummedLogs, &chainedLogs)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan daily metrics: %w", err)
+		}
+
+		metrics = append(metrics, map[string]interface{}{
+			"day":                       day,
+			"total_logs":                totalLogs,
+			"dangerous_ops":             dangerousOps,
+			"failed_ops":                failedOps,
+			"successful_ops":            successfulOps,
+			"unique_users":              uniqueUsers,
+			"unique_sessions":           uniqueSessions,
+			"unique_clusters":           uniqueClusters,
+			"successful_dangerous_ops":  successfulDangerousOps,
+			"failed_dangerous_ops":      failedDangerousOps,
+			"checksummed_logs":          checksummedLogs,
+			"chained_logs":              chainedLogs,
+		})
+	}
+
+	return metrics, rows.Err()
+}
+
+// RefreshMetricsViews refreshes the materialized views
+func (r *auditRepository) RefreshMetricsViews(ctx context.Context) error {
+	_, err := r.db.ExecContext(ctx, "SELECT refresh_audit_metrics()")
+	if err != nil {
+		return fmt.Errorf("failed to refresh metrics views: %w", err)
+	}
+	return nil
+}
+
+// GetSuspiciousActivities uses optimized function for suspicious activity detection
+func (r *auditRepository) GetSuspiciousActivities(ctx context.Context, timeWindow string) ([]map[string]interface{}, error) {
+	query := `
+		SELECT user_id, activity_type, risk_score, event_count, latest_event, description
+		FROM detect_suspicious_activity($1::INTERVAL)
+		ORDER BY risk_score DESC, latest_event DESC`
+
+	rows, err := r.db.QueryxContext(ctx, query, timeWindow)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get suspicious activities: %w", err)
+	}
+	defer rows.Close()
+
+	var activities []map[string]interface{}
+	for rows.Next() {
+		var userID uuid.UUID
+		var activityType, description string
+		var riskScore float64
+		var eventCount int64
+		var latestEvent string
+
+		err := rows.Scan(&userID, &activityType, &riskScore, &eventCount, &latestEvent, &description)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan suspicious activity: %w", err)
+		}
+
+		activities = append(activities, map[string]interface{}{
+			"user_id":       userID.String(),
+			"activity_type": activityType,
+			"risk_score":    riskScore,
+			"event_count":   eventCount,
+			"latest_event":  latestEvent,
+			"description":   description,
+		})
+	}
+
+	return activities, rows.Err()
+}
+
+// GetComplianceScore calculates compliance score using optimized function
+func (r *auditRepository) GetComplianceScore(ctx context.Context, framework, startDate, endDate string) (float64, error) {
+	query := `SELECT calculate_compliance_score($1, $2::TIMESTAMPTZ, $3::TIMESTAMPTZ)`
+
+	var score float64
+	err := r.db.QueryRowxContext(ctx, query, framework, startDate, endDate).Scan(&score)
+	if err != nil {
+		return 0, fmt.Errorf("failed to calculate compliance score: %w", err)
+	}
+
+	return score, nil
+}
+
+// ArchiveAuditLogs archives old audit logs using optimized function
+func (r *auditRepository) ArchiveAuditLogs(ctx context.Context, cutoffDate string, batchID uuid.UUID) (int64, error) {
+	query := `SELECT archive_audit_logs($1::TIMESTAMPTZ, $2)`
+
+	var archivedCount int64
+	err := r.db.QueryRowxContext(ctx, query, cutoffDate, batchID).Scan(&archivedCount)
+	if err != nil {
+		return 0, fmt.Errorf("failed to archive audit logs: %w", err)
+	}
+
+	return archivedCount, nil
+}
+
+// BatchCreateAuditLogs creates multiple audit logs in a single transaction for better performance
+func (r *auditRepository) BatchCreateAuditLogs(ctx context.Context, auditLogs []*models.AuditLog) error {
+	if len(auditLogs) == 0 {
+		return nil
+	}
+
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	// Prepare batch insert statement
+	query := `
+		INSERT INTO audit_logs (
+			user_id, session_id, query_text, generated_command, safety_level,
+			execution_result, execution_status, cluster_context, namespace_context,
+			timestamp, ip_address, user_agent, checksum, previous_checksum
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`
+
+	stmt, err := tx.PreparexContext(ctx, query)
+	if err != nil {
+		return fmt.Errorf("failed to prepare batch insert statement: %w", err)
+	}
+	defer stmt.Close()
+
+	// Get initial checksum
+	lastChecksum, err := r.GetLastChecksum(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get last checksum for batch: %w", err)
+	}
+
+	// Execute batch insert
+	for _, auditLog := range auditLogs {
+		// Set checksum for integrity verification
+		auditLog.SetChecksum(lastChecksum)
+
+		var executionResultJSON []byte
+		if auditLog.ExecutionResult != nil {
+			executionResultJSON, err = json.Marshal(auditLog.ExecutionResult)
+			if err != nil {
+				return fmt.Errorf("failed to marshal execution result: %w", err)
+			}
+		}
+
+		_, err = stmt.ExecContext(ctx,
+			auditLog.UserID,
+			auditLog.SessionID,
+			auditLog.QueryText,
+			auditLog.GeneratedCommand,
+			auditLog.SafetyLevel,
+			executionResultJSON,
+			auditLog.ExecutionStatus,
+			auditLog.ClusterContext,
+			auditLog.NamespaceContext,
+			auditLog.Timestamp,
+			auditLog.IPAddress,
+			auditLog.UserAgent,
+			auditLog.Checksum,
+			auditLog.PreviousChecksum,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to execute batch insert: %w", err)
+		}
+
+		// Update lastChecksum for chain integrity
+		lastChecksum = &auditLog.Checksum
+	}
+
+	return tx.Commit()
+}
+
+// GetQueryPerformanceStats returns database query performance statistics
+func (r *auditRepository) GetQueryPerformanceStats(ctx context.Context) (map[string]interface{}, error) {
+	query := `
+		SELECT
+			schemaname,
+			tablename,
+			attname,
+			n_distinct,
+			correlation
+		FROM pg_stats
+		WHERE tablename = 'audit_logs'
+		AND schemaname = 'public'
+		ORDER BY n_distinct DESC`
+
+	rows, err := r.db.QueryxContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get query performance stats: %w", err)
+	}
+	defer rows.Close()
+
+	stats := make(map[string]interface{})
+	columnStats := make([]map[string]interface{}, 0)
+
+	for rows.Next() {
+		var schemaname, tablename, attname string
+		var nDistinct sql.NullFloat64
+		var correlation sql.NullFloat64
+
+		err := rows.Scan(&schemaname, &tablename, &attname, &nDistinct, &correlation)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan performance stats: %w", err)
+		}
+
+		columnStat := map[string]interface{}{
+			"column": attname,
+		}
+
+		if nDistinct.Valid {
+			columnStat["distinct_values"] = nDistinct.Float64
+		}
+
+		if correlation.Valid {
+			columnStat["correlation"] = correlation.Float64
+		}
+
+		columnStats = append(columnStats, columnStat)
+	}
+
+	stats["table"] = "audit_logs"
+	stats["column_statistics"] = columnStats
+
+	// Get index usage statistics
+	indexQuery := `
+		SELECT
+			indexrelname,
+			idx_scan,
+			idx_tup_read,
+			idx_tup_fetch
+		FROM pg_stat_user_indexes
+		WHERE relname = 'audit_logs'
+		ORDER BY idx_scan DESC`
+
+	indexRows, err := r.db.QueryxContext(ctx, indexQuery)
+	if err != nil {
+		return stats, nil // Don't fail if index stats unavailable
+	}
+	defer indexRows.Close()
+
+	indexStats := make([]map[string]interface{}, 0)
+	for indexRows.Next() {
+		var indexName string
+		var idxScan, idxTupRead, idxTupFetch int64
+
+		err := indexRows.Scan(&indexName, &idxScan, &idxTupRead, &idxTupFetch)
+		if err != nil {
+			continue
+		}
+
+		indexStats = append(indexStats, map[string]interface{}{
+			"index_name":     indexName,
+			"scans":          idxScan,
+			"tuples_read":    idxTupRead,
+			"tuples_fetched": idxTupFetch,
+		})
+	}
+
+	stats["index_statistics"] = indexStats
+	return stats, nil
+}

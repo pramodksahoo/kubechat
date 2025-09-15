@@ -1,4 +1,4 @@
-import { ChatMessage } from '@kubechat/shared/types';
+import { ChatMessage } from '@/types/chat';
 import { ChatMessageBubble } from './ChatMessageBubble';
 
 interface ChatMessageListProps {
@@ -39,7 +39,13 @@ export function ChatMessageList({
       )}
 
       {messages.map((message) => (
-        <ChatMessageBubble key={message.id} message={message} />
+        <ChatMessageBubble
+          key={message.id}
+          message={{
+            ...message,
+            timestamp: new Date(message.timestamp)
+          }}
+        />
       ))}
 
       {loading && (

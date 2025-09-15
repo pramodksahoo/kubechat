@@ -14,13 +14,9 @@ export {
 // Error Display Components
 export {
   ErrorDisplay,
-  NetworkError,
-  CommandError,
-  MaintenanceMode,
-  PermissionDenied,
-  LoadingFailed,
-  ErrorToast,
-} from './ErrorComponents';
+  InlineErrorDisplay,
+  LoadingErrorDisplay,
+} from './ErrorDisplay';
 
 // Error Types and Interfaces
 export type {

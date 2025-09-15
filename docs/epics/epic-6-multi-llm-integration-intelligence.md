@@ -635,6 +635,10 @@ This ensures:
 - Early detection of deployment issues
 - Production parity maintenance
 
+### 🔄 Epic 6 Additional Features
+**Inherited from Epic 1 Roadmap:**
+- **Blue-Green Deployment Support** with traffic switching capabilities (deferred from Story 1.9 for advanced deployment strategies integration with multi-LLM environments)
+
 ## Business Value and ROI
 
 ### Quantifiable Benefits
