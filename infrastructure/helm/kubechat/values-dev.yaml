@@ -1,0 +1,434 @@
+# KubeChat Helm Chart - Development Values
+# This file contains development-specific configurations optimized for local development
+
+## Namespace Configuration - Let Helm manage namespace creation
+namespace:
+  create: false
+
+## Frontend (Web) Configuration - Development Overrides
+web:
+  enabled: true
+  replicaCount: 1  # Single replica for development
+  
+  image:
+    repository: kubechat/web
+    tag: "dev"
+    pullPolicy: IfNotPresent  # Use local images for development
+  
+  service:
+    type: NodePort
+    port: 3000
+    targetPort: 3000
+    nodePort: 30001
+  
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  
+  # Development environment variables
+  env:
+    NODE_ENV: "development"
+    NEXT_PUBLIC_API_BASE_URL: http://localhost:30080/api
+    NEXT_TELEMETRY_DISABLED: "1"
+
+  # Proper health checks using actual Next.js endpoints
+  livenessProbe:
+    enabled: true
+    httpGet:
+      path: /api/health  # Native Next.js health endpoint
+      port: 3000
+    initialDelaySeconds: 60
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 5
+
+  readinessProbe:
+    enabled: true
+    httpGet:
+      path: /health  # Proxied to backend API health check
+      port: 3000
+    initialDelaySeconds: 45
+    periodSeconds: 15
+    timeoutSeconds: 8
+    failureThreshold: 3
+
+  startupProbe:
+    enabled: true
+    httpGet:
+      path: /api/health  # Fast startup detection with native endpoint
+      port: 3000
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 10
+
+  # Init containers enabled with proper health endpoints
+
+## Backend (API) Configuration - Development Overrides
+api:
+  enabled: true
+  replicaCount: 1  # Single replica for development
+  
+  image:
+    repository: kubechat/api
+    tag: "dev"
+    pullPolicy: IfNotPresent  # Use local images for development
+  
+  service:
+    type: NodePort
+    port: 8080
+    targetPort: 8080
+    nodePort: 30080
+  
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 200m
+      memory: 512Mi
+  
+  # Development environment variables
+  env:
+    GIN_MODE: "debug"
+    LOG_LEVEL: debug
+    # Database configuration for enhanced schema
+    POSTGRES_HOST: kubechat-dev-postgresql
+    POSTGRES_PORT: "5432"
+    POSTGRES_DB: kubechat
+    POSTGRES_USER: kubechat
+    # POSTGRES_PASSWORD: Provided via secret
+    POSTGRES_SSLMODE: disable
+    # Additional DB_* variables for authentication service
+    DB_HOST: kubechat-dev-postgresql
+    DB_PORT: "5432"
+    DB_NAME: kubechat
+    DB_USER: kubechat
+    DB_SSL_MODE: disable
+    DB_MAX_OPEN_CONNS: "25"
+    DB_MAX_IDLE_CONNS: "5"
+    DB_CONN_MAX_LIFETIME: "5m"
+    DB_CONN_MAX_IDLE_TIME: "1m"
+    # Redis configuration
+    REDIS_HOST: kubechat-dev-redis-master
+    REDIS_PORT: "6379"
+    # REDIS_PASSWORD: Provided via secret
+    # Application settings
+    DEBUG: "true"
+    # Security settings
+    ENCRYPTION_KEY: "dev-encryption-key-32-bytes-long" # 32 bytes for AES-256
+    SESSION_SECRET: "dev-session-secret-key"
+    BCRYPT_COST: "12"
+
+  # Proper health checks using actual Go API endpoints
+  livenessProbe:
+    enabled: true
+    httpGet:
+      path: /health  # Basic health endpoint implemented in main.go
+      port: 8080
+    initialDelaySeconds: 90
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 5
+
+  readinessProbe:
+    enabled: true
+    httpGet:
+      path: /api/v1/health/ready  # Comprehensive readiness check with dependencies
+      port: 8080
+    initialDelaySeconds: 75
+    periodSeconds: 15
+    timeoutSeconds: 8
+    failureThreshold: 3
+
+  startupProbe:
+    enabled: true
+    httpGet:
+      path: /api/v1/health/live  # Fast startup detection
+      port: 8080
+    initialDelaySeconds: 60
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 15
+
+## Ingress Configuration - Development
+ingress:
+  enabled: true
+  className: "traefik"
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+  hosts:
+    - host: kubechat.local
+      paths:
+        - path: /
+          pathType: Prefix
+          service: kubechat-web
+        - path: /api
+          pathType: Prefix
+          service: kubechat-api
+  tls: []
+
+## TLS Configuration - Disabled for Development
+tls:
+  enabled: false
+  certManager:
+    enabled: false
+
+
+## Backup Configuration - Disabled for Development
+backup:
+  enabled: false
+
+## Autoscaling - Disabled for Development
+autoscaling:
+  enabled: false
+
+## Pod Disruption Budget - Disabled for Development
+podDisruptionBudget:
+  enabled: false
+
+## Hooks Configuration - Disabled for Development
+hooks:
+  preInstall:
+    enabled: false
+  preUpgrade:
+    enabled: false
+  preDelete:
+    enabled: false
+
+## PostgreSQL Configuration - Development Overrides
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "dev-postgres"
+    username: kubechat
+    password: "dev-password"
+    database: kubechat
+  
+  primary:
+    persistence:
+      enabled: true
+      size: 5Gi  # Smaller size for development
+      storageClass: "local-path"  # Rancher Desktop default
+    
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+    
+    # Development database configuration with enhanced security
+    extendedConfiguration: |
+      # Logging for development
+      log_statement = 'mod'
+      log_duration = on
+      log_min_duration_statement = 1000
+      log_line_prefix = '%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h '
+      # Performance tuning for development
+      shared_preload_libraries = 'pg_stat_statements'
+      # Security settings
+      log_connections = on
+      log_disconnections = on
+      log_lock_waits = on
+    
+    # Database initialization - scripts are loaded from external files
+    initdb:
+      scriptsConfigMap: kubechat-db-init
+
+## Redis Configuration - Development Overrides  
+redis:
+  enabled: true
+  auth:
+    enabled: true
+    password: "dev-redis"
+  
+  master:
+    persistence:
+      enabled: true
+      size: 2Gi  # Smaller size for development
+      storageClass: "local-path"  # Rancher Desktop default
+    
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 50m
+        memory: 128Mi
+  
+  # Reduce replicas for development to save resources
+  replica:
+    replicaCount: 1  # Only 1 replica instead of default 3
+    persistence:
+      enabled: false  # Disable persistence for replicas in dev
+    resources:
+      limits:
+        cpu: 250m
+        memory: 256Mi
+      requests:
+        cpu: 25m
+        memory: 64Mi
+
+## Development Tools Configuration
+devTools:
+  enabled: true
+  
+  # PgAdmin for database management
+  pgadmin:
+    enabled: true
+    image: dpage/pgadmin4:8.10
+    service:
+      type: NodePort
+      port: 80
+      nodePort: 30050
+    env:
+      PGADMIN_DEFAULT_EMAIL: admin@kubechat.dev
+      PGADMIN_DEFAULT_PASSWORD: dev-admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+  
+  # Redis Commander for Redis management
+  redisCommander:
+    enabled: true
+    image: rediscommander/redis-commander:latest
+    service:
+      type: NodePort
+      port: 8081
+      nodePort: 30081
+    env:
+      REDIS_HOSTS: kubechat-dev-redis-master:6379
+
+## ConfigMap - Development Configuration
+configMap:
+  create: true
+  data:
+    api_config.yaml: |
+      server:
+        port: 8080
+        timeout: 60s
+        debug: true
+      database:
+        max_connections: 50
+        timeout: 10s
+        log_queries: true
+      redis:
+        timeout: 5s
+      logging:
+        level: debug
+        format: console
+      development:
+        cors_enabled: true
+        allowed_origins: ["http://localhost:3000", "http://kubechat.local"]
+
+## Security Context - Relaxed for Development
+securityContext:
+  runAsNonRoot: false  # Allow root for easier debugging
+  runAsUser: 0
+  runAsGroup: 0
+
+## Pod Security Context - Relaxed for Development
+podSecurityContext:
+  fsGroup: 0
+
+# Duplicate sections removed - configurations are set earlier in the file
+
+## Ollama AI Service Configuration - Development
+ollama:
+  enabled: true
+  replicaCount: 1
+  
+  image:
+    repository: ollama/ollama
+    tag: "0.1.48"
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: NodePort
+    port: 11434
+    targetPort: 11434
+    nodePort: 30434
+  
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+    requests:
+      cpu: 500m
+      memory: 2Gi
+  
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: "local-path"
+  
+  env:
+    OLLAMA_HOST: "0.0.0.0"
+  
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+## Development-specific Services
+debugServices:
+  enabled: true
+  
+  # Port forwarding helper service
+  portForward:
+    enabled: true
+    services:
+      - name: web
+        port: 3000
+        targetPort: 30001
+      - name: api
+        port: 8080
+        targetPort: 30080
+      - name: postgres
+        port: 5432
+        targetPort: 5432
+      - name: redis
+        port: 6379
+        targetPort: 6379
+      - name: pgadmin
+        port: 5050
+        targetPort: 30050
+      - name: redis-commander
+        port: 8081
+        targetPort: 30081
+
+## ServiceAccount - Development Configuration
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+## RBAC - Development Configuration with Enhanced Permissions
+rbac:
+  create: true
+  rules:
+    # Basic read permissions for cluster resources
+    - apiGroups: [""]
+      resources: ["pods", "services", "endpoints", "configmaps"]
+      verbs: ["get", "list", "watch"]
+    # Full secrets management for external API credentials and encryption
+    - apiGroups: [""]
+      resources: ["secrets"]
+      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+    # App deployment resources
+    - apiGroups: ["apps"]
+      resources: ["deployments", "replicasets", "daemonsets", "statefulsets"]
+      verbs: ["get", "list", "watch"]
+    # Ingress resources
+    - apiGroups: ["extensions", "networking.k8s.io"]
+      resources: ["ingresses"]
+      verbs: ["get", "list", "watch"]
+
+## Volume mounts - REMOVED for container-first best practices
+# Container-first development: All code is built into containers
+# Benefits: Portability, consistency, security, faster deployment
+# Development workflow: make dev-rebuild-web/api -> kubectl rollout restart
+# This ensures identical behavior across dev/staging/production

@@ -1,0 +1,149 @@
+{{- if .Values.web.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "kubechat.fullname" . }}-web
+  namespace: {{ include "kubechat.namespace" . }}
+  labels:
+    {{- include "kubechat.web.labels" . | nindent 4 }}
+  annotations:
+    deployment.kubernetes.io/revision: "1"
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.web.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "kubechat.web.selectorLabels" . | nindent 6 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  template:
+    metadata:
+      labels:
+        {{- include "kubechat.web.selectorLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- with .Values.web.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "kubechat.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.web.podSecurityContext | nindent 8 }}
+      {{- with .Values.web.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.web.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.web.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.api.enabled }}
+      initContainers:
+      - name: wait-for-api
+        image: curlimages/curl:8.4.0
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1001
+          runAsGroup: 1001
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          readOnlyRootFilesystem: true
+        command:
+          - /bin/sh
+          - -c
+          - |
+            echo "Waiting for API service to be ready..."
+            until curl -f -s --max-time 5 "http://{{ include "kubechat.fullname" . }}-api.{{ include "kubechat.namespace" . }}.svc.cluster.local:{{ .Values.api.service.port }}/api/v1/health/live" >/dev/null 2>&1; do
+              echo "API service not ready, waiting..."
+              sleep 5
+            done
+            echo "API service is ready!"
+        resources:
+          limits:
+            cpu: 100m
+            memory: 64Mi
+          requests:
+            cpu: 50m
+            memory: 32Mi
+      {{- end }}
+      containers:
+      - name: web
+        image: {{ include "kubechat.web.image" . }}
+        imagePullPolicy: {{ .Values.web.image.pullPolicy }}
+        securityContext:
+          {{- toYaml .Values.web.securityContext | nindent 10 }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.web.service.targetPort }}
+          protocol: TCP
+        {{- if .Values.web.livenessProbe.enabled }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.web.livenessProbe.httpGet.path }}
+            port: {{ .Values.web.livenessProbe.httpGet.port }}
+          initialDelaySeconds: {{ .Values.web.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.web.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.web.livenessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.web.livenessProbe.successThreshold }}
+          failureThreshold: {{ .Values.web.livenessProbe.failureThreshold }}
+        {{- end }}
+        {{- if .Values.web.readinessProbe.enabled }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.web.readinessProbe.httpGet.path }}
+            port: {{ .Values.web.readinessProbe.httpGet.port }}
+          initialDelaySeconds: {{ .Values.web.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.web.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.web.readinessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.web.readinessProbe.successThreshold }}
+          failureThreshold: {{ .Values.web.readinessProbe.failureThreshold }}
+        {{- end }}
+        {{- if .Values.web.startupProbe.enabled }}
+        startupProbe:
+          httpGet:
+            path: {{ .Values.web.startupProbe.httpGet.path }}
+            port: {{ .Values.web.startupProbe.httpGet.port }}
+          initialDelaySeconds: {{ .Values.web.startupProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.web.startupProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.web.startupProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.web.startupProbe.successThreshold }}
+          failureThreshold: {{ .Values.web.startupProbe.failureThreshold }}
+        {{- end }}
+        env:
+        {{- range $key, $value := .Values.web.env }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
+        - name: RELEASE_NAME
+          value: {{ .Release.Name | quote }}
+        - name: RELEASE_NAMESPACE
+          value: {{ include "kubechat.namespace" . | quote }}
+        {{- with .Values.web.extraEnv }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        resources:
+          {{- toYaml .Values.web.resources | nindent 10 }}
+        volumeMounts:
+        {{- with .Values.web.volumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      volumes:
+      {{- with .Values.web.volumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+{{- end }}

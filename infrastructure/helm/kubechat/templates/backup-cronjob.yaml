@@ -1,0 +1,97 @@
+{{- if .Values.backup.enabled -}}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "kubechat.fullname" . }}-backup
+  namespace: {{ include "kubechat.namespace" . }}
+  labels:
+    {{- include "kubechat.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  schedule: "{{ .Values.backup.schedule }}"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            {{- include "kubechat.labels" . | nindent 12 }}
+            app.kubernetes.io/component: backup
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: postgres-backup
+            image: postgres:16
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/bash
+            - -c
+            - |
+              set -e
+
+              # Create backup directory structure
+              BACKUP_DATE=$(date +"%Y-%m-%d_%H-%M-%S")
+              BACKUP_DIR="/backups/$BACKUP_DATE"
+              mkdir -p "$BACKUP_DIR"
+
+              # Database backup
+              echo "Starting PostgreSQL backup..."
+              PGPASSWORD="$POSTGRES_PASSWORD" pg_dump \
+                -h "$DB_HOST" \
+                -p "$DB_PORT" \
+                -U "$DB_USER" \
+                -d "$DB_NAME" \
+                -f "$BACKUP_DIR/postgres_backup.sql" \
+                --verbose
+
+              # Compress backup
+              gzip "$BACKUP_DIR/postgres_backup.sql"
+
+              # Create metadata file
+              cat > "$BACKUP_DIR/metadata.json" <<EOF
+              {
+                "backup_type": "postgresql",
+                "database": "$DB_NAME",
+                "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+                "size_bytes": $(stat -c%s "$BACKUP_DIR/postgres_backup.sql.gz"),
+                "helm_release": "{{ .Release.Name }}",
+                "chart_version": "{{ .Chart.Version }}"
+              }
+              EOF
+
+              # Cleanup old backups
+              echo "Cleaning up old backups..."
+              find /backups -type d -name "*_*" -mtime +{{ .Values.backup.retention.days }} -exec rm -rf {} + || true
+              find /backups -type d -name "*_*" -mtime +$(({{ .Values.backup.retention.weeks }} * 7)) -exec rm -rf {} + || true
+
+              echo "Backup completed successfully: $BACKUP_DIR"
+              ls -la "$BACKUP_DIR"
+            env:
+            - name: DB_HOST
+              value: "{{ .Values.api.env.DB_HOST }}"
+            - name: DB_PORT
+              value: "{{ .Values.api.env.DB_PORT }}"
+            - name: DB_NAME
+              value: "{{ .Values.api.env.DB_NAME }}"
+            - name: DB_USER
+              value: "{{ .Values.api.env.DB_USER }}"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.auth.existingSecret | default (printf "%s-postgresql" .Release.Name) }}
+                  key: {{ .Values.postgresql.auth.secretKeys.userPasswordKey | default "password" }}
+            resources:
+              {{- toYaml .Values.backup.resources | nindent 14 }}
+            securityContext:
+              {{- toYaml .Values.backup.securityContext | nindent 14 }}
+            volumeMounts:
+            - name: backup-storage
+              mountPath: /backups
+          volumes:
+          - name: backup-storage
+            persistentVolumeClaim:
+              claimName: {{ include "kubechat.fullname" . }}-backup-storage
+{{- end }}

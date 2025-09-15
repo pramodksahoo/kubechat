@@ -1,0 +1,28 @@
+{{- if and .Values.tls.enabled .Values.tls.certManager.enabled .Values.ingress.tls -}}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "kubechat.fullname" . }}-tls
+  namespace: {{ include "kubechat.namespace" . }}
+  labels:
+    {{- include "kubechat.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  secretName: {{ (index .Values.ingress.tls 0).secretName | default (printf "%s-tls" (include "kubechat.fullname" .)) }}
+  issuerRef:
+    name: {{ .Values.tls.certManager.issuer.name }}
+    kind: ClusterIssuer
+  dnsNames:
+  {{- range .Values.ingress.hosts }}
+    - {{ .host }}
+  {{- end }}
+  {{- if .Values.tls.certManager.dns01.enabled }}
+  solvers:
+  - dns01:
+      {{ .Values.tls.certManager.dns01.provider }}:
+        {{- with .Values.tls.certManager.dns01.config }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+  {{- end }}
+{{- end }}

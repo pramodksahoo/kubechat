@@ -34,7 +34,7 @@ go.work.sum
 # NOTE: go.sum files should be tracked (not ignored) for dependency verification
 
 # Build artifacts
-kubechat
+/kubechat
 kubechat-*
 dist/
 build/
@@ -154,8 +154,6 @@ secrets/
 
 # Helm packaging and dependencies
 *.tgz
-charts/
-Chart.lock
 requirements.lock
 
 # Helm values overrides (except the ones we want to track)
