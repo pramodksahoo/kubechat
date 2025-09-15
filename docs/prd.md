@@ -20,6 +20,7 @@ The market timing is optimal with 78% of enterprises struggling to find qualifie
 | Date | Version | Description | Author |
 |------|---------|-------------|---------|
 | 2025-01-10 | 1.0 | Initial PRD creation from Project Brief and competitive analysis | John (PM) |
+| 2025-01-15 | 1.1 | Epic 1 marked completed, Epic 2 revised to focus on frontend-backend integration + Ollama | Bob (Scrum Master) |
 
 ---
 
@@ -158,14 +159,14 @@ Enterprise adoption requires thorough testing given the operational criticality.
 
 ## Epic List
 
-**Epic 1: Foundation & Community Launch** *(72 points, 8-10 sprints)*  
-Establish Go microservices architecture, React frontend, core natural language translation, and **Helm-based deployment** for easy community adoption. **Includes open-source launch milestone** with community documentation and contribution guidelines to build early momentum.
+**Epic 1: Foundation & Community Launch** ✅ **COMPLETED** *(65 points, 6 sprints)*
+Established Go microservices architecture, React frontend, core natural language translation, and **Helm-based deployment** for community adoption. **Open-source launch milestone achieved** with comprehensive documentation and contribution guidelines. All 10 user stories completed with enterprise-grade audit trails, security, and compliance features.
 
-**Epic 2: Enterprise Security & Compliance Foundation** *(55 points, 6-8 sprints)*  
-Implement comprehensive audit trails, RBAC integration, and baseline security frameworks to establish enterprise trust and meet initial compliance requirements, creating the foundation for regulated industry adoption.
+**Epic 2: Ollama Integration & Enterprise Frontend Completion** *(48 points, 6-8 sprints)*
+Complete enterprise-grade frontend interfaces for existing backend APIs while adding Ollama as local AI provider. Bridge the gap between sophisticated backend capabilities and missing frontend UIs. Implement admin dashboards, command approval workflows, user management, and audit interfaces to deliver complete enterprise platform.
 
-**Epic 3: Air-Gapped Support & Local AI** *(48 points, 5-7 sprints)*  
-Enable complete offline operation with Ollama local model integration, bundled deployments, and air-gapped installation capabilities to capture the unique underserved market segment.
+**Epic 3: Air-Gapped Support & Local AI Enhancement** *(32 points, 4-5 sprints)*
+Enhance existing Ollama integration with advanced air-gapped deployment capabilities, offline model distribution, and comprehensive local data processing for regulated environments requiring complete network isolation.
 
 **Epic 4: Real-Time Observability Layer** *(45 points, 5-6 sprints)*  
 Implement comprehensive cluster health monitoring, workload status tracking, WebSocket live updates, and visual dashboards to provide essential DevOps operational capabilities.
@@ -182,7 +183,7 @@ Add AI-powered optimization suggestions, predictive failure analysis, remediatio
 **Epic 8: Enterprise Scale & Multi-Tenant Features** *(58 points, 7-8 sprints)*  
 Complete enterprise feature set with multi-cluster management, advanced export APIs, enterprise SSO integration, and professional services capabilities for large-scale adoption.
 
-**Total Project Scope:** *412 story points across 40-50 sprints*
+**Total Project Scope:** *387 story points across 38-46 sprints*
 
 ---
 
@@ -323,121 +324,99 @@ so that **external developers can easily contribute and adopt KubeChat**.
 
 ---
 
-## Epic 2: Enterprise Security & Compliance Foundation
+## Epic 2: Ollama Integration & Enterprise Frontend Completion
 
-**Epic Goal:** Implement comprehensive security frameworks, RBAC integration, and compliance-ready audit capabilities to establish enterprise trust and meet regulated industry requirements. This epic transforms KubeChat from a functional tool into an enterprise-ready platform that satisfies security teams and regulatory auditors.
+**Epic Goal:** Complete the enterprise-grade frontend interfaces for existing backend APIs while adding Ollama as a local AI provider option, enabling both online (OpenAI) and offline (Ollama) AI capabilities with comprehensive admin and user management interfaces. This epic bridges the gap between sophisticated backend capabilities and missing frontend UIs to deliver a complete enterprise platform.
 
-### Story 2.1: Kubernetes RBAC Integration and Permission Enforcement
+### Story 2.1: Ollama Integration & AI Provider Management UI
 
-As a **cluster security administrator**,
-I want **KubeChat to respect and enforce existing Kubernetes RBAC policies**,
-so that **users can only perform operations they're authorized for without bypassing security controls**.
-
-#### Acceptance Criteria
-1. Service account token validation with Kubernetes API for user authentication
-2. Real-time RBAC permission checking before command generation or execution
-3. Dynamic UI adaptation based on user permissions (hide unavailable operations)
-4. Permission-aware command generation (only suggest commands user can execute)
-5. Clear permission denial messages with explanation of required roles/permissions
-6. Support for multiple authentication methods: service account tokens, kubeconfig files, OIDC integration
-7. User context switching for administrators with multiple permission levels
-8. Permission caching with configurable TTL to optimize performance
-
-### Story 2.2: Enhanced Audit Trail with Compliance Framework Support
-
-As a **compliance officer**,
-I want **detailed audit trails that meet SOX, HIPAA, SOC 2, and PCI DSS requirements**,
-so that **I can demonstrate regulatory compliance during audits and investigations**.
+As a **System Administrator and End User**,
+I want **Ollama integrated as a local AI provider with provider selection UI**,
+so that **I can choose between OpenAI (online) and Ollama (local) AI providers through the interface**.
 
 #### Acceptance Criteria
-1. Comprehensive audit schema capturing: user identity, query, generated command, execution result, timestamp, IP address, user agent
-2. Immutable audit trail storage with cryptographic integrity validation
-3. Compliance-specific audit report templates for SOX, HIPAA, SOC 2, and PCI DSS requirements
-4. Automated compliance report generation with filtering by date range, user, and operation type
-5. Audit trail export in multiple formats: CSV, JSON, PDF for regulatory submission
-6. Real-time audit trail monitoring with configurable alerting for suspicious activities
-7. Audit log retention policies with automated archival and secure deletion procedures
-8. Integration with external SIEM systems through structured logging and webhook notifications
+1. Ollama service deployed in Kubernetes cluster alongside existing services
+2. AI provider selection interface in chat UI (OpenAI vs Ollama toggle)
+3. Model management interface for Ollama models (load/unload/monitor)
+4. Integration with existing `/ai/providers` and `/ai/models` backend APIs
+5. Provider performance comparison dashboard
+6. Fallback mechanism when selected provider is unavailable
+7. Cost tracking for both providers (tokens for OpenAI, resource usage for Ollama)
 
-### Story 2.3: Enterprise Authentication and Session Management
+### Story 2.2: Command Approval Workflow UI Integration
 
-As a **IT security administrator**,
-I want **robust authentication and session management aligned with enterprise security policies**,
-so that **user access is properly controlled and monitored across the organization**.
-
-#### Acceptance Criteria
-1. Multi-factor authentication support with TOTP and enterprise MFA provider integration
-2. Session management with configurable timeout, concurrent session limits, and secure session storage
-3. Password policy enforcement with complexity requirements and expiration policies
-4. Account lockout mechanisms after failed authentication attempts with audit logging
-5. Secure credential storage using industry-standard encryption and key management
-6. Integration with enterprise identity providers (preparation for LDAP/SAML in future epics)
-7. Session activity logging with geographic and device information tracking
-8. Secure logout procedures with session invalidation and cleanup
-
-### Story 2.4: Security Headers and Input Validation Framework
-
-As a **security engineer**,
-I want **comprehensive security controls protecting against common web vulnerabilities**,
-so that **KubeChat meets enterprise security scanning and penetration testing requirements**.
+As a **System Administrator and DevOps Engineer**,
+I want **complete frontend interface for the existing command approval workflow**,
+so that **I can manage dangerous command approvals and monitor command executions through the UI**.
 
 #### Acceptance Criteria
-1. Complete security header implementation: CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy
-2. Input sanitization for all user queries preventing injection attacks and malicious LLM prompt manipulation
-3. Rate limiting per user and IP address with configurable thresholds and blocking mechanisms
-4. CSRF protection with secure token generation and validation
-5. XSS prevention through output encoding and Content Security Policy enforcement
-6. SQL injection prevention through parameterized queries and ORM usage
-7. File upload security controls with type validation and virus scanning preparation
-8. Security testing integration in CI/CD pipeline with automated vulnerability scanning
+1. Pending approvals dashboard using existing `/commands/approvals/pending` API
+2. Command approval interface for dangerous operations via `/commands/approve` API
+3. Execution history viewer using `/commands/executions` API
+4. Rollback planning interface using `/commands/executions/{id}/rollback/plan` API
+5. Real-time command execution status monitoring
+6. Approval workflow notifications and alerts
+7. Command execution analytics dashboard using `/commands/stats` API
 
-### Story 2.5: Encrypted Data Storage and Key Management
+### Story 2.3: Admin User Management Interface
 
-As a **data protection officer**,
-I want **all sensitive data encrypted at rest and in transit with proper key management**,
-so that **we meet data protection regulations and enterprise security standards**.
-
-#### Acceptance Criteria
-1. Database encryption at rest using AES-256 with proper key rotation procedures
-2. Audit log encryption with separate key management from application data
-3. TLS 1.3 enforcement for all communications with proper certificate management
-4. Secrets management integration for API keys, database credentials, and encryption keys
-5. Key derivation and storage following NIST guidelines and enterprise key management policies
-6. Encrypted backup procedures with secure key escrow and recovery testing
-7. Data classification labels and handling procedures for different sensitivity levels
-8. Integration with enterprise key management systems (preparation for HSM support)
-
-### Story 2.6: Compliance Dashboard and Regulatory Reporting
-
-As a **compliance manager**,
-I want **real-time compliance status monitoring and automated regulatory reporting**,
-so that **I can proactively manage compliance posture and efficiently respond to audit requests**.
+As a **System Administrator**,
+I want **comprehensive user management interface for existing user APIs**,
+so that **I can manage users, roles, and permissions through the UI**.
 
 #### Acceptance Criteria
-1. Compliance dashboard showing real-time status for SOX, HIPAA, SOC 2, and PCI DSS requirements
-2. Automated compliance report generation with scheduled delivery to stakeholders
-3. Risk assessment scoring based on user activities, permission changes, and security events
-4. Compliance violation detection with automated alerting and escalation procedures
-5. Regulatory framework mapping showing which KubeChat features address specific compliance requirements
-6. Audit preparation tools with evidence collection and documentation generation
-7. Compliance trend analysis with historical reporting and improvement recommendations
-8. Integration with enterprise GRC (Governance, Risk, and Compliance) platforms
+1. User CRUD interface using existing `/users` APIs
+2. Auto-admin user creation during Helm deployment with K8s secrets
+3. User role and permission management UI
+4. Password management through Kubernetes secrets
+5. User session management interface using `/sessions` APIs
+6. User activity monitoring dashboard
+7. Bulk user operations (import/export)
 
-### Story 2.7: Security Incident Response and Forensics Support
+### Story 2.4: Audit Trail & Compliance Dashboard
 
-As a **security incident responder**,
-I want **detailed forensic capabilities and incident response tools**,
-so that **I can quickly investigate security events and provide evidence for incident analysis**.
+As a **Compliance Officer and System Administrator**,
+I want **comprehensive audit trail interface for existing audit APIs**,
+so that **I can monitor system compliance and security through dashboards**.
 
 #### Acceptance Criteria
-1. Forensic audit trail with immutable timestamping and chain of custody documentation
-2. Security event correlation and anomaly detection for unusual user behavior patterns
-3. Incident response workflows with automated evidence collection and preservation
-4. User activity timeline reconstruction with detailed command and result history
-5. Security alert integration with enterprise SIEM and incident response platforms
-6. Forensic data export with legal hold capabilities and secure transfer procedures
-7. Incident documentation templates aligned with enterprise security procedures
-8. Integration with threat intelligence feeds for suspicious IP and behavior detection
+1. Audit log viewer using existing `/audit/logs` APIs
+2. Dangerous operations monitoring via `/audit/dangerous` API
+3. Failed operations dashboard using `/audit/failed` API
+4. Compliance reporting interface with export capabilities
+5. Real-time audit event streaming using `/audit/stream` API
+6. Audit log search and filtering capabilities
+7. Compliance metrics and trending analysis
+
+### Story 2.5: Kubernetes Resource Explorer Interface
+
+As a **DevOps Engineer and Developer**,
+I want **Kubernetes resource management interface for existing K8s APIs**,
+so that **I can explore and manage cluster resources through the UI**.
+
+#### Acceptance Criteria
+1. K8s resource browser using existing `/kubernetes/resources` APIs
+2. Namespace explorer and resource listing
+3. Resource detail views with YAML/JSON display
+4. Cluster health dashboard using `/kubernetes/health` APIs
+5. Node and pod monitoring interface
+6. Resource scaling and management controls
+7. K8s events and logs viewer
+
+### Story 2.6: User-Kubernetes RBAC Integration UI
+
+As a **System Administrator**,
+I want **individual ServiceAccount creation and RBAC management interface**,
+so that **each user has proper K8s permissions with granular access control**.
+
+#### Acceptance Criteria
+1. Individual ServiceAccount creation interface per user
+2. K8s permissions management per user with role selection
+3. Namespace access control UI with permission matrix
+4. ServiceAccount token management interface
+5. RBAC testing and validation tools
+6. Permission conflict detection and resolution
+7. Kubernetes identity audit trail per user
 
 ---
 
