@@ -1,12 +1,12 @@
-# Epic 3: Air-Gapped Support & Local AI
+# Epic 2: Air-Gapped Support & Local AI
 
 ## Epic Overview
 
-**Epic ID:** EPIC-3
+**Epic ID:** EPIC-2
 **Epic Name:** Air-Gapped Support & Local AI
 **Priority:** High
-**Estimated Story Points:** 48
-**Duration:** 5-7 Sprints
+**Estimated Story Points:** 53
+**Duration:** 6-8 Sprints
 
 ## Epic Goal
 
@@ -37,7 +37,7 @@ Enable KubeChat deployment in air-gapped environments with comprehensive local A
 
 ## User Stories
 
-### Story 3.1: Air-Gapped Deployment Architecture
+### Story 2.1: Air-Gapped Deployment Architecture
 **Story Points:** 8
 **Priority:** High
 **Dependencies:** Epic 1 Stories 1.1, 1.2
@@ -95,10 +95,10 @@ CREATE TABLE offline_packages (
 3. Document offline-to-online migration path
 4. Ensure configuration portability
 
-### Story 3.2: Ollama Integration & Local AI Engine
+### Story 2.2: Ollama Integration & Local AI Engine
 **Story Points:** 8
 **Priority:** High
-**Dependencies:** Story 3.1
+**Dependencies:** Story 2.1
 
 **As a** System Administrator  
 **I want** Ollama integrated as the local AI engine  
@@ -156,10 +156,10 @@ CREATE TABLE ai_inference_logs (
 3. Preserve model data and configurations
 4. Document AI service switching procedures
 
-### Story 3.3: Offline Model Distribution System
+### Story 2.3: Offline Model Distribution System
 **Story Points:** 6
 **Priority:** High
-**Dependencies:** Story 3.2
+**Dependencies:** Story 2.2
 
 **As a** AI Model Administrator  
 **I want** offline model distribution and update system  
@@ -215,10 +215,10 @@ CREATE TABLE model_distributions (
 3. Document model distribution history
 4. Ensure model compatibility during rollback
 
-### Story 3.4: Local Data Processing & Caching
+### Story 2.4: Local Data Processing & Caching
 **Story Points:** 7
 **Priority:** Medium
-**Dependencies:** Stories 3.1, 3.2
+**Dependencies:** Stories 2.1, 2.2
 
 **As a** Performance Engineer  
 **I want** comprehensive local data processing and caching system  
@@ -273,67 +273,62 @@ CREATE TABLE processing_jobs (
 3. Fallback to direct data processing
 4. Preserve job queue state
 
-### Story 3.5: Offline Security & Certificate Management
+### Story 2.5: Offline Security & Certificate Management
 **Story Points:** 6
 **Priority:** High
-**Dependencies:** Epic 2 Stories 2.1, 2.2
+**Dependencies:** Epic 1 Stories 1.1, 1.2 (Foundation only)
 
-**As a** Security Administrator  
-**I want** offline security and certificate management  
-**So that** air-gapped deployments maintain enterprise security without external certificate authorities
+**As a** Security Administrator
+**I want** basic offline security and certificate management
+**So that** air-gapped deployments have secure HTTPS communication and basic authentication
 
 **Acceptance Criteria:**
-- [ ] Local Certificate Authority (CA) deployment
-- [ ] Automated certificate generation and renewal
-- [ ] Offline PKI infrastructure
-- [ ] Certificate distribution mechanisms
-- [ ] Local security policy enforcement
-- [ ] Offline security scanning and validation
-- [ ] Air-gapped security updates
+- [ ] Self-signed Certificate Authority (CA) for air-gapped environments
+- [ ] Basic TLS certificate generation for HTTPS
+- [ ] Simple certificate renewal process (manual)
+- [ ] Local authentication (no external SSO required)
+- [ ] Basic password policies and user management
+- [ ] Secure storage of secrets and credentials
+- [ ] Simple security validation checks
 
 **Technical Requirements:**
-- Local CA with OpenSSL or similar
-- Certificate lifecycle management
-- Security policy validation offline
-- Local vulnerability database
+- Self-signed CA using OpenSSL for TLS certificates
+- Basic JWT token management (from Epic 1)
+- Kubernetes secret management for credentials
+- Simple security policy validation
 
 **Database Schema Requirements:**
 ```sql
-CREATE TABLE local_certificates (
+CREATE TABLE airgap_certificates (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    certificate_name VARCHAR(255) NOT NULL,
-    certificate_type VARCHAR(50),
+    cert_name VARCHAR(255) NOT NULL,
+    cert_type VARCHAR(20) DEFAULT 'tls',
     pem_data TEXT NOT NULL,
-    private_key_path TEXT,
-    issuer VARCHAR(255),
-    subject VARCHAR(255),
     valid_from TIMESTAMP NOT NULL,
     valid_until TIMESTAMP NOT NULL,
     status VARCHAR(20) DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE offline_security_policies (
+CREATE TABLE airgap_security_config (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    policy_name VARCHAR(255) NOT NULL,
-    policy_type VARCHAR(50),
-    policy_rules JSONB,
-    enforcement_level VARCHAR(20),
-    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_by UUID REFERENCES users(id)
+    config_key VARCHAR(100) NOT NULL UNIQUE,
+    config_value TEXT,
+    description TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
 **Rollback Plan:**
-1. Maintain certificate validity during rollback
-2. Preserve CA infrastructure
-3. Document certificate changes
-4. Ensure security policy continuity
+1. Preserve existing TLS certificates during rollback
+2. Maintain basic authentication functionality
+3. Keep security configuration backed up
+4. Ensure HTTPS communication remains functional
 
-### Story 3.6: Resource Management & Scaling for Local AI
+### Story 2.6: Resource Management & Scaling for Local AI
 **Story Points:** 7
 **Priority:** Medium
-**Dependencies:** Stories 3.2, 3.4
+**Dependencies:** Stories 2.2, 2.4
 
 **As a** Kubernetes Administrator  
 **I want** intelligent resource management for local AI workloads  
@@ -384,10 +379,10 @@ CREATE TABLE performance_metrics (
 3. Preserve performance data
 4. Document resource state changes
 
-### Story 3.7: Offline Documentation & Help System
+### Story 2.7: Offline Documentation & Help System
 **Story Points:** 3
 **Priority:** Low
-**Dependencies:** Story 3.1
+**Dependencies:** Story 2.1
 
 **As a** End User  
 **I want** comprehensive offline documentation and help system  
@@ -438,10 +433,10 @@ CREATE TABLE help_interactions (
 3. Document rollback procedures
 4. Ensure user guidance availability
 
-### Story 3.8: Air-Gap Validation & Testing Framework
+### Story 2.8: Air-Gap Validation & Testing Framework
 **Story Points:** 3
 **Priority:** Medium
-**Dependencies:** All previous stories in Epic 3
+**Dependencies:** All previous stories in Epic 2
 
 **As a** QA Engineer  
 **I want** comprehensive air-gap validation and testing framework  
@@ -492,6 +487,115 @@ CREATE TABLE validation_reports (
 3. Document testing procedures
 4. Ensure continuous validation
 
+### Story 2.9: Enterprise Authentication Initialization & Secret Management
+**Story Points:** 5
+**Priority:** High
+**Dependencies:** Epic 1 Stories 1.1, 1.2 (Foundation only)
+
+**As a** System Administrator
+**I want** automatic admin user creation with Kubernetes secret-based password management
+**So that** air-gapped deployments have secure, enterprise-ready authentication from first install
+
+**Acceptance Criteria:**
+- [ ] Helm pre-install hook automatically creates built-in `admin` user
+- [ ] Random complex password generated (16+ chars, mixed case, numbers, symbols)
+- [ ] Password stored in Kubernetes secret `kubechat-admin-secret`
+- [ ] Login screen enforced in all environments (dev, staging, production)
+- [ ] Password retrievable via: `kubectl get secret kubechat-admin-secret -o jsonpath="{.data.password}" | base64 -d`
+- [ ] Password changeable by updating secret value
+- [ ] Secret watcher automatically updates user password when secret changes
+- [ ] Login screen displays secret retrieval command for admins
+
+**Technical Requirements:**
+- Helm hook job with `pre-install,pre-upgrade` annotations
+- Secure password generation using crypto/rand
+- Kubernetes secret creation with proper labels and ownership
+- Authentication middleware enforcement (remove dev bypasses)
+- Secret controller/watcher for password synchronization
+- Frontend login screen with admin password instructions
+
+**Database Schema Requirements:**
+```sql
+-- Add admin user tracking
+ALTER TABLE users ADD COLUMN is_system_user BOOLEAN DEFAULT false;
+ALTER TABLE users ADD COLUMN password_source VARCHAR(50) DEFAULT 'manual'; -- 'manual' or 'secret'
+
+-- Create admin audit trail
+CREATE TABLE admin_password_changes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id),
+    changed_via VARCHAR(50), -- 'secret_update', 'manual_change'
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ip_address VARCHAR(45),
+    user_agent TEXT
+);
+```
+
+**Helm Hook Job Specification:**
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kubechat-init-admin
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  template:
+    spec:
+      containers:
+      - name: init-admin
+        image: kubechat/admin-init:latest
+        env:
+        - name: DB_HOST
+          value: {{ .Values.postgresql.primary.service.name }}
+        - name: NAMESPACE
+          value: {{ .Release.Namespace }}
+        command: ["/bin/sh"]
+        args:
+        - -c
+        - |
+          # Generate random password
+          ADMIN_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-16)
+
+          # Create Kubernetes secret
+          kubectl create secret generic kubechat-admin-secret \
+            --from-literal=username=admin \
+            --from-literal=password="${ADMIN_PASSWORD}" \
+            --namespace={{ .Release.Namespace }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+          # Create admin user in database
+          /app/create-admin-user
+      restartPolicy: Never
+```
+
+**Secret Management Features:**
+- **Password Retrieval**: `kubectl get secret kubechat-admin-secret -n kubechat -o jsonpath="{.data.password}" | base64 -d`
+- **Password Update**: `kubectl patch secret kubechat-admin-secret -n kubechat --type='merge' -p='{"data":{"password":"'$(echo -n "new_password" | base64)'"}}'`
+- **ArgoCD-Style CLI Access**: Include CLI command in login screen help text
+- **Rotation Support**: Secret watcher automatically syncs password changes
+
+**Frontend Changes:**
+- Remove authentication bypasses in all environments
+- Add login screen with admin credential instructions
+- Display secret retrieval command for admin access
+- Implement session management with proper logout
+
+**Security Considerations:**
+- Password meets enterprise complexity requirements
+- Secret has proper RBAC restrictions
+- Audit trail for all password changes
+- No password logging in application logs
+- Secure password generation using cryptographically secure random
+
+**Rollback Plan:**
+1. Preserve existing user accounts during rollback
+2. Maintain secret-based authentication if rollback fails
+3. Document manual admin creation procedure as backup
+4. Ensure database schema changes are backwards compatible
+
 ## External API Integration Requirements
 
 ### None Required for Air-Gapped Operation
@@ -507,9 +611,9 @@ CREATE TABLE validation_reports (
 
 ### Internal Dependencies
 - Epic 1: Foundation & Community Launch (Core system functionality)
-- Epic 2: Enterprise Security & Compliance (Security framework for offline deployment)
 - Existing container deployment infrastructure
 - PostgreSQL database with offline operation capabilities
+- **Note:** Self-contained basic security for air-gapped environments (no external dependencies)
 
 ### External Dependencies (Eliminated in Air-Gap Mode)
 - ❌ External LLM APIs (replaced with Ollama)

@@ -1,8 +1,8 @@
-# Epic 5: Open Source Product Release & Documentation
+# Epic 4: Open Source Product Release & Documentation
 
 ## Epic Overview
 
-**Epic ID:** EPIC-5
+**Epic ID:** EPIC-4
 **Epic Name:** Open Source Product Release & Documentation
 **Priority:** Medium
 **Estimated Story Points:** 38
