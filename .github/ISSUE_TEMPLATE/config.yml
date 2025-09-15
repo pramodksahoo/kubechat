@@ -1,0 +1,20 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🔒 Security Vulnerabilities
+    url: mailto:security@kubechat.dev
+    about: Report security vulnerabilities privately via email (preferred method)
+  - name: 🛡️ GitHub Security Advisory
+    url: https://github.com/pramodksahoo/kubechat/security/advisories/new
+    about: Report security vulnerabilities using GitHub's private reporting feature
+  - name: 💬 Community Discussions
+    url: https://github.com/pramodksahoo/kubechat/discussions
+    about: Ask questions, share ideas, and discuss KubeChat with the community
+  - name: 📚 Documentation
+    url: https://github.com/pramodksahoo/kubechat/tree/main/docs
+    about: Check our comprehensive documentation and guides
+  - name: 🚀 Development Guide
+    url: https://github.com/pramodksahoo/kubechat/blob/main/DEVELOPMENT.md
+    about: Learn about our container-first development approach
+  - name: 🤝 Contributing Guide
+    url: https://github.com/pramodksahoo/kubechat/blob/main/CONTRIBUTING.md
+    about: Learn how to contribute to KubeChat

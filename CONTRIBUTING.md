@@ -333,6 +333,31 @@ npm test -- --coverage
 - [ ] Secure headers in API responses
 - [ ] No secrets in logs or error messages
 
+### Security Vulnerability Reporting
+
+**🚨 IMPORTANT**: Do NOT create public GitHub issues for security vulnerabilities.
+
+If you discover a security vulnerability:
+
+1. **Email**: security@kubechat.dev (GPG key available on request)
+2. **GitHub**: Use [private security reporting](https://github.com/pramodksahoo/kubechat/security/advisories/new)
+3. **Response Time**: We aim to respond within 24 hours
+4. **Disclosure**: We follow coordinated disclosure practices
+
+Include in your report:
+- Description of the vulnerability
+- Steps to reproduce
+- Potential impact assessment
+- Suggested fix (if available)
+
+### Security Review Process
+
+All contributions undergo security review:
+- Automated security scanning in CI/CD
+- Manual review for security-sensitive changes
+- Dependency vulnerability scanning
+- Container image security analysis
+
 ## 📚 Documentation Standards
 
 ### Documentation Types

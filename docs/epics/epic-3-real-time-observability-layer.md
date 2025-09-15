@@ -1,8 +1,8 @@
-# Epic 4: Real-Time Observability Layer
+# Epic 3: Real-Time Observability Layer
 
 ## Epic Overview
 
-**Epic ID:** EPIC-4
+**Epic ID:** EPIC-3
 **Epic Name:** Real-Time Observability Layer
 **Priority:** High
 **Estimated Story Points:** 45
@@ -40,7 +40,7 @@ Implement comprehensive real-time observability platform with advanced monitorin
 
 ## User Stories
 
-### Story 4.1: Core Metrics Collection & Prometheus Integration
+### Story 3.1: Core Metrics Collection & Prometheus Integration
 **Story Points:** 7
 **Priority:** High
 **Dependencies:** Epic 1 Stories 1.1, 1.2
@@ -96,7 +96,7 @@ CREATE TABLE metric_thresholds (
 3. Remove custom exporters gracefully
 4. Maintain essential system monitoring
 
-### Story 4.2: Real-Time Dashboards with Grafana
+### Story 3.2: Real-Time Dashboards with Grafana
 **Story Points:** 6
 **Priority:** High
 **Dependencies:** Story 4.1
@@ -151,10 +151,10 @@ CREATE TABLE dashboard_access (
 3. Preserve user access configurations
 4. Fallback to basic monitoring views
 
-### Story 4.3: Distributed Tracing with OpenTelemetry
+### Story 3.3: Distributed Tracing with OpenTelemetry
 **Story Points:** 8
 **Priority:** High
-**Dependencies:** Story 4.1
+**Dependencies:** Story 3.1
 
 **As a** Development Team Lead  
 **I want** comprehensive distributed tracing across all services  
@@ -204,10 +204,10 @@ CREATE INDEX idx_trace_operations_time ON trace_operations(start_time);
 3. Remove instrumentation without service disruption
 4. Maintain basic logging capabilities
 
-### Story 4.4: Intelligent Alerting & Notification System
+### Story 3.4: Intelligent Alerting & Notification System
 **Story Points:** 7
 **Priority:** Medium
-**Dependencies:** Stories 4.1, 4.2
+**Dependencies:** Stories 3.1, 3.2
 
 **As a** Site Reliability Engineer  
 **I want** intelligent alerting system with ML-based anomaly detection  
@@ -264,10 +264,10 @@ CREATE TABLE alert_incidents (
 3. Preserve alert history and configurations
 4. Maintain critical system notifications
 
-### Story 4.5: Log Aggregation & Analysis Pipeline
+### Story 3.5: Log Aggregation & Analysis Pipeline
 **Story Points:** 6
 **Priority:** Medium
-**Dependencies:** Story 4.1
+**Dependencies:** Story 3.1
 
 **As a** Security Analyst  
 **I want** centralized log aggregation with real-time analysis  
@@ -326,10 +326,10 @@ CREATE INDEX idx_log_analytics_level ON log_analytics(log_level);
 3. Fall back to individual service logs
 4. Ensure audit log continuity
 
-### Story 4.6: AI Operations Monitoring
+### Story 3.6: AI Operations Monitoring
 **Story Points:** 5
 **Priority:** Medium
-**Dependencies:** Stories 4.1, 4.3
+**Dependencies:** Stories 3.1, 3.3
 
 **As a** AI Operations Engineer  
 **I want** specialized monitoring for AI model operations  
@@ -385,7 +385,7 @@ CREATE TABLE model_performance_baselines (
 3. Maintain model performance tracking
 4. Document AI metrics collection changes
 
-### Story 4.7: Custom Observability APIs & Integration
+### Story 3.7: Custom Observability APIs & Integration
 **Story Points:** 4
 **Priority:** Low
 **Dependencies:** Stories 4.1, 4.2, 4.3
@@ -442,7 +442,7 @@ CREATE TABLE api_usage_logs (
 3. Provide migration path for integrations
 4. Document API changes and alternatives
 
-### Story 4.8: Performance Optimization & Capacity Planning
+### Story 3.8: Performance Optimization & Capacity Planning
 **Story Points:** 6
 **Priority:** Medium
 **Dependencies:** All previous stories in Epic 4

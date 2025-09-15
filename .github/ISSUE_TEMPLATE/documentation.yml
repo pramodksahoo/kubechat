@@ -1,0 +1,177 @@
+name: Documentation Improvement
+description: Suggest improvements to documentation
+title: "[Docs]: "
+labels: ["documentation", "needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Thank you for helping improve our documentation! 📚
+
+        Clear documentation is essential for KubeChat's success. Your feedback helps make it better for everyone.
+
+  - type: checkboxes
+    id: preliminary-checks
+    attributes:
+      label: Preliminary Checks
+      description: Please confirm you've done your research
+      options:
+        - label: I have searched existing documentation issues
+          required: true
+        - label: I have checked if this is already covered elsewhere
+          required: true
+
+  - type: dropdown
+    id: documentation-type
+    attributes:
+      label: Documentation Type
+      description: What type of documentation needs improvement?
+      options:
+        - README.md
+        - Installation Guide
+        - Configuration Guide
+        - API Documentation
+        - Development Guide
+        - Architecture Documentation
+        - Troubleshooting Guide
+        - Security Documentation
+        - Contributing Guidelines
+        - Code Comments
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: Issue Type
+      description: What kind of documentation issue is this?
+      options:
+        - Missing Information - Something important is not documented
+        - Incorrect Information - Something documented is wrong
+        - Unclear Instructions - Existing content is confusing
+        - Outdated Content - Documentation is out of sync with current version
+        - Poor Organization - Content exists but is hard to find
+        - Missing Examples - Need code examples or use cases
+        - Accessibility - Documentation is not accessible to all users
+        - Translation - Need content in other languages
+    validations:
+      required: true
+
+  - type: textarea
+    id: current-documentation
+    attributes:
+      label: Current Documentation Location
+      description: |
+        Where is the current documentation that needs improvement?
+        Provide links or file paths if possible.
+      placeholder: |
+        - File: docs/installation.md
+        - Section: "Deploying to Production"
+        - URL: https://github.com/pramodksahoo/kubechat/blob/main/README.md#quick-start
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem-description
+    attributes:
+      label: Problem Description
+      description: What specific issue did you encounter with the documentation?
+      placeholder: |
+        - What were you trying to accomplish?
+        - What information was missing or unclear?
+        - How did this affect your experience?
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggested-improvement
+    attributes:
+      label: Suggested Improvement
+      description: How would you improve this documentation?
+      placeholder: |
+        - What information should be added?
+        - How could existing content be made clearer?
+        - What examples would be helpful?
+        - How should content be reorganized?
+    validations:
+      required: true
+
+  - type: textarea
+    id: target-audience
+    attributes:
+      label: Target Audience
+      description: Who would benefit from this improvement?
+      value: |
+        **Primary Audience:**
+        - [ ] New users getting started
+        - [ ] Experienced users doing advanced configuration
+        - [ ] Developers contributing to KubeChat
+        - [ ] System administrators deploying KubeChat
+        - [ ] Security teams reviewing KubeChat
+
+        **Experience Level:**
+        - [ ] Beginner (new to Kubernetes)
+        - [ ] Intermediate (familiar with Kubernetes basics)
+        - [ ] Advanced (Kubernetes experts)
+        - [ ] All levels
+
+  - type: textarea
+    id: context-environment
+    attributes:
+      label: Context and Environment
+      description: Provide context about your situation
+      value: |
+        - **Your Role**: [e.g., DevOps Engineer, Developer, System Admin]
+        - **Experience Level**: [e.g., Beginner, Intermediate, Expert]
+        - **Use Case**: [e.g., Learning KubeChat, Production Deployment, Development]
+        - **Environment**: [e.g., Local development, Staging, Production]
+        - **Platform**: [e.g., EKS, GKE, AKS, local Kubernetes]
+
+  - type: textarea
+    id: examples-references
+    attributes:
+      label: Examples or References
+      description: |
+        Do you have examples of good documentation elsewhere?
+        Can you provide draft content or examples?
+      placeholder: |
+        - Links to good examples from other projects
+        - Draft text or content suggestions
+        - Screenshots of confusing sections
+        - Code examples that would help
+
+  - type: checkboxes
+    id: contribution-offer
+    attributes:
+      label: Contribution Offer
+      description: Would you like to help improve this documentation?
+      options:
+        - label: I'm willing to submit a pull request with the improvement
+        - label: I can help review proposed changes
+        - label: I can provide feedback on drafts
+        - label: I can help test documentation accuracy
+
+  - type: dropdown
+    id: urgency
+    attributes:
+      label: Urgency Level
+      description: How urgent is this documentation improvement?
+      options:
+        - Low - General improvement for the future
+        - Medium - Would help many users
+        - High - Blocking adoption or causing confusion
+        - Critical - Incorrect information causing problems
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other information that would help us improve the documentation
+      placeholder: |
+        - Related issues or discussions
+        - Additional use cases to consider
+        - Specific timeline needs

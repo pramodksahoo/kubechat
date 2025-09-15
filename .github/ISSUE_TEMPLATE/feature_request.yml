@@ -1,0 +1,166 @@
+name: Feature Request
+description: Suggest a new feature or enhancement for KubeChat
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Thank you for suggesting a feature! ✨
+
+        Please fill out this template to help us understand your feature request.
+
+  - type: checkboxes
+    id: preliminary-checks
+    attributes:
+      label: Preliminary Checks
+      description: Please confirm you've done your research
+      options:
+        - label: I have searched existing issues and feature requests
+          required: true
+        - label: I have checked the project roadmap and documentation
+          required: true
+        - label: This feature aligns with KubeChat's mission of simplifying Kubernetes management
+          required: true
+
+  - type: dropdown
+    id: feature-category
+    attributes:
+      label: Feature Category
+      description: What type of feature is this?
+      options:
+        - Natural Language Processing / AI
+        - User Interface / Dashboard
+        - API / Backend
+        - Security / RBAC
+        - Deployment / Infrastructure
+        - Documentation
+        - Performance / Optimization
+        - Integration / Third-party
+        - Monitoring / Observability
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority-level
+    attributes:
+      label: Priority Level
+      description: How important is this feature to you?
+      options:
+        - Low - Nice to have
+        - Medium - Would improve workflow
+        - High - Needed for adoption
+        - Critical - Blocking deployment
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem-statement
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve? Who would benefit from it?
+      placeholder: |
+        - Current challenge or limitation
+        - Who is affected (users, operators, developers)
+        - Business impact or use case
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed Solution
+      description: Describe your ideal solution in detail
+      placeholder: |
+        - How should this feature work?
+        - What should the user experience be?
+        - Any specific implementation ideas?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives-considered
+    attributes:
+      label: Alternatives Considered
+      description: What other solutions have you considered?
+      placeholder: |
+        - Alternative approaches
+        - Existing workarounds you've tried
+        - Why those don't fully solve the problem
+
+  - type: textarea
+    id: impact-assessment
+    attributes:
+      label: Impact Assessment
+      description: Help us understand the broader impact of this feature
+      value: |
+        **User Impact:**
+        - Who would use this feature?
+        - How often would it be used?
+        - What's the learning curve?
+
+        **Technical Impact:**
+        - Any compatibility concerns?
+        - Performance implications?
+        - Security considerations?
+
+        **Maintenance Impact:**
+        - Additional documentation needed?
+        - Support overhead?
+        - Long-term maintenance considerations?
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: security-considerations
+    attributes:
+      label: Security Considerations
+      description: Please consider security implications
+      options:
+        - label: This feature does not introduce new security risks
+        - label: I have considered how this feature affects RBAC and permissions
+        - label: I have considered audit trail and compliance implications
+        - label: If this involves external integrations, I've considered data privacy
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: What would make this feature complete and successful?
+      placeholder: |
+        - [ ] Feature requirement 1
+        - [ ] Feature requirement 2
+        - [ ] Documentation updated
+        - [ ] Tests added
+        - [ ] Security review completed
+
+  - type: textarea
+    id: mockups-examples
+    attributes:
+      label: Mockups, Examples, or References
+      description: |
+        Provide any visual aids, code examples, or references
+        - Screenshots or mockups
+        - API examples
+        - Similar features in other tools
+      placeholder: Attach files or provide links...
+
+  - type: checkboxes
+    id: contribution-willingness
+    attributes:
+      label: Contribution Willingness
+      description: Are you interested in contributing to this feature?
+      options:
+        - label: I'm willing to help implement this feature
+        - label: I can help with testing once implemented
+        - label: I can help with documentation
+        - label: I can provide subject matter expertise
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other information that would help us understand this request
+      placeholder: Additional details, links, references...
