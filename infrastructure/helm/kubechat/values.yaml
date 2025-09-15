@@ -1,0 +1,809 @@
+# KubeChat Helm Chart - Production Values
+# This file contains production-specific configuration for KubeChat deployment
+
+## Global Configuration
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: "fast-ssd"  # Production-grade storage
+  environment: "production"
+
+## Application Metadata
+app:
+  name: kubechat
+  version: "1.0.0"
+  description: "KubeChat - Natural Language Kubernetes Management Platform (Production)"
+
+## Namespace Configuration
+namespace:
+  create: true
+  name: kubechat-production
+  annotations:
+    environment: "production"
+    security.policy: restricted
+  labels:
+    environment: "production"
+    tier: production
+
+## Frontend (Web) Configuration
+web:
+  enabled: true
+  replicaCount: 5  # High availability for production
+
+  image:
+    repository: kubechat/web
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent  # Use cached production images
+
+  service:
+    type: ClusterIP
+    port: 3000
+    targetPort: 3000
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-type: nlb
+      service.beta.kubernetes.io/aws-load-balancer-ssl-cert: arn:aws:acm:region:account:certificate/cert-id
+
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+
+  # Production health checks with strict timeouts
+  livenessProbe:
+    enabled: true
+    httpGet:
+      path: /health
+      port: 3000
+    initialDelaySeconds: 60
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+
+  readinessProbe:
+    enabled: true
+    httpGet:
+      path: /ready
+      port: 3000
+    initialDelaySeconds: 30
+    periodSeconds: 5
+    timeoutSeconds: 3
+    successThreshold: 1
+    failureThreshold: 3
+
+  startupProbe:
+    enabled: true
+    httpGet:
+      path: /health
+      port: 3000
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 30
+
+  # Strict security context for production
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+    runAsGroup: 1001
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+    seccompProfile:
+      type: RuntimeDefault
+
+  # Pod security context
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+    runAsGroup: 1001
+    fsGroup: 1001
+    seccompProfile:
+      type: RuntimeDefault
+    supplementalGroups: []
+
+  # Strict anti-affinity for production
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: kubechat
+            app.kubernetes.io/component: web
+        topologyKey: kubernetes.io/hostname
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: kubechat
+            app.kubernetes.io/component: web
+        topologyKey: topology.kubernetes.io/zone
+
+  # Environment variables for production
+  env:
+    NODE_ENV: "production"
+    NEXT_PUBLIC_API_BASE_URL: https://api.kubechat.com
+    NEXT_TELEMETRY_DISABLED: "1"
+    LOG_LEVEL: warn
+
+  # Volume mounts
+  volumeMounts:
+    - name: tmp
+      mountPath: /tmp
+    - name: next-cache
+      mountPath: /app/.next/cache
+
+  volumes:
+    - name: tmp
+      emptyDir:
+        sizeLimit: 1Gi
+    - name: next-cache
+      emptyDir:
+        sizeLimit: 2Gi
+
+## Backend (API) Configuration
+api:
+  enabled: true
+  replicaCount: 5  # High availability for production
+
+  image:
+    repository: kubechat/api
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent  # Use cached production images
+
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-type: nlb
+
+  resources:
+    limits:
+      cpu: 4000m
+      memory: 4Gi
+    requests:
+      cpu: 1000m
+      memory: 2Gi
+
+  # Production health checks
+  livenessProbe:
+    enabled: true
+    httpGet:
+      path: /health
+      port: 8080
+    initialDelaySeconds: 120
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+
+  readinessProbe:
+    enabled: true
+    httpGet:
+      path: /ready
+      port: 8080
+    initialDelaySeconds: 60
+    periodSeconds: 5
+    timeoutSeconds: 3
+    successThreshold: 1
+    failureThreshold: 3
+
+  startupProbe:
+    enabled: true
+    httpGet:
+      path: /health
+      port: 8080
+    initialDelaySeconds: 60
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 30
+
+  # Strict security context for production
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+    runAsGroup: 1001
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+    seccompProfile:
+      type: RuntimeDefault
+
+  # Pod security context
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+    runAsGroup: 1001
+    fsGroup: 1001
+    seccompProfile:
+      type: RuntimeDefault
+    supplementalGroups: []
+
+  # Strict anti-affinity for production
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: kubechat
+            app.kubernetes.io/component: api
+        topologyKey: kubernetes.io/hostname
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: kubechat
+            app.kubernetes.io/component: api
+        topologyKey: topology.kubernetes.io/zone
+
+  # Environment variables for production
+  env:
+    GIN_MODE: "release"
+    DB_HOST: kubechat-postgresql-production
+    DB_PORT: "5432"
+    DB_NAME: kubechat_production
+    DB_USER: kubechat
+    REDIS_HOST: kubechat-redis-master-production
+    REDIS_PORT: "6379"
+    LOG_LEVEL: warn
+    LOG_FORMAT: "json"
+    AUDIT_LOG_ENABLED: "true"
+    METRICS_ENABLED: "true"
+    SECURITY_AUDIT_ENABLED: "true"
+
+  # Volume mounts
+  volumeMounts:
+    - name: tmp
+      mountPath: /tmp
+
+  volumes:
+    - name: tmp
+      emptyDir:
+        sizeLimit: 1Gi
+
+## Ingress Configuration
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/rate-limit: "200"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    nginx.ingress.kubernetes.io/server-snippet: |
+      add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+      add_header X-Frame-Options "SAMEORIGIN" always;
+      add_header X-Content-Type-Options "nosniff" always;
+      add_header X-XSS-Protection "1; mode=block" always;
+      add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+  hosts:
+    - host: kubechat.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: kubechat-web
+        - path: /api
+          pathType: Prefix
+          service: kubechat-api
+    - host: www.kubechat.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: kubechat-web
+        - path: /api
+          pathType: Prefix
+          service: kubechat-api
+  tls:
+    - secretName: kubechat-production-tls
+      hosts:
+        - kubechat.com
+        - www.kubechat.com
+
+## TLS/Certificate Configuration
+tls:
+  enabled: true
+  certManager:
+    enabled: true
+    issuer:
+      name: letsencrypt-prod
+      server: https://acme-v02.api.letsencrypt.org/directory
+      email: security@kubechat.com
+    dns01:
+      enabled: true
+      provider: cloudflare
+  customCerts:
+    enabled: false
+    secretName: ""
+
+## PostgreSQL Configuration (Production HA)
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: ""  # Use external secret
+    username: kubechat
+    password: ""  # Use external secret
+    database: kubechat_production
+    existingSecret: kubechat-postgresql-secret
+
+  architecture: repmgr  # High availability
+
+  primary:
+    persistence:
+      enabled: true
+      size: 100Gi  # Large storage for production
+      storageClass: "fast-ssd"
+      accessModes:
+        - ReadWriteOnce
+
+    resources:
+      limits:
+        cpu: 4000m
+        memory: 8Gi
+      requests:
+        cpu: 2000m
+        memory: 4Gi
+
+    # Security
+    containerSecurityContext:
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      seccompProfile:
+        type: RuntimeDefault
+
+    podSecurityContext:
+      runAsUser: 1001
+      runAsGroup: 1001
+      fsGroup: 1001
+      seccompProfile:
+        type: RuntimeDefault
+
+  readReplicas:
+    replicaCount: 2
+    persistence:
+      enabled: true
+      size: 100Gi
+      storageClass: "fast-ssd"
+
+    resources:
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+      requests:
+        cpu: 1000m
+        memory: 2Gi
+
+## Redis Configuration (Production HA)
+redis:
+  enabled: true
+  auth:
+    enabled: true
+    password: ""  # Use external secret
+    existingSecret: kubechat-redis-secret
+    existingSecretPasswordKey: redis-password
+
+  architecture: replication  # High availability
+
+  master:
+    persistence:
+      enabled: true
+      size: 20Gi
+      storageClass: "fast-ssd"
+
+    resources:
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+      requests:
+        cpu: 1000m
+        memory: 2Gi
+
+    # Security
+    containerSecurityContext:
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      seccompProfile:
+        type: RuntimeDefault
+
+    podSecurityContext:
+      runAsUser: 1001
+      runAsGroup: 1001
+      fsGroup: 1001
+      seccompProfile:
+        type: RuntimeDefault
+
+  replica:
+    replicaCount: 2
+    persistence:
+      enabled: true
+      size: 20Gi
+      storageClass: "fast-ssd"
+
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+      requests:
+        cpu: 500m
+        memory: 1Gi
+
+## ServiceAccount Configuration
+serviceAccount:
+  create: true
+  automount: true
+  annotations:
+    environment: "production"
+    eks.amazonaws.com/role-arn: arn:aws:iam::account:role/kubechat-production-role
+  name: ""
+
+## RBAC Configuration (Minimal permissions for production)
+rbac:
+  create: true
+  rules:
+    - apiGroups: [""]
+      resources: ["pods", "services", "endpoints"]
+      verbs: ["get", "list", "watch"]
+    - apiGroups: [""]
+      resources: ["configmaps"]
+      verbs: ["get", "list", "watch"]
+      resourceNames: ["kubechat-config"]
+    - apiGroups: [""]
+      resources: ["secrets"]
+      verbs: ["get"]
+      resourceNames: ["kubechat-secrets"]
+    - apiGroups: ["apps"]
+      resources: ["deployments", "replicasets"]
+      verbs: ["get", "list", "watch"]
+    - apiGroups: ["extensions", "networking.k8s.io"]
+      resources: ["ingresses"]
+      verbs: ["get", "list", "watch"]
+    - apiGroups: ["metrics.k8s.io"]
+      resources: ["pods", "nodes"]
+      verbs: ["get", "list"]
+
+## RBAC Additional Configuration
+rbacConfig:
+  useClusterRole: false  # Set to true for cluster-wide permissions
+  annotations: {}
+
+## Network Policies (Strict for production)
+networkPolicy:
+  enabled: true
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            name: ingress-nginx
+      - podSelector:
+          matchLabels:
+            app.kubernetes.io/name: kubechat
+    - ports:
+      - protocol: TCP
+        port: 3000
+      - protocol: TCP
+        port: 8080
+  egress:
+    # DNS
+    - to: []
+      ports:
+      - protocol: TCP
+        port: 53
+      - protocol: UDP
+        port: 53
+    # PostgreSQL
+    - to:
+      - podSelector:
+          matchLabels:
+            app.kubernetes.io/name: postgresql
+      ports:
+      - protocol: TCP
+        port: 5432
+    # Redis
+    - to:
+      - podSelector:
+          matchLabels:
+            app.kubernetes.io/name: redis
+      ports:
+      - protocol: TCP
+        port: 6379
+    # HTTPS for external APIs
+    - to: []
+      ports:
+      - protocol: TCP
+        port: 443
+
+## Pod Security Standards (Strict for production)
+podSecurityStandards:
+  enabled: true
+  enforce: "restricted"
+  audit: "restricted"
+  warn: "restricted"
+
+## ConfigMaps
+configMap:
+  create: true
+  data:
+    api_config.yaml: |
+      server:
+        port: 8080
+        timeout: 60s
+        read_header_timeout: 15s
+        write_timeout: 60s
+        idle_timeout: 120s
+      database:
+        max_connections: 50
+        timeout: 15s
+        max_idle_time: 60m
+        max_lifetime: 2h
+      redis:
+        timeout: 10s
+        max_retries: 5
+        min_retry_backoff: 200ms
+        max_retry_backoff: 5s
+      logging:
+        level: warn
+        format: json
+        output: stdout
+      metrics:
+        enabled: true
+        path: /metrics
+        port: 8080
+      audit:
+        enabled: true
+        retention_days: 2555  # 7 years for compliance
+      security:
+        csrf_protection: true
+        cors_enabled: true
+        allowed_origins: ["https://kubechat.com", "https://www.kubechat.com"]
+        rate_limiting: true
+        max_requests_per_minute: 200
+
+## Horizontal Pod Autoscaler
+autoscaling:
+  enabled: true
+  minReplicas: 5
+  maxReplicas: 50  # High scaling for production
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+      - type: Pods
+        value: 10
+        periodSeconds: 60
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 60
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 70
+
+## Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 60%  # Ensure high availability
+
+
+## Database Backup Configuration
+backup:
+  enabled: true
+  schedule: "0 1 * * *"  # Daily at 1 AM UTC
+  retention:
+    days: 30
+    weeks: 12
+    months: 24  # 2 years retention
+
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+    runAsGroup: 1001
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    seccompProfile:
+      type: RuntimeDefault
+
+  # Backup to external storage
+  storage:
+    type: s3
+    bucket: kubechat-production-backups
+    region: us-west-2
+    encryption: true
+
+## External Secrets Integration
+externalSecrets:
+  enabled: true
+  secretStore:
+    provider: aws
+    region: us-west-2
+    roleArn: arn:aws:iam::account:role/kubechat-secrets-role
+
+## Ollama AI Service Configuration (Disabled in production)
+ollama:
+  enabled: false
+
+
+## Development Tools (Disabled in production)
+devTools:
+  enabled: false
+  pgAdmin:
+    enabled: false
+  redisCommander:
+    enabled: false
+
+## Resource Quotas for Production
+resourceQuotas:
+  enabled: true
+  hard:
+    requests.cpu: "50"
+    requests.memory: "100Gi"
+    limits.cpu: "100"
+    limits.memory: "200Gi"
+    persistentvolumeclaims: "20"
+    secrets: "10"
+    configmaps: "10"
+    services: "10"
+
+## Limit Ranges
+limitRanges:
+  enabled: true
+  limits:
+    - default:
+        cpu: "2000m"
+        memory: "2Gi"
+      defaultRequest:
+        cpu: "500m"
+        memory: "1Gi"
+      type: "Container"
+
+## Secrets Configuration
+secret:
+  annotations: {}
+  data: {}
+
+# JWT Secret for authentication (will be auto-generated if not provided)
+jwtSecret: ""
+
+# Encryption key for sensitive data (will be auto-generated if not provided)
+encryptionKey: ""
+
+## Hooks Configuration
+hooks:
+  preInstall:
+    enabled: true
+    image:
+      repository: bitnami/kubectl
+      tag: "1.28"
+      pullPolicy: IfNotPresent
+    ttlSecondsAfterFinished: 300
+    backoffLimit: 3
+    podSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 1001
+      runAsGroup: 1001
+      fsGroup: 1001
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1001
+      runAsGroup: 1001
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      readOnlyRootFilesystem: true
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    env: []
+
+  preUpgrade:
+    enabled: true
+    image:
+      repository: bitnami/kubectl
+      tag: "1.28"
+      pullPolicy: IfNotPresent
+    ttlSecondsAfterFinished: 300
+    backoffLimit: 3
+    podSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 1001
+      runAsGroup: 1001
+      fsGroup: 1001
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1001
+      runAsGroup: 1001
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      readOnlyRootFilesystem: true
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    env: []
+
+  preDelete:
+    enabled: true
+    image:
+      repository: bitnami/kubectl
+      tag: "1.28"
+      pullPolicy: IfNotPresent
+    ttlSecondsAfterFinished: 300
+    backoffLimit: 3
+    podSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 1001
+      runAsGroup: 1001
+      fsGroup: 1001
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1001
+      runAsGroup: 1001
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      readOnlyRootFilesystem: true
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    env: []

@@ -1,0 +1,43 @@
+{{- if .Values.podSecurityStandards.enabled -}}
+{{- if semverCompare "<1.25-0" .Capabilities.KubeVersion.GitVersion }}
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: {{ include "kubechat.fullname" . }}
+  namespace: {{ include "kubechat.namespace" . }}
+  labels:
+    {{- include "kubechat.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/resource-policy: keep
+    seccomp.security.alpha.kubernetes.io/allowedProfileNames: 'docker/default,runtime/default'
+    apparmor.security.beta.kubernetes.io/allowedProfileNames: 'runtime/default'
+    apparmor.security.beta.kubernetes.io/defaultProfileName:  'runtime/default'
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  requiredDropCapabilities:
+    - ALL
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'secret'
+    - 'downwardAPI'
+    - 'persistentVolumeClaim'
+  runAsUser:
+    rule: 'MustRunAsNonRoot'
+  runAsGroup:
+    rule: 'MustRunAs'
+    ranges:
+      - min: 1
+        max: 65535
+  seLinux:
+    rule: 'RunAsAny'
+  fsGroup:
+    rule: 'RunAsAny'
+  readOnlyRootFilesystem: true
+{{- else }}
+# Pod Security Standards are enforced via namespace labels in Kubernetes 1.25+
+# See: https://kubernetes.io/docs/concepts/security/pod-security-standards/
+{{- end }}
+{{- end }}

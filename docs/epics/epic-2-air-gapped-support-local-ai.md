@@ -5,8 +5,8 @@
 **Epic ID:** EPIC-2
 **Epic Name:** Air-Gapped Support & Local AI
 **Priority:** High
-**Estimated Story Points:** 53
-**Duration:** 6-8 Sprints
+**Estimated Story Points:** 61
+**Duration:** 7-9 Sprints
 
 ## Epic Goal
 
@@ -595,6 +595,295 @@ spec:
 2. Maintain secret-based authentication if rollback fails
 3. Document manual admin creation procedure as backup
 4. Ensure database schema changes are backwards compatible
+
+### Story 2.10: User-Kubernetes RBAC Integration & Individual Identity Management
+**Story Points:** 8
+**Priority:** High
+**Dependencies:** Epic 1 Stories 1.1, 1.2; Story 2.9 (Admin Authentication)
+
+**As a** System Administrator
+**I want** UI-driven user creation with automatic Kubernetes ServiceAccount and RBAC management
+**So that** each KubeChat user has individual K8s identity with granular permissions and namespace isolation
+
+**Acceptance Criteria:**
+- [ ] Admin UI for user creation with Kubernetes permissions configuration
+- [ ] Automatic ServiceAccount creation per KubeChat user
+- [ ] Namespace selection and assignment interface
+- [ ] ClusterRole/Role selection dropdown with predefined and custom roles
+- [ ] Resource permission matrix (CRUD operations per resource type)
+- [ ] Real-time K8s RBAC validation and testing
+- [ ] User permission preview before creation
+- [ ] Bulk user creation with CSV import
+- [ ] Individual ServiceAccount token management
+- [ ] User-specific audit trail in K8s logs
+
+**UI Components & Features:**
+
+**1. Enhanced User Creation Form:**
+```typescript
+interface UserCreationForm {
+  // Basic User Info
+  username: string;
+  email: string;
+  password?: string;
+  kubechatRole: 'admin' | 'user' | 'viewer';
+
+  // Kubernetes Integration
+  kubernetes: {
+    enabled: boolean;
+    serviceAccount: {
+      create: boolean;
+      name?: string; // auto-generated or custom
+      namespace: string; // defaults to 'kubechat'
+    };
+
+    // Namespace Permissions
+    namespaceAccess: {
+      type: 'all' | 'specific' | 'none';
+      namespaces: string[]; // multi-select with validation
+      permissions: NamespacePermission[];
+    };
+
+    // Cluster-Level Permissions
+    clusterAccess: {
+      enabled: boolean;
+      roles: string[]; // ClusterRole selection
+      customPermissions: ResourcePermission[];
+    };
+
+    // Resource-Specific Permissions
+    resourcePermissions: {
+      pods: PermissionLevel;
+      deployments: PermissionLevel;
+      services: PermissionLevel;
+      configmaps: PermissionLevel;
+      secrets: PermissionLevel;
+      persistentvolumes: PermissionLevel;
+      // ... other resources
+    };
+  };
+}
+
+type PermissionLevel = 'none' | 'read' | 'read-write' | 'full';
+```
+
+**2. Permission Matrix UI:**
+```
+┌─────────────────────┬─────┬─────┬───────────┬──────┐
+│ Resource Type       │ Get │ List│ Create/Update │Delete│
+├─────────────────────┼─────┼─────┼───────────┼──────┤
+│ Pods               │ ✓   │ ✓   │     ✓     │  ✗   │
+│ Deployments        │ ✓   │ ✓   │     ✓     │  ✓   │
+│ Services           │ ✓   │ ✓   │     ✗     │  ✗   │
+│ ConfigMaps         │ ✓   │ ✗   │     ✗     │  ✗   │
+│ Secrets            │ ✗   │ ✗   │     ✗     │  ✗   │
+└─────────────────────┴─────┴─────┴───────────┴──────┘
+```
+
+**3. Namespace Assignment Interface:**
+```typescript
+interface NamespaceSelector {
+  availableNamespaces: string[]; // fetched from cluster
+  selectedNamespaces: string[];
+  permissionTemplate: 'read-only' | 'developer' | 'admin' | 'custom';
+  customPermissions: ResourcePermission[];
+}
+```
+
+**Backend Implementation:**
+
+**Database Schema Extensions:**
+```sql
+-- User Kubernetes Integration
+CREATE TABLE user_kubernetes_config (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    service_account_name VARCHAR(255) NOT NULL,
+    service_account_namespace VARCHAR(255) DEFAULT 'kubechat',
+    service_account_token TEXT, -- encrypted
+    cluster_access_enabled BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Namespace Assignments
+CREATE TABLE user_namespace_permissions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    namespace_name VARCHAR(255) NOT NULL,
+    role_name VARCHAR(255) NOT NULL, -- ClusterRole or Role name
+    permission_level VARCHAR(50) NOT NULL, -- 'read', 'read-write', 'admin'
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, namespace_name)
+);
+
+-- Custom Resource Permissions
+CREATE TABLE user_resource_permissions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    resource_type VARCHAR(100) NOT NULL, -- 'pods', 'deployments', etc.
+    api_group VARCHAR(100) DEFAULT '', -- '', 'apps', 'extensions', etc.
+    verbs JSONB NOT NULL, -- ['get', 'list', 'create', 'update', 'delete']
+    namespace_scope BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Service Account Audit Trail
+CREATE TABLE service_account_operations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id),
+    service_account_name VARCHAR(255) NOT NULL,
+    operation VARCHAR(50) NOT NULL, -- 'created', 'updated', 'deleted', 'token_rotated'
+    kubernetes_uid VARCHAR(255), -- K8s resource UID for tracking
+    status VARCHAR(20) NOT NULL, -- 'success', 'failed'
+    error_message TEXT,
+    performed_by UUID REFERENCES users(id), -- admin who performed action
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**Kubernetes Resource Management:**
+```go
+// ServiceAccount Creation
+type ServiceAccountManager struct {
+    client     kubernetes.Interface
+    namespace  string
+    userRepo   UserRepository
+}
+
+func (s *ServiceAccountManager) CreateUserServiceAccount(ctx context.Context, user *User, config *KubernetesConfig) error {
+    // 1. Create ServiceAccount
+    sa := &corev1.ServiceAccount{
+        ObjectMeta: metav1.ObjectMeta{
+            Name:      fmt.Sprintf("kubechat-%s", user.Username),
+            Namespace: config.ServiceAccount.Namespace,
+            Labels: map[string]string{
+                "app.kubernetes.io/name":       "kubechat",
+                "app.kubernetes.io/component":  "user-identity",
+                "app.kubernetes.io/managed-by": "kubechat",
+                "kubechat.io/username":         user.Username,
+                "kubechat.io/user-id":          user.ID.String(),
+            },
+        },
+    }
+
+    // 2. Create RoleBindings for each namespace
+    for _, ns := range config.NamespaceAccess.Namespaces {
+        roleBinding := &rbacv1.RoleBinding{
+            ObjectMeta: metav1.ObjectMeta{
+                Name:      fmt.Sprintf("kubechat-%s-%s", user.Username, ns),
+                Namespace: ns,
+            },
+            Subjects: []rbacv1.Subject{{
+                Kind:      "ServiceAccount",
+                Name:      sa.Name,
+                Namespace: sa.Namespace,
+            }},
+            RoleRef: rbacv1.RoleRef{
+                Kind:     "ClusterRole",
+                Name:     config.RoleName,
+                APIGroup: "rbac.authorization.k8s.io",
+            },
+        }
+    }
+
+    // 3. Create ClusterRoleBinding if cluster access enabled
+    if config.ClusterAccess.Enabled {
+        // Create ClusterRoleBinding
+    }
+
+    return nil
+}
+```
+
+**Admin UI Features:**
+
+**1. User Management Dashboard:**
+- User list with K8s integration status
+- Quick permission overview per user
+- Bulk operations (enable/disable K8s access)
+- Permission conflict detection and warnings
+
+**2. Role Templates:**
+```typescript
+const ROLE_TEMPLATES = {
+  'developer': {
+    namespaces: 'specific',
+    permissions: {
+      pods: 'read-write',
+      deployments: 'read-write',
+      services: 'read',
+      configmaps: 'read',
+      secrets: 'none'
+    }
+  },
+  'devops': {
+    namespaces: 'all',
+    permissions: {
+      pods: 'full',
+      deployments: 'full',
+      services: 'full',
+      configmaps: 'read-write',
+      secrets: 'read'
+    }
+  },
+  'viewer': {
+    namespaces: 'specific',
+    permissions: {
+      pods: 'read',
+      deployments: 'read',
+      services: 'read',
+      configmaps: 'none',
+      secrets: 'none'
+    }
+  }
+};
+```
+
+**3. Real-Time Validation:**
+- Test user permissions before creation
+- Validate namespace existence
+- Check ClusterRole availability
+- Preview generated RBAC resources
+
+**Security Features:**
+- ServiceAccount token encryption in database
+- Token rotation capabilities
+- Permission audit trail
+- Least privilege principle enforcement
+- Namespace isolation validation
+
+**API Endpoints:**
+```typescript
+// User CRUD with K8s integration
+POST   /api/v1/admin/users                    // Create user with K8s config
+PUT    /api/v1/admin/users/{id}/kubernetes    // Update K8s permissions
+DELETE /api/v1/admin/users/{id}/kubernetes    // Remove K8s access
+GET    /api/v1/admin/users/{id}/permissions   // Get effective permissions
+
+// K8s Resource Management
+GET    /api/v1/admin/kubernetes/namespaces    // Available namespaces
+GET    /api/v1/admin/kubernetes/roles         // Available ClusterRoles
+POST   /api/v1/admin/kubernetes/test-permissions // Test user permissions
+GET    /api/v1/admin/kubernetes/service-accounts // List managed ServiceAccounts
+
+// Bulk Operations
+POST   /api/v1/admin/users/bulk-create        // CSV import with K8s config
+POST   /api/v1/admin/users/bulk-update-permissions // Bulk permission updates
+```
+
+**Chat Command Integration:**
+When user executes commands, KubeChat will:
+1. Use user's individual ServiceAccount token
+2. Respect user's namespace restrictions
+3. Validate permissions before execution
+4. Log actions under user's K8s identity
+
+**Rollback Plan:**
+1. Preserve existing shared ServiceAccount as fallback
+2. Maintain user database records during rollback
+3. Clean up created K8s resources gracefully
+4. Document individual ServiceAccount cleanup procedures
 
 ## External API Integration Requirements
 

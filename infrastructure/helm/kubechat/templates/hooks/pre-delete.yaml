@@ -1,0 +1,62 @@
+{{- if .Values.hooks.preDelete.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "kubechat.fullname" . }}-pre-delete
+  namespace: {{ include "kubechat.namespace" . }}
+  labels:
+    {{- include "kubechat.labels" . | nindent 4 }}
+    app.kubernetes.io/component: pre-delete-hook
+  annotations:
+    "helm.sh/hook": pre-delete
+    "helm.sh/hook-weight": "-15"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  ttlSecondsAfterFinished: {{ .Values.hooks.preDelete.ttlSecondsAfterFinished }}
+  backoffLimit: {{ .Values.hooks.preDelete.backoffLimit }}
+  template:
+    metadata:
+      name: {{ include "kubechat.fullname" . }}-pre-delete
+      labels:
+        {{- include "kubechat.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: pre-delete-hook
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ include "kubechat.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.hooks.preDelete.podSecurityContext | nindent 8 }}
+      containers:
+      - name: pre-delete
+        image: "{{ .Values.hooks.preDelete.image.repository }}:{{ .Values.hooks.preDelete.image.tag }}"
+        imagePullPolicy: {{ .Values.hooks.preDelete.image.pullPolicy }}
+        securityContext:
+          {{- toYaml .Values.hooks.preDelete.securityContext | nindent 10 }}
+        command:
+          - /bin/bash
+          - -c
+          - |
+            echo "=== KubeChat Pre-Delete Hook ==="
+            echo "Namespace: {{ include "kubechat.namespace" . }}"
+            echo "Release: {{ .Release.Name }}"
+            echo "Chart: {{ .Chart.Name }}-{{ .Chart.Version }}"
+
+            # List resources to be deleted
+            echo "Resources to be deleted:"
+            kubectl get all -n "{{ include "kubechat.namespace" . }}" -l "app.kubernetes.io/name={{ include "kubechat.name" . }}" || true
+
+            # Optional: Create backup information
+            echo "Creating deletion report..."
+            kubectl get all -n "{{ include "kubechat.namespace" . }}" -l "app.kubernetes.io/name={{ include "kubechat.name" . }}" -o yaml > /tmp/kubechat-backup-$(date +%Y%m%d-%H%M%S).yaml || true
+
+            echo "Pre-delete preparation completed"
+        env:
+        - name: RELEASE_NAME
+          value: {{ .Release.Name | quote }}
+        - name: RELEASE_NAMESPACE
+          value: {{ include "kubechat.namespace" . | quote }}
+        {{- with .Values.hooks.preDelete.env }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        resources:
+          {{- toYaml .Values.hooks.preDelete.resources | nindent 10 }}
+{{- end }}
