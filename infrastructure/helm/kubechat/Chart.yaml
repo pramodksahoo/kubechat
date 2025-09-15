@@ -1,0 +1,69 @@
+apiVersion: v2
+name: kubechat
+description: KubeChat - Natural Language Kubernetes Management Platform with Enterprise Production Features
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+home: https://github.com/pramodksahoo/kubechat
+sources:
+  - https://github.com/pramodksahoo/kubechat
+maintainers:
+  - name: KubeChat Team
+    email: hello@kubechat.dev
+    url: https://github.com/pramodksahoo/kubechat
+
+dependencies:
+  - name: postgresql
+    version: 16.0.0
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+    tags:
+      - database
+    # PostgreSQL passwords are managed via secrets, not imported
+    alias: postgresql
+  - name: redis
+    version: 19.6.0
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+    tags:
+      - cache
+      - session
+    # Redis passwords are managed via secrets, not imported
+    alias: redis
+
+keywords:
+  - kubernetes
+  - ai
+  - nlp
+  - management
+  - devops
+  - production-ready
+  - enterprise
+  - compliance
+
+annotations:
+  category: Infrastructure
+  licenses: Apache-2.0
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/prerelease: "false"
+  artifacthub.io/operator: "false"
+  artifacthub.io/changes: |
+    - kind: added
+      description: Production-ready Helm chart with comprehensive multi-environment support
+    - kind: added
+      description: Enhanced RBAC configuration with service accounts and minimal permissions
+    - kind: added
+      description: TLS/HTTPS configuration with cert-manager integration
+    - kind: added
+      description: Health checks integration with readiness and liveness probes
+    - kind: added
+      description: Database backup automation with scheduled CronJobs
+    - kind: added
+      description: Security scanning integration and Pod Security Standards
+    - kind: added
+      description: Multi-environment configuration with staging and production values
+  artifacthub.io/links: |
+    - name: Chart Source
+      url: https://github.com/pramodksahoo/kubechat/tree/main/infrastructure/helm/kubechat
+    - name: Documentation
+      url: https://github.com/pramodksahoo/kubechat/blob/main/README.md
