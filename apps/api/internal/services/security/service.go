@@ -291,10 +291,17 @@ type service struct {
 	cache              map[string]cacheEntry
 	blockedIPs         map[string]time.Time
 	performanceHistory []PerformanceSnapshot
+	auditService       AuditService // Add audit service dependency
+	securityLogger     *SecurityLogger // Add security logger
 	mu                 sync.RWMutex
 	ctx                context.Context
 	cancel             context.CancelFunc
 	monitoring         bool
+}
+
+// AuditService interface for audit logging dependency
+type AuditService interface {
+	LogEvent(ctx context.Context, entry *models.AuditLog) error
 }
 
 // cacheEntry represents a cache entry
@@ -315,6 +322,10 @@ type PerformanceSnapshot struct {
 
 // NewService creates a new security and performance service
 func NewService(config *Config) Service {
+	return NewServiceWithAudit(config, nil)
+}
+
+func NewServiceWithAudit(config *Config, auditService AuditService) Service {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	s := &service{
@@ -330,9 +341,13 @@ func NewService(config *Config) Service {
 			StartTime:  time.Now(),
 			LastUpdate: time.Now(),
 		},
-		ctx:    ctx,
-		cancel: cancel,
+		auditService: auditService,
+		ctx:          ctx,
+		cancel:       cancel,
 	}
+
+	// Initialize security logger
+	s.securityLogger = NewSecurityLogger(s)
 
 	return s
 }
@@ -804,4 +819,37 @@ func (s *service) StartMonitoring(ctx context.Context) error {
 func (s *service) StopMonitoring() {
 	s.monitoring = false
 	s.cancel()
+}
+
+// LogAuthenticationAttempt logs authentication attempts with security context
+func (s *service) LogAuthenticationAttempt(ctx context.Context, username string, success bool, errorCode string) {
+	if s.securityLogger != nil {
+		s.securityLogger.LogAuthenticationAttempt(ctx, username, success, errorCode)
+	}
+}
+
+// LogConfigurationChange logs configuration changes for audit trail
+func (s *service) LogConfigurationChange(ctx context.Context, userID, configKey, action string, metadata map[string]string) {
+	if s.securityLogger != nil {
+		s.securityLogger.LogConfigurationChange(ctx, userID, configKey, action, metadata)
+	}
+}
+
+// LogSecurityViolation logs security violations and suspicious activities
+func (s *service) LogSecurityViolation(ctx context.Context, violationType, description string, metadata map[string]string) {
+	if s.securityLogger != nil {
+		s.securityLogger.LogSecurityViolation(ctx, violationType, description, metadata)
+	}
+}
+
+// LogPermissionDenied logs permission denied events
+func (s *service) LogPermissionDenied(ctx context.Context, userID, resource, action string) {
+	if s.securityLogger != nil {
+		s.securityLogger.LogPermissionDenied(ctx, userID, resource, action)
+	}
+}
+
+// GetSecurityLogger returns the security logger instance
+func (s *service) GetSecurityLogger() *SecurityLogger {
+	return s.securityLogger
 }

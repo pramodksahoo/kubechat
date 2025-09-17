@@ -5,6 +5,7 @@ import { ChatMessageList } from './ChatMessageList';
 import { ChatInput } from './ChatInput';
 import { useChat } from '@/hooks/useChat';
 import { commandApprovalService } from '@/services/commandApprovalService';
+import { realTimeService } from '@/services/realTimeService';
 
 interface ChatInterfaceProps {
   sessionId?: string;
@@ -44,6 +45,23 @@ export function ChatInterface({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Initialize WebSocket connection for real-time updates (AC: 7)
+  useEffect(() => {
+    if (!realTimeService.isWebSocketConnected()) {
+      realTimeService.initializeWebSocket();
+    }
+
+    // Subscribe to chat-related real-time updates
+    const subscriptionId = realTimeService.subscribe(['chat'], (update) => {
+      console.log('Chat real-time update:', update);
+      // Handle real-time chat updates if needed
+    });
+
+    return () => {
+      realTimeService.unsubscribe(subscriptionId);
+    };
+  }, []);
 
   const handleSendMessage = async (message: string) => {
     if (!message.trim() || loading || !currentSession) return;

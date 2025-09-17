@@ -1,9 +1,17 @@
 # KubeChat Helm Chart - Development Values
 # This file contains development-specific configurations optimized for local development
 
-## Namespace Configuration - Let Helm manage namespace creation
+## Global Configuration - Development Overrides
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: "local-path"  # Use local-path for development
+  environment: "development"
+
+## Namespace Configuration - Development Environment
 namespace:
   create: false
+  name: kubechat  # Override production namespace name
 
 ## Frontend (Web) Configuration - Development Overrides
 web:
@@ -32,8 +40,11 @@ web:
   # Development environment variables
   env:
     NODE_ENV: "development"
-    NEXT_PUBLIC_API_BASE_URL: http://localhost:30080/api
+    NEXT_PUBLIC_API_BASE_URL: http://localhost:30080
     NEXT_TELEMETRY_DISABLED: "1"
+    # API proxy configuration for Next.js rewrites
+    API_URL: "http://kubechat-dev-api:8080"
+    BACKEND_SERVICE_URL: "http://kubechat-dev-api:8080"
 
   # Proper health checks using actual Next.js endpoints
   livenessProbe:
@@ -92,37 +103,43 @@ api:
       cpu: 200m
       memory: 512Mi
   
-  # Development environment variables
+  # Development environment variables with security hardening
   env:
-    GIN_MODE: "debug"
+    GIN_MODE: "debug"  # Enable debug mode for development
     LOG_LEVEL: debug
     # Database configuration for enhanced schema
-    POSTGRES_HOST: kubechat-dev-postgresql
+    POSTGRES_HOST: kubechat-postgresql
     POSTGRES_PORT: "5432"
     POSTGRES_DB: kubechat
     POSTGRES_USER: kubechat
     # POSTGRES_PASSWORD: Provided via secret
-    POSTGRES_SSLMODE: disable
+    POSTGRES_SSLMODE: prefer  # SECURITY: Use prefer instead of disable
     # Additional DB_* variables for authentication service
-    DB_HOST: kubechat-dev-postgresql
+    DB_HOST: kubechat-postgresql
     DB_PORT: "5432"
     DB_NAME: kubechat
     DB_USER: kubechat
-    DB_SSL_MODE: disable
+    DB_SSL_MODE: disable  # Development override: Use disable for local PostgreSQL
     DB_MAX_OPEN_CONNS: "25"
     DB_MAX_IDLE_CONNS: "5"
     DB_CONN_MAX_LIFETIME: "5m"
     DB_CONN_MAX_IDLE_TIME: "1m"
     # Redis configuration
-    REDIS_HOST: kubechat-dev-redis-master
+    REDIS_HOST: kubechat-redis-master
     REDIS_PORT: "6379"
     # REDIS_PASSWORD: Provided via secret
     # Application settings
     DEBUG: "true"
-    # Security settings
-    ENCRYPTION_KEY: "dev-encryption-key-32-bytes-long" # 32 bytes for AES-256
-    SESSION_SECRET: "dev-session-secret-key"
+    # Security settings - MUST be provided via secrets in development
+    # JWT_SECRET: Provided via secret (mandatory)
+    JWT_EXPIRY_MINUTES: "1440"  # 24 hours (within security validation range)
+    # Security validation settings
+    SECURITY_AUDIT_ENABLED: "true"
+    AUDIT_LOG_ENABLED: "true"
     BCRYPT_COST: "12"
+    METRICS_ENABLED: "true"
+    # ALLOWED_ORIGINS: Secure CORS origins
+    ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:30001,http://kubechat.local"
 
   # Proper health checks using actual Go API endpoints
   livenessProbe:
@@ -200,14 +217,18 @@ hooks:
   preDelete:
     enabled: false
 
-## PostgreSQL Configuration - Development Overrides
+## PostgreSQL Configuration - Production-grade for Development Environment
 postgresql:
   enabled: true
+  fullnameOverride: "kubechat-postgresql"  # This ensures consistent secret naming
   auth:
-    postgresPassword: "dev-postgres"
     username: kubechat
-    password: "dev-password"
     database: kubechat
+    # Use KubeChat secret with secure 32-character password
+    existingSecret: "kubechat-dev-secret"
+    secretKeys:
+      adminPasswordKey: "postgresql-password"
+      userPasswordKey: "postgresql-password"
   
   primary:
     persistence:
@@ -241,12 +262,15 @@ postgresql:
     initdb:
       scriptsConfigMap: kubechat-db-init
 
-## Redis Configuration - Development Overrides  
+## Redis Configuration - Production-grade for Development Environment
 redis:
   enabled: true
+  fullnameOverride: "kubechat-redis"  # This ensures consistent secret naming
   auth:
     enabled: true
-    password: "dev-redis"
+    # Use KubeChat secret with secure 32-character password
+    existingSecret: "kubechat-dev-secret"
+    existingSecretPasswordKey: "redis-password"
   
   master:
     persistence:

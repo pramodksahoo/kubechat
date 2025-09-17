@@ -1,229 +1,283 @@
-# Epic 2: Ollama Integration & Enterprise Frontend Completion
+# Epic 2: Enterprise Security Hardening & Frontend Completion with Ollama
 
 ## Epic Overview
 
 **Epic ID:** EPIC-2
-**Epic Name:** Ollama Integration & Enterprise Frontend Completion
-**Priority:** High
-**Estimated Story Points:** 48
-**Duration:** 6-8 Sprints
+**Epic Name:** Enterprise Security Hardening & Frontend Completion with Ollama
+**Priority:** P0 - Critical (Security & Compliance)
+**Estimated Story Points:** 71
+**Duration:** 4 Sprints (4 weeks)
 
 ## Epic Goal
 
-Complete the enterprise-grade frontend interfaces for existing backend APIs while adding Ollama as a local AI provider option, enabling both online (OpenAI) and offline (Ollama) AI capabilities with comprehensive admin and user management interfaces.
+**Transform KubeChat from development-mode application to enterprise-ready platform** by eliminating all security vulnerabilities, implementing proper authentication, and completing frontend interfaces for existing backend APIs with security-first approach.
 
 ## Epic Description
 
-**Existing System Analysis:**
-- ✅ Rich backend APIs already implemented (multi-provider AI, user management, audit trail, command workflow)
-- ✅ Basic chat interface UI exists but is non-functional
-- ❌ **CRITICAL GAP:** Chat interface not connected to backend APIs - queries don't process, commands don't execute
-- ❌ **Missing:** Frontend-backend integration for core chat functionality
-- ❌ **Missing:** AI provider selection and model management UI
-- ❌ **Missing:** Admin interfaces for user, audit, and resource management
+### **🚨 CRITICAL SECURITY SITUATION**
+**Current State Analysis:**
+- ✅ **Rich backend APIs implemented** (multi-provider AI, user management, audit trail, command workflow)
+- ❌ **22 CRITICAL security vulnerabilities** from development-mode configurations
+- ❌ **No frontend authentication system** - cannot access protected endpoints
+- ❌ **Production configs point to development APIs** - data leakage risk
+- ❌ **Default JWT secrets & wildcard CORS** - system compromise risk
+- ❌ **Chat interface broken** - tries to call protected endpoints without authentication
 
-**Enhancement Strategy:**
-- **PRIORITY 1:** Fix core chat interface to connect with existing backend APIs
-- **PRIORITY 2:** Add Ollama service and AI provider selection UI once chat works
-- **PRIORITY 3:** Build comprehensive admin interfaces for existing `/users`, `/audit`, `/kubernetes` APIs
-- Implement command approval workflow UI for existing approval system
-- Create enterprise dashboards for monitoring and management
-- Complete frontend-backend integration for all existing capabilities
+### **🎯 ENTERPRISE TRANSFORMATION STRATEGY**
+**Security-First Foundation → Feature Implementation:**
 
-**Success Criteria:**
-- **CRITICAL:** Core chat interface functional - queries process and commands execute with results
-- Ollama integrated as local AI provider alongside existing OpenAI
-- All backend APIs have corresponding frontend interfaces
-- Complete admin user management and RBAC interfaces implemented
-- Enterprise audit trail and compliance dashboards functional
-- Command approval workflow UI operational
-- Kubernetes resource management interface complete
+1. **FOUNDATION PHASE** (Sprint 1): Enterprise security hardening & authentication
+2. **CORE FEATURES PHASE** (Sprint 2): Authenticated chat & user management
+3. **ADVANCED FEATURES PHASE** (Sprint 3-4): AI providers, approvals, dashboards
 
-## User Stories
+### **🏆 SUCCESS CRITERIA**
+- **ZERO development mode configurations** in production
+- **Complete frontend authentication system** integrated with backend APIs
+- **All 22 security vulnerabilities eliminated**
+- **Enterprise-grade chat interface** with authenticated command execution
+- **Full admin interfaces** for user management and RBAC
+- **Production-ready deployment** with security compliance
+- **SOC 2 / ISO 27001 compliance readiness**
 
-### Story 2.1: Core Chat Interface & Command Execution Integration
-**Story Points:** 8
-**Priority:** Critical
-**Dependencies:** Epic 1 Stories 1.3, 1.5 (Backend API services completed)
+---
 
-**As a** End User and DevOps Engineer
-**I want** a functional chat interface that processes queries and executes commands
-**So that** I can interact with Kubernetes clusters through natural language and see actual results
+## User Stories (Redesigned Priority Order)
+
+### 🔴 **FOUNDATION STORIES (CRITICAL - Sprint 1)**
+
+### Story 2.1: Enterprise Security Hardening & Authentication Foundation
+**Story Points:** 21
+**Priority:** P0 - CRITICAL BLOCKER
+**Sprint:** 1 (Week 1)
+**Dependencies:** None - must be first
+
+**As a** Security Officer and System Administrator
+**I want** all development mode vulnerabilities eliminated and enterprise authentication implemented
+**So that** the application meets security standards and users can safely access protected features
+
+**Critical Security Issues to Resolve:**
+- Remove all 22 development mode security vulnerabilities
+- Implement frontend authentication system (login/register/JWT management)
+- Eliminate default JWT secrets and implement mandatory environment variables
+- Replace wildcard CORS with specific domain restrictions
+- Production-first configuration hardening
+- Secure secrets management integration
 
 **Acceptance Criteria:**
-- [ ] Chat interface connects to existing `/queries` API for natural language processing
-- [ ] Command execution integration with `/commands/execute` API showing real results
-- [ ] Command history display using `/commands/executions` API with proper formatting
-- [ ] Real-time command execution status and progress indicators
-- [ ] Error handling with clear user feedback for failed queries/commands
-- [ ] Loading states during query processing and command execution
-- [ ] WebSocket integration for real-time updates and notifications
+- [ ] **Security Hardening:** All 22 development vulnerabilities eliminated
+- [ ] **Authentication System:** Complete login/register/JWT frontend implementation
+- [ ] **Protected API Access:** Frontend can authenticate with all protected endpoints
+- [ ] **Production Configuration:** All configs default to production, not development
+- [ ] **JWT Security:** No default secrets, mandatory environment validation
+- [ ] **CORS Security:** Specific origins only, no wildcards
+- [ ] **Secrets Management:** All credentials from Kubernetes secrets
+- [ ] **Startup Validation:** Application fails fast if security requirements missing
 
-### Story 2.2: Ollama Integration & AI Provider Management UI
+---
+
+### 🟡 **CORE FUNCTIONALITY STORIES (HIGH - Sprint 2)**
+
+### Story 2.2: Authenticated Chat Interface & Command Execution Integration
+**Story Points:** 13
+**Priority:** P0 - CRITICAL
+**Sprint:** 2 (Week 2)
+**Dependencies:** Story 2.1 (Authentication Foundation)
+
+**As an** End User and DevOps Engineer
+**I want** a functional authenticated chat interface that processes queries and executes commands
+**So that** I can interact with Kubernetes clusters through natural language with proper security
+
+**Key Changes from Original:**
+- Uses **authenticated endpoints only** (`/api/v1/chat/sessions`, `/api/v1/nlp/process`)
+- **Requires JWT tokens** for all API calls
+- **Proper error handling** for authentication failures
+- **Real backend integration** (no mock/fallback services)
+
+**Acceptance Criteria:**
+- [ ] **Authenticated Chat:** Chat interface uses authenticated `/api/v1/chat/sessions` API
+- [ ] **NLP Integration:** Natural language processing via authenticated `/api/v1/nlp/process`
+- [ ] **Command Execution:** Integration with `/api/v1/commands/execute` with JWT tokens
+- [ ] **Real-time Updates:** WebSocket connection with authentication
+- [ ] **Command History:** Display using `/api/v1/commands/executions` with proper permissions
+- [ ] **Error Handling:** Clear feedback for authentication and authorization failures
+- [ ] **Session Management:** Automatic token refresh and logout handling
+
+### Story 2.3: Admin User Management & RBAC Interface
 **Story Points:** 8
-**Priority:** High
-**Dependencies:** Story 2.1 (Core chat functionality working)
+**Priority:** P0 - HIGH
+**Sprint:** 2 (Week 2)
+**Dependencies:** Story 2.1 (Authentication Foundation)
+
+**As a** System Administrator
+**I want** comprehensive user management interface for the authentication system
+**So that** I can manage users, roles, and permissions through secure admin UI
+
+**Integration with Authentication Foundation:**
+- Builds admin UI for authentication system from Story 2.1
+- Leverages existing backend user management APIs
+- Provides enterprise user administration capabilities
+
+**Acceptance Criteria:**
+- [ ] **User Administration:** CRUD interface for users with role management
+- [ ] **Authentication Integration:** Manages users created by Story 2.1 auth system
+- [ ] **Role-Based Access:** Admin interface for roles and permissions
+- [ ] **Session Management:** User session monitoring and control
+- [ ] **Security Administration:** Password policies and security settings
+- [ ] **Audit Integration:** User activity monitoring and logs
+
+---
+
+### 🟢 **ADVANCED FEATURES STORIES (MEDIUM - Sprint 3-4)**
+
+### Story 2.4: AI Provider Selection & Management UI
+**Story Points:** 8
+**Priority:** P1 - HIGH
+**Sprint:** 3 (Week 3)
+**Dependencies:** Story 2.2 (Authenticated Chat)
 
 **As a** System Administrator and End User
-**I want** Ollama integrated as a local AI provider with provider selection UI
-**So that** I can choose between OpenAI (online) and Ollama (local) AI providers through the interface
+**I want** AI provider management with authenticated Ollama integration
+**So that** I can choose between OpenAI and local Ollama providers securely
 
 **Acceptance Criteria:**
-- [ ] Ollama service deployed in Kubernetes cluster alongside existing services
-- [ ] AI provider selection interface in chat UI (OpenAI vs Ollama toggle)
-- [ ] Model management interface for Ollama models (load/unload/monitor)
-- [ ] Integration with existing `/ai/providers` and `/ai/models` backend APIs
-- [ ] Provider performance comparison dashboard
-- [ ] Fallback mechanism when selected provider is unavailable
-- [ ] Cost tracking for both providers (tokens for OpenAI, resource usage for Ollama)
+- [ ] **Ollama Integration:** Secure deployment with authentication
+- [ ] **Provider Selection:** Authenticated switching between OpenAI/Ollama
+- [ ] **Model Management:** Secure Ollama model management interface
+- [ ] **Performance Dashboard:** Provider comparison with security metrics
+- [ ] **Cost Tracking:** Authenticated usage monitoring for both providers
 
-### Story 2.3: Command Approval Workflow UI Integration
+### Story 2.5: Command Approval Workflow UI Integration
 **Story Points:** 7
-**Priority:** High
-**Dependencies:** Epic 1 Stories 1.6 (Command execution system)
+**Priority:** P1 - HIGH
+**Sprint:** 3 (Week 3)
+**Dependencies:** Story 2.2 (Authenticated Chat), Story 2.3 (User Management)
 
 **As a** System Administrator and DevOps Engineer
-**I want** complete frontend interface for the existing command approval workflow
-**So that** I can manage dangerous command approvals and monitor command executions through the UI
+**I want** secure command approval workflow interface
+**So that** I can manage dangerous operations with proper authorization
 
 **Acceptance Criteria:**
-- [ ] Pending approvals dashboard using existing `/commands/approvals/pending` API
-- [ ] Command approval interface for dangerous operations via `/commands/approve` API
-- [ ] Execution history viewer using `/commands/executions` API
-- [ ] Rollback planning interface using `/commands/executions/{id}/rollback/plan` API
-- [ ] Real-time command execution status monitoring
-- [ ] Approval workflow notifications and alerts
-- [ ] Command execution analytics dashboard using `/commands/stats` API
+- [ ] **Approval Dashboard:** Authenticated pending approvals interface
+- [ ] **Command Review:** Secure command approval with user verification
+- [ ] **Execution Monitoring:** Real-time authenticated command tracking
+- [ ] **Rollback Interface:** Secure rollback planning and execution
+- [ ] **Audit Trail:** Complete approval workflow audit logging
 
-### Story 2.4: Admin User Management Interface
+### Story 2.6: Audit Trail & Compliance Dashboard
 **Story Points:** 6
-**Priority:** High
-**Dependencies:** Epic 1 Stories 1.2 (Database), existing user APIs
-
-**As a** System Administrator
-**I want** comprehensive user management interface for existing user APIs
-**So that** I can manage users, roles, and permissions through the UI
-
-**Acceptance Criteria:**
-- [ ] User CRUD interface using existing `/users` APIs
-- [ ] Auto-admin user creation during Helm deployment with K8s secrets
-- [ ] User role and permission management UI
-- [ ] Password management through Kubernetes secrets
-- [ ] User session management interface using `/sessions` APIs
-- [ ] User activity monitoring dashboard
-- [ ] Bulk user operations (import/export)
-
-### Story 2.5: Audit Trail & Compliance Dashboard
-**Story Points:** 6
-**Priority:** Medium
-**Dependencies:** Epic 1 Stories 1.8 (Audit system)
+**Priority:** P1 - MEDIUM
+**Sprint:** 4 (Week 4)
+**Dependencies:** Story 2.3 (User Management)
 
 **As a** Compliance Officer and System Administrator
-**I want** comprehensive audit trail interface for existing audit APIs
-**So that** I can monitor system compliance and security through dashboards
+**I want** comprehensive security audit interface
+**So that** I can monitor compliance with enterprise security standards
 
 **Acceptance Criteria:**
-- [ ] Audit log viewer using existing `/audit/logs` APIs
-- [ ] Dangerous operations monitoring via `/audit/dangerous` API
-- [ ] Failed operations dashboard using `/audit/failed` API
-- [ ] Compliance reporting interface with export capabilities
-- [ ] Real-time audit event streaming using `/audit/stream` API
-- [ ] Audit log search and filtering capabilities
-- [ ] Compliance metrics and trending analysis
+- [ ] **Security Audit Logs:** Authentication and authorization event tracking
+- [ ] **Compliance Dashboard:** Security compliance metrics and reporting
+- [ ] **Threat Monitoring:** Suspicious activity detection and alerting
+- [ ] **Export Capabilities:** Secure audit data export for compliance
+- [ ] **Real-time Monitoring:** Live security event streaming
 
-### Story 2.6: Kubernetes Resource Explorer Interface
+### Story 2.7: Kubernetes Resource Explorer with RBAC
 **Story Points:** 8
-**Priority:** Medium
-**Dependencies:** Epic 1 Stories 1.6 (K8s integration)
+**Priority:** P1 - MEDIUM
+**Sprint:** 4 (Week 4)
+**Dependencies:** Story 2.3 (User Management)
 
 **As a** DevOps Engineer and Developer
-**I want** Kubernetes resource management interface for existing K8s APIs
-**So that** I can explore and manage cluster resources through the UI
+**I want** secure Kubernetes resource management interface
+**So that** I can explore cluster resources with proper user permissions
 
 **Acceptance Criteria:**
-- [ ] K8s resource browser using existing `/kubernetes/resources` APIs
-- [ ] Namespace explorer and resource listing
-- [ ] Resource detail views with YAML/JSON display
-- [ ] Cluster health dashboard using `/kubernetes/health` APIs
-- [ ] Node and pod monitoring interface
-- [ ] Resource scaling and management controls
-- [ ] K8s events and logs viewer
+- [ ] **Authenticated K8s Access:** Resource browser with user-based permissions
+- [ ] **RBAC Integration:** User-specific Kubernetes access control
+- [ ] **ServiceAccount Management:** Individual user ServiceAccount creation
+- [ ] **Resource Security:** Permission-based resource visibility
+- [ ] **Audit Integration:** Kubernetes operation audit logging
 
-### Story 2.7: User-Kubernetes RBAC Integration UI
-**Story Points:** 8
-**Priority:** High
-**Dependencies:** Stories 2.4 (User management), existing RBAC APIs
-
-**As a** System Administrator
-**I want** individual ServiceAccount creation and RBAC management interface
-**So that** each user has proper K8s permissions with granular access control
-
-**Acceptance Criteria:**
-- [ ] Individual ServiceAccount creation interface per user
-- [ ] K8s permissions management per user with role selection
-- [ ] Namespace access control UI with permission matrix
-- [ ] ServiceAccount token management interface
-- [ ] RBAC testing and validation tools
-- [ ] Permission conflict detection and resolution
-- [ ] Kubernetes identity audit trail per user
+---
 
 ## Dependencies and Integration Points
 
-### Internal Dependencies
-- Epic 1: Complete foundation with all backend APIs functional
-- Existing rich backend API endpoints for AI, users, audit, commands, and Kubernetes
-- Current chat interface and basic authentication system
-- Database schema and audit trail system from Epic 1
+### **Critical Path Dependencies:**
+```mermaid
+Story 2.1 (Security Foundation) → ALL OTHER STORIES
+    ↓
+Story 2.2 (Chat) + Story 2.3 (User Mgmt) → Advanced Features
+    ↓
+Stories 2.4, 2.5, 2.6, 2.7 (Can run in parallel)
+```
 
-### External Dependencies (Maintained)
-- OpenAI API integration (keeps existing functionality)
-- Ollama service (new local AI provider)
-- Kubernetes cluster for RBAC integration
-- Container registry for Ollama model storage
+### **Internal Dependencies:**
+- **Epic 1:** Backend APIs completed and functional
+- **Story 2.1:** Foundation for ALL subsequent stories
+- **Authentication System:** Required for all protected endpoint access
 
-### Cross-Epic Dependencies
-- Epic 3: Benefits from enhanced user management and AI provider selection
-- Epic 4: Builds on improved admin interfaces and monitoring dashboards
-- Epic 5: Uses audit trail interfaces for compliance features
+### **External Dependencies:**
+- **Kubernetes Secrets:** For secure credential management
+- **External Secrets Operator:** For enterprise secrets management
+- **HashiCorp Vault/AWS Secrets Manager:** For external secret stores
+
+---
+
+## Security Compliance Requirements
+
+### **Enterprise Standards:**
+- [ ] **SOC 2 Type II:** Access controls and configuration management
+- [ ] **ISO 27001:** Security by design and risk management
+- [ ] **GDPR:** Data protection by design and default
+- [ ] **NIST Cybersecurity Framework:** Complete security controls
+
+### **Security Gates:**
+1. **Sprint 1 Gate:** All security vulnerabilities eliminated
+2. **Sprint 2 Gate:** Authentication and authorization working
+3. **Sprint 3 Gate:** Advanced features secure and auditable
+4. **Epic Gate:** Full security compliance validation
+
+---
 
 ## Success Metrics
 
-### Technical Metrics
-- All existing backend APIs have functional frontend interfaces: 100%
-- AI provider switching response time: <2 seconds
-- Command approval workflow completion time: <30 seconds
-- User management operations response time: <1 second
-- Audit dashboard load time: <3 seconds
+### **Security Metrics (Critical)**
+- Security vulnerabilities eliminated: 22 → 0
+- Authentication coverage: 0% → 100%
+- Configuration security score: 20% → 100%
+- Compliance readiness: 15% → 95%
 
-### Business Metrics
-- Admin task completion time reduced by 70%
-- User onboarding time reduced by 60% with automated processes
-- Command execution safety improved with approval workflow UI
-- Compliance reporting time reduced by 80% with automated dashboards
+### **Functional Metrics**
+- Backend API integration: 20% → 100%
+- Admin interface coverage: 0% → 100%
+- User management automation: 0% → 90%
+- Command execution security: 30% → 100%
 
-### Quality Metrics
-- Frontend test coverage: >85% for new interfaces
-- API integration test coverage: 100% for all connected endpoints
-- User experience consistency across all admin interfaces
-- Accessibility compliance (WCAG AA) for all new UI components
+### **Business Metrics**
+- Enterprise customer readiness: No → Yes
+- Security audit pass rate: 0% → 100%
+- Compliance certification readiness: No → Yes
+- Time to production deployment: Blocked → 4 weeks
+
+---
 
 ## Definition of Done
 
-### Epic-Level Success Criteria
-- [ ] All 6 user stories completed with acceptance criteria met
-- [ ] Ollama fully integrated as local AI provider alongside OpenAI
-- [ ] Complete frontend interfaces for all existing backend APIs
-- [ ] Admin user management fully functional with K8s integration
-- [ ] Command approval workflow UI operational
-- [ ] Audit trail and compliance dashboards complete
-- [ ] Kubernetes resource explorer functional
-- [ ] User-specific RBAC and ServiceAccount management working
+### **Epic-Level Success Criteria:**
+- [ ] **Zero Security Vulnerabilities:** All 22 development mode issues eliminated
+- [ ] **Complete Authentication:** Full frontend auth system integrated with backend
+- [ ] **Enterprise Ready:** Production-first configuration with security hardening
+- [ ] **Feature Complete:** All backend APIs have secure frontend interfaces
+- [ ] **Compliance Ready:** SOC 2, ISO 27001, GDPR compliance capabilities
+- [ ] **User Management:** Complete admin interfaces for user and RBAC management
+- [ ] **Audit Capable:** Full security audit trail and compliance reporting
 
-### Quality Gates
-1. **Integration Gate:** All frontend components successfully integrate with existing APIs
-2. **Performance Gate:** All new interfaces meet response time requirements
-3. **Security Gate:** RBAC and permission management properly implemented
-4. **User Experience Gate:** Consistent design system across all new interfaces
+### **Security Quality Gates:**
+1. **Penetration Testing:** No critical/high vulnerabilities found
+2. **Configuration Audit:** 100% production-ready settings
+3. **Authentication Testing:** All endpoints properly protected
+4. **Compliance Validation:** Enterprise standards met
+
+---
 
 ### Container-First Development Workflow ⚠️ CRITICAL FOR ALL TASKS
 **This workflow requirement applies to EVERY task in EVERY story:**
@@ -231,8 +285,8 @@ Complete the enterprise-grade frontend interfaces for existing backend APIs whil
 **⚠️ SCRUM MASTER NOTE: The following workflow section MUST be added to every story in this epic:**
 
 **Task Completion Workflow (Required for ALL tasks):**
-1. **Code Implementation** - Complete the task requirements
-2. **Container Build** - `make dev-rebuild-api` or `make dev-rebuild-web`
+1. **Code Implementation** - Complete the task requirements with security controls
+2. **Container Build and Deploy**: `make dev-upgrade-web` and `make dev-upgrade-api` with security validations
 3. **Deploy to Cluster** - `make dev-deploy` or `helm upgrade kubechat-dev`
 4. **End-to-End Testing** - Verify functionality works in deployed environment
 5. **Mark Complete** - Only after successful build, deploy, and E2E verification
@@ -245,6 +299,35 @@ This ensures:
 - Continuous integration of changes
 - Early detection of deployment issues
 - Production parity maintenance
+- Security validation in deployed environment
+
+---
+
+## Key Changes from Original Epic 2
+
+### **✅ Security-First Transformation:**
+- **Story 2.1 completely redesigned** to address 22 critical vulnerabilities first
+- **Authentication foundation** required before any features
+- **Production-ready from day 1** approach
+
+### **✅ Proper API Integration:**
+- **Removed references to non-existent `/queries` API**
+- **Uses correct authenticated endpoints** (`/api/v1/chat/sessions`, `/api/v1/nlp/process`)
+- **Proper JWT token management** throughout
+
+### **✅ Enterprise User System Integration:**
+- **Story 2.3 builds on Story 2.1** authentication foundation
+- **Leverages existing backend user APIs** discovered in security audit
+- **Provides complete admin interface** for user management
+
+### **✅ Risk Mitigation:**
+- **Critical security issues addressed first** (prevents security incidents)
+- **Enables enterprise sales** with proper authentication and compliance
+- **Ensures audit compliance** before feature delivery
+
+---
+
+**This redesigned Epic 2 transforms KubeChat from a development prototype to an enterprise-ready platform with security compliance, proper authentication, and complete frontend integration.**
 
 ---
 

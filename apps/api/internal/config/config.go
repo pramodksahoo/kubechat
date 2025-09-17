@@ -43,7 +43,7 @@ type Config struct {
 // Load returns a new Config struct with values from environment variables
 func Load() (*Config, error) {
 	cfg := &Config{
-		Environment:  getEnv("ENVIRONMENT", "development"),
+		Environment:  getEnv("ENVIRONMENT", "production"),
 		Port:         getEnvAsInt("PORT", 8080),
 		ReadTimeout:  getEnvAsInt("READ_TIMEOUT", 30),
 		WriteTimeout: getEnvAsInt("WRITE_TIMEOUT", 30),

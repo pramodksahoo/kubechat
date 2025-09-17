@@ -6,10 +6,19 @@ export interface ChatMessage {
   content: string;
   timestamp: string;
   metadata?: {
+    queryId?: string;
     command?: string;
     safetyLevel?: 'safe' | 'warning' | 'dangerous';
+    confidence?: number;
+    explanation?: string;
+    potentialImpact?: string[];
+    requiredPermissions?: string[];
     executionId?: string;
     approvalRequired?: boolean;
+    error?: string;
+    errorType?: string;
+    canRetry?: boolean;
+    suggestions?: string[];
   };
 }
 
