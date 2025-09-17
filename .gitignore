@@ -356,7 +356,7 @@ privkey*
 *.gpg
 *.pgp
 secring.*
-
+main
 # SSH keys
 id_rsa
 id_rsa.pub
@@ -455,3 +455,4 @@ playwright-report/
 tests/
 apps/api/server
 apps/web/tests/
+security-scan-results

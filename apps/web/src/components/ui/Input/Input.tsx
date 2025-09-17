@@ -2,6 +2,7 @@ import React from 'react';
 import { InputProps } from '@kubechat/shared/types';
 
 export const Input: React.FC<InputProps> = ({
+  id,
   label,
   placeholder,
   value,
@@ -33,6 +34,7 @@ export const Input: React.FC<InputProps> = ({
       )}
       
       <input
+        id={id}
         type={type}
         placeholder={placeholder}
         value={value}

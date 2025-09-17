@@ -94,7 +94,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ include "kubechat.fullname" . }}-secret
-                  key: db-password
+                  key: postgresql-password
             - name: REDIS_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -105,6 +105,10 @@ spec:
                 secretKeyRef:
                   name: {{ include "kubechat.fullname" . }}-secret
                   key: jwt-secret
+            {{- if .Values.api.env.ALLOWED_ORIGINS }}
+            - name: ALLOWED_ORIGINS
+              value: {{ .Values.api.env.ALLOWED_ORIGINS | quote }}
+            {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ include "kubechat.fullname" . }}-config

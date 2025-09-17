@@ -51,7 +51,7 @@ class RealTimeService {
   }
 
   // WebSocket Connection Management
-  private initializeWebSocket() {
+  initializeWebSocket() {
     if (typeof window === 'undefined') {
       return; // Skip on server-side rendering
     }
@@ -249,6 +249,11 @@ class RealTimeService {
 
   private broadcastChatUpdate(update: RealTimeUpdate) {
     this.broadcastToSubscribers(['chat'], update);
+
+    // Handle command execution status updates (AC: 7)
+    if (update.action === 'status_change' && update.data?.executionId) {
+      this.broadcastToSubscribers(['command_execution'], update);
+    }
   }
 
   private broadcastSystemUpdate(update: RealTimeUpdate) {
@@ -318,6 +323,33 @@ class RealTimeService {
         this.notificationListeners.splice(index, 1);
       }
     };
+  }
+
+  // Command execution specific methods (AC: 7)
+  subscribeToCommandExecution(
+    executionId: string,
+    callback: (update: RealTimeUpdate) => void
+  ): string {
+    return this.subscribe(['command_execution'], (update) => {
+      if (update.data?.executionId === executionId) {
+        callback(update);
+      }
+    });
+  }
+
+  subscribeToAllCommandExecutions(callback: (update: RealTimeUpdate) => void): string {
+    return this.subscribe(['command_execution'], callback);
+  }
+
+  // Request real-time updates for a specific command execution
+  requestCommandExecutionUpdates(executionId: string): void {
+    if (this.isConnected) {
+      webSocketService.send({
+        type: 'SUBSCRIBE_COMMAND_EXECUTION',
+        executionId,
+        timestamp: new Date().toISOString()
+      });
+    }
   }
 
   // Manual trigger methods for testing and development
@@ -421,6 +453,50 @@ export function useRealTimeUpdates(
     lastUpdate,
     isConnected,
     clearUpdates
+  };
+}
+
+// React hook for command execution tracking (AC: 7)
+export function useCommandExecutionTracking(executionId?: string) {
+  const [status, setStatus] = useState<string>('pending');
+  const [progress, setProgress] = useState<number>(0);
+  const [phase, setPhase] = useState<string>('initializing');
+  const [output, setOutput] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+
+  useEffect(() => {
+    if (!executionId) return;
+
+    const handleUpdate = (update: RealTimeUpdate) => {
+      if (update.data?.executionId === executionId) {
+        if (update.data.status) setStatus(update.data.status);
+        if (update.data.progress !== undefined) setProgress(update.data.progress);
+        if (update.data.phase) setPhase(update.data.phase);
+        if (update.data.output) setOutput(update.data.output);
+        if (update.data.error) setError(update.data.error);
+      }
+    };
+
+    const subscriptionId = realTimeService.subscribeToCommandExecution(executionId, handleUpdate);
+    const unsubscribeConnectionStatus = realTimeService.onConnectionChange(setIsConnected);
+
+    // Request real-time updates for this execution
+    realTimeService.requestCommandExecutionUpdates(executionId);
+
+    return () => {
+      realTimeService.unsubscribe(subscriptionId);
+      unsubscribeConnectionStatus();
+    };
+  }, [executionId]);
+
+  return {
+    status,
+    progress,
+    phase,
+    output,
+    error,
+    isConnected
   };
 }
 

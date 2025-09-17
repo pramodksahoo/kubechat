@@ -43,6 +43,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -91,13 +92,103 @@ import (
 	websocketService "github.com/pramodksahoo/kubechat/apps/api/internal/services/websocket"
 )
 
-func main() {
-	// Set Gin mode based on environment
-	if os.Getenv("GIN_MODE") == "release" {
-		gin.SetMode(gin.ReleaseMode)
-	} else {
-		gin.SetMode(gin.DebugMode)
+// getAllowedOrigins returns secure CORS origins from environment with production defaults
+func getAllowedOrigins() []string {
+	allowedOriginsEnv := os.Getenv("ALLOWED_ORIGINS")
+	if allowedOriginsEnv == "" {
+		// Production-first: No default origins allowed, must be explicitly configured
+		// Debug mode allows localhost for convenience
+		if gin.Mode() == gin.DebugMode {
+			log.Println("DEBUG MODE: Using default localhost CORS origins")
+			return []string{"http://localhost:3000", "http://localhost:8080", "https://localhost:3000", "https://localhost:8080"}
+		}
+		// Production requires explicit configuration - fail fast
+		log.Fatal("SECURITY CRITICAL: ALLOWED_ORIGINS environment variable must be explicitly set in production mode")
 	}
+
+	// Parse comma-separated origins and validate
+	origins := strings.Split(allowedOriginsEnv, ",")
+	validOrigins := make([]string, 0, len(origins))
+
+	for _, origin := range origins {
+		origin = strings.TrimSpace(origin)
+		if origin == "*" {
+			log.Fatal("SECURITY CRITICAL: Wildcard CORS origin (*) is not allowed in production")
+		}
+		if origin != "" {
+			validOrigins = append(validOrigins, origin)
+		}
+	}
+
+	if len(validOrigins) == 0 {
+		log.Fatal("SECURITY CRITICAL: At least one valid CORS origin must be specified")
+	}
+
+	return validOrigins
+}
+
+// securityValidationMiddleware implements comprehensive security headers and validation
+func securityValidationMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// API versioning headers
+		c.Header("API-Version", "v1")
+		c.Header("X-API-Version", "1.0.0")
+		c.Header("X-Service-Name", "kubechat-api")
+
+		// Security headers
+		c.Header("X-Content-Type-Options", "nosniff")
+		c.Header("X-Frame-Options", "DENY")
+		c.Header("X-XSS-Protection", "1; mode=block")
+		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
+		c.Header("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
+
+		// HSTS for HTTPS
+		if c.Request.TLS != nil {
+			c.Header("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+		}
+
+		// Enhanced Content Security Policy
+		csp := "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' wss: ws:; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'"
+		c.Header("Content-Security-Policy", csp)
+
+		// Additional security headers
+		c.Header("X-Permitted-Cross-Domain-Policies", "none")
+		c.Header("Cross-Origin-Embedder-Policy", "require-corp")
+		c.Header("Cross-Origin-Opener-Policy", "same-origin")
+		c.Header("Cross-Origin-Resource-Policy", "same-origin")
+
+		// Request size validation (prevent DoS)
+		if c.Request.ContentLength > 10*1024*1024 { // 10MB limit
+			c.JSON(http.StatusRequestEntityTooLarge, gin.H{
+				"error": "Request entity too large",
+				"code":  "REQUEST_TOO_LARGE",
+			})
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
+
+func main() {
+	// Production-first configuration: default to release mode
+	// Use GIN_MODE=debug environment variable to enable debug mode if needed
+	if os.Getenv("GIN_MODE") == "debug" {
+		gin.SetMode(gin.DebugMode)
+		log.Println("Running in DEBUG mode (GIN_MODE=debug)")
+	} else {
+		gin.SetMode(gin.ReleaseMode)
+		log.Println("Running in PRODUCTION mode (default)")
+	}
+
+	// Perform comprehensive security validation at startup
+	log.Println("Performing security validation...")
+	securityValidator := securityService.NewSecurityValidator()
+	if err := securityValidator.ValidateSecurityConfiguration(); err != nil {
+		log.Fatalf("SECURITY VALIDATION FAILED: %v", err)
+	}
+	log.Println("✅ Security validation passed")
 
 	// Initialize database connection
 	db, err := initDatabase()
@@ -110,11 +201,13 @@ func main() {
 	userRepo := repositories.NewUserRepository(db)
 	auditRepo := repositories.NewAuditRepository(db)
 
-	// Initialize services
+	// Initialize services with mandatory JWT secret validation
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
-		jwtSecret = "dev-secret-key-change-in-production"
-		log.Println("Warning: Using default JWT secret. Set JWT_SECRET environment variable.")
+		log.Fatal("SECURITY CRITICAL: JWT_SECRET environment variable must be set. Application cannot start without secure JWT secret.")
+	}
+	if jwtSecret == "dev-secret-key-change-in-production" || jwtSecret == "your-secret-key" || len(jwtSecret) < 32 {
+		log.Fatal("SECURITY CRITICAL: JWT_SECRET must be a secure, unique value with minimum 32 characters. Default or weak secrets are not allowed.")
 	}
 	authSvc := authService.NewService(userRepo, jwtSecret)
 
@@ -262,7 +355,7 @@ func main() {
 		HeartbeatInterval:     30 * time.Second,
 		MaxConcurrentCommands: 10,
 		CommandTimeout:        5 * time.Minute,
-		AllowedOrigins:        []string{"*"}, // Adjust for production
+		AllowedOrigins:        getAllowedOrigins(), // Secure CORS origins from environment
 		RequireAuth:           true,
 		EnableDebugLogging:    gin.Mode() == gin.DebugMode,
 		LogLevel:              "info",
@@ -280,7 +373,7 @@ func main() {
 		CircuitBreakerTimeout:   30 * time.Second,
 		CircuitBreakerReset:     60 * time.Second,
 		EnableSecurityHeaders:   true,
-		AllowedOrigins:          []string{"*"}, // Adjust for production
+		AllowedOrigins:          getAllowedOrigins(), // Secure CORS origins from environment
 		AllowedMethods:          []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowedHeaders:          []string{"Content-Type", "Authorization", "X-Requested-With"},
 		MaxRequestSize:          10 * 1024 * 1024, // 10MB
@@ -1036,7 +1129,8 @@ func main() {
 	// Create Gin router
 	r := gin.Default()
 
-	// API Gateway middleware stack
+	// API Gateway middleware stack with enhanced security
+	r.Use(securityValidationMiddleware())          // Enhanced security headers and validation
 	r.Use(gatewaySvc.SecurityHeadersMiddleware())  // CORS and security headers
 	r.Use(gatewaySvc.RequestLoggingMiddleware())   // Request logging
 	r.Use(gatewaySvc.ResponseTimeMiddleware())     // Response time tracking
@@ -1051,6 +1145,30 @@ func main() {
 			"status":  "healthy",
 			"service": "kubechat-api",
 			"version": "1.0.0",
+		})
+	})
+
+	// Security health check endpoint
+	r.GET("/security/health", func(c *gin.Context) {
+		securityChecks := securityValidator.PerformSecurityHealthCheck()
+		overallStatus := "healthy"
+
+		// Check if any security checks failed
+		for _, check := range securityChecks {
+			if checkMap, ok := check.(map[string]interface{}); ok {
+				if status, exists := checkMap["status"]; exists && status != "healthy" {
+					overallStatus = "unhealthy"
+					break
+				}
+			}
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"status":         overallStatus,
+			"service":        "kubechat-api-security",
+			"version":        "1.0.0",
+			"security_checks": securityChecks,
+			"timestamp":      time.Now(),
 		})
 	})
 
@@ -1230,7 +1348,10 @@ func initDatabase() (*sqlx.DB, error) {
 
 	password := os.Getenv("DB_PASSWORD")
 	if password == "" {
-		password = "dev-password"
+		log.Fatal("SECURITY CRITICAL: DB_PASSWORD environment variable must be set. No default database passwords allowed.")
+	}
+	if password == "dev-password" || password == "password" || password == "postgres" || len(password) < 12 {
+		log.Fatal("SECURITY CRITICAL: DB_PASSWORD must be a secure value with minimum 12 characters. Default or weak passwords are not allowed.")
 	}
 
 	dbname := os.Getenv("DB_NAME")
@@ -1240,6 +1361,8 @@ func initDatabase() (*sqlx.DB, error) {
 
 	sslmode := os.Getenv("DB_SSL_MODE")
 	if sslmode == "" {
+		// Internal cluster communication: SSL not required for in-cluster database
+		// Database runs in same Kubernetes cluster with secure internal networking
 		sslmode = "disable"
 	}
 

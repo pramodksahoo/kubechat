@@ -2,10 +2,25 @@ import '../styles/globals.css';
 import '../styles/themes.css';
 import type { AppProps } from 'next/app';
 import Head from 'next/head';
+import { useEffect } from 'react';
 import { ErrorBoundary } from '../components/error/ErrorBoundary';
 import { ThemeProvider } from '../providers/ThemeProvider';
+import { initializeAuth, startTokenRefresh, stopTokenRefresh } from '../stores/authStore';
 
 export default function App({ Component, pageProps }: AppProps) {
+  useEffect(() => {
+    // Initialize authentication on app start
+    initializeAuth();
+
+    // Start token refresh interval
+    startTokenRefresh();
+
+    // Cleanup on unmount
+    return () => {
+      stopTokenRefresh();
+    };
+  }, []);
+
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="system" enableSystem disableTransitionOnChange>

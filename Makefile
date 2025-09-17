@@ -7,6 +7,7 @@
 .PHONY: dev-logs dev-logs-api dev-logs-web dev-shell-api dev-shell-web dev-port-forward
 .PHONY: dev-db-connect dev-db-migrate dev-db-seed dev-db-reset dev-db-status dev-db-backup dev-db-health dev-db-integrity
 .PHONY: dev-test dev-test-unit dev-test-e2e
+.PHONY: dev-security-scan dev-security-scan-api dev-security-scan-web dev-security-report
 
 # Default target
 help: ## Show this help message
@@ -96,6 +97,9 @@ dev-build: ## Build all application containers
 	@docker save kubechat/api:dev | nerdctl --address /var/run/docker/containerd/containerd.sock --namespace k8s.io load
 	@echo ""
 	@echo "✅ All containers built and imported to k8s successfully"
+	@echo ""
+	@echo "Running security scans on built containers..."
+	@make --no-print-directory dev-security-scan || echo "⚠️ Security scan completed with findings - check security-scan-results/"
 
 dev-rebuild-api: ## Rebuild API container only
 	@echo "=== Rebuilding API Container ==="
@@ -332,6 +336,34 @@ dev-test-coverage-local: ## Run tests locally with coverage (for CI/local develo
 	@echo "✅ Coverage report generated at apps/api/coverage.html"
 	@echo "📊 Total coverage above demonstrates functional implementation with tests"
 
+# Security Scanning
+dev-security-scan: ## Run security scans on all containers
+	@echo "=== Running Security Scans on All Containers ==="
+	@./infrastructure/scripts/security-scan.sh --image kubechat/web:dev --image kubechat/api:dev
+
+dev-security-scan-api: ## Run security scan on API container only
+	@echo "=== Running Security Scan on API Container ==="
+	@./infrastructure/scripts/security-scan.sh --image kubechat/api:dev
+
+dev-security-scan-web: ## Run security scan on Web container only
+	@echo "=== Running Security Scan on Web Container ==="
+	@./infrastructure/scripts/security-scan.sh --image kubechat/web:dev
+
+dev-security-report: ## Generate comprehensive security report
+	@echo "=== Generating Security Report ==="
+	@./infrastructure/scripts/security-scan.sh --image kubechat/web:dev --image kubechat/api:dev
+	@echo ""
+	@echo "✅ Security report generated at ./security-scan-results/security_report.md"
+	@echo "📊 Review the report for security findings and recommendations"
+
+dev-security-scan-strict: ## Run security scans with strict failure policies
+	@echo "=== Running Strict Security Scans ==="
+	@./infrastructure/scripts/security-scan.sh --image kubechat/web:dev --image kubechat/api:dev --fail-on-high true --fail-on-critical true
+
+dev-security-scan-secrets: ## Scan containers for secrets only
+	@echo "=== Scanning Containers for Secrets ==="
+	@./infrastructure/scripts/security-scan.sh --image kubechat/web:dev --image kubechat/api:dev --no-vulnerabilities
+
 # Lint and Format
 dev-lint: ## Run linting for all code
 	@echo "=== Running Code Linting ==="
@@ -383,9 +415,13 @@ dev-upgrade-web: ## Upgrade web container only (faster for frontend changes)
 	@echo "Step 1: Rebuilding web container..."
 	@make --no-print-directory dev-rebuild-web
 	@echo ""
-	@echo "Step 2: Restarting web deployment..."
-	@kubectl rollout restart deployment/kubechat-dev-web -n kubechat
-	@kubectl rollout status deployment/kubechat-dev-web -n kubechat
+	@echo "Step 2: Scaling down web deployment..."
+	@kubectl scale deployment kubechat-dev-web --replicas=0 -n kubechat
+	@kubectl wait --for=delete pod -l app.kubernetes.io/component=web -n kubechat --timeout=60s
+	@echo ""
+	@echo "Step 3: Scaling up web deployment with new image..."
+	@kubectl scale deployment kubechat-dev-web --replicas=1 -n kubechat
+	@kubectl rollout status deployment/kubechat-dev-web -n kubechat --timeout=300s
 	@echo ""
 	@echo "✅ Web container upgraded successfully!"
 	@echo "Frontend: http://localhost:30001"
@@ -396,9 +432,13 @@ dev-upgrade-api: ## Upgrade API container only (faster for backend changes)
 	@echo "Step 1: Rebuilding API container..."
 	@make --no-print-directory dev-rebuild-api
 	@echo ""
-	@echo "Step 2: Restarting API deployment..."
-	@kubectl rollout restart deployment/kubechat-dev-api -n kubechat
-	@kubectl rollout status deployment/kubechat-dev-api -n kubechat
+	@echo "Step 2: Scaling down API deployment..."
+	@kubectl scale deployment kubechat-dev-api --replicas=0 -n kubechat
+	@kubectl wait --for=delete pod -l app.kubernetes.io/component=api -n kubechat --timeout=60s
+	@echo ""
+	@echo "Step 3: Scaling up API deployment with new image..."
+	@kubectl scale deployment kubechat-dev-api --replicas=1 -n kubechat
+	@kubectl rollout status deployment/kubechat-dev-api -n kubechat --timeout=300s
 	@echo ""
 	@echo "✅ API container upgraded successfully!"
 	@echo "API: http://localhost:30080"

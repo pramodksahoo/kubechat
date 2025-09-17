@@ -45,6 +45,7 @@ class HttpClient {
         ...defaultHeaders,
         ...options.headers,
       },
+      credentials: 'include', // Include cookies for authentication
       signal: AbortSignal.timeout(API_CONFIG.timeout),
     };
 
@@ -73,13 +74,9 @@ class HttpClient {
   }
 
   private getAuthHeaders(): Record<string, string> {
-    // Get auth token from localStorage, cookies, or auth context
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('auth_token');
-      if (token) {
-        return { Authorization: `Bearer ${token}` };
-      }
-    }
+    // Authentication is now handled via secure httpOnly cookies
+    // Tokens are automatically included in requests via cookies
+    // No need to manually add Authorization header
     return {};
   }
 
@@ -138,23 +135,23 @@ export const healthApi = {
 // Authentication API - Updated to match backend endpoints
 export const authApi = {
   login: (credentials: { username: string; password: string }) =>
-    httpClient.post<{ user: unknown; token: string }>('/auth/login', credentials),
+    httpClient.post<{ user: unknown; token: string }>('/api/v1/auth/login', credentials),
 
-  logout: () => httpClient.post('/auth/logout'),
+  logout: () => httpClient.post('/api/v1/auth/logout'),
 
   register: (userData: { username: string; email: string; password: string }) =>
-    httpClient.post('/auth/register', userData),
+    httpClient.post('/api/v1/auth/register', userData),
 
-  me: () => httpClient.get<{ id: string; username: string; email: string; role: string }>('/auth/me'),
+  me: () => httpClient.get<{ id: string; username: string; email: string; role: string }>('/api/v1/auth/me'),
 
-  profile: () => httpClient.get('/auth/profile'),
+  profile: () => httpClient.get('/api/v1/auth/profile'),
 
-  refresh: () => httpClient.post<{ token: string }>('/auth/refresh'),
+  refresh: () => httpClient.post<{ token: string }>('/api/v1/auth/refresh'),
 
   // Admin user management
-  getUsers: () => httpClient.get('/auth/admin/users'),
+  getUsers: () => httpClient.get('/api/v1/auth/admin/users'),
 
-  getUser: (id: string) => httpClient.get(`/auth/admin/users/${id}`),
+  getUser: (id: string) => httpClient.get(`/api/v1/auth/admin/users/${id}`),
 };
 
 // Commands API - Updated to match backend endpoints
@@ -428,20 +425,140 @@ export const securityApi = {
   getHealth: () => httpClient.get('/security/health'),
 };
 
-// NLP API
+// NLP API - Process natural language queries using existing backend endpoints
 export const nlpApi = {
-  process: (text: string, options?: Record<string, unknown>) =>
-    httpClient.post('/nlp/process', { text, ...(options || {}) }),
+  // Process natural language queries to generate commands (uses existing /api/v1/nlp/process)
+  processQuery: (query: { query: string; context?: string; cluster_info?: string; provider?: string }) =>
+    httpClient.post<{
+      id: string;
+      query: string;
+      generated_command?: string;
+      explanation?: string;
+      safety_level: 'safe' | 'warning' | 'dangerous';
+      confidence: number;
+      potential_impact?: string[];
+      required_permissions?: string[];
+      approval_required?: boolean;
+    }>('/api/v1/nlp/process', query),
 
-  classify: (text: string) => httpClient.post('/nlp/classify', { text }),
+  // Validate command safety
+  validateCommand: (command: { command: string; context?: string }) =>
+    httpClient.post<{
+      valid: boolean;
+      safety_level: string;
+      warnings: string[];
+      suggestions: string[];
+    }>('/api/v1/nlp/validate', command),
 
-  validate: (data: unknown) => httpClient.post('/nlp/validate', data),
+  // Classify command risk level
+  classifyCommand: (command: { command: string; context?: string }) =>
+    httpClient.post<{
+      classification: string;
+      risk_level: string;
+      confidence: number;
+    }>('/api/v1/nlp/classify', command),
 
-  getProviders: () => httpClient.get('/nlp/providers'),
+  // Get supported NLP providers
+  getProviders: () =>
+    httpClient.get<{
+      providers: string[];
+      default_provider: string;
+    }>('/api/v1/nlp/providers'),
 
-  getMetrics: () => httpClient.get('/nlp/metrics'),
+  // Check NLP service health
+  getHealth: () =>
+    httpClient.get<{
+      status: string;
+      providers: Record<string, string>;
+    }>('/api/v1/nlp/health'),
+};
 
-  getHealth: () => httpClient.get('/nlp/health'),
+// Chat API - Session and message management using existing backend endpoints
+export const chatApi = {
+  // Session management (backend returns wrapped response)
+  createSession: (session?: { clusterId?: string }) =>
+    httpClient.post<{
+      success: boolean;
+      data: {
+        id: string;
+        title: string;
+        createdAt: string;
+        updatedAt: string;
+        messageCount: number;
+        isActive: boolean;
+        sessionType: string;
+      };
+      message: string;
+    }>('/api/v1/chat/sessions', session || {}),
+
+  getSessions: () =>
+    httpClient.get<{
+      sessions: Array<{
+        id: string;
+        userId: string;
+        clusterId?: string;
+        status: string;
+        createdAt: string;
+        updatedAt: string;
+        messageCount: number;
+      }>;
+    }>('/api/v1/chat/sessions'),
+
+  getSession: (sessionId: string) =>
+    httpClient.get<{
+      id: string;
+      userId: string;
+      clusterId?: string;
+      status: string;
+      createdAt: string;
+      updatedAt: string;
+      messageCount: number;
+    }>(`/api/v1/chat/sessions/${sessionId}`),
+
+  // Message management
+  getMessages: (sessionId: string, params?: { limit?: number; offset?: number }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.limit) searchParams.set('limit', params.limit.toString());
+    if (params?.offset) searchParams.set('offset', params.offset.toString());
+
+    const query = searchParams.toString();
+    return httpClient.get<{
+      messages: Array<{
+        id: string;
+        sessionId: string;
+        type: 'user' | 'assistant';
+        content: string;
+        metadata?: Record<string, unknown>;
+        createdAt: string;
+      }>;
+    }>(`/api/v1/chat/sessions/${sessionId}/messages${query ? `?${query}` : ''}`);
+  },
+
+  sendMessage: (sessionId: string, message: { content: string; type?: string }) =>
+    httpClient.post<{
+      success: boolean;
+      data: {
+        id: string;
+        sessionId: string;
+        type: string;
+        content: string;
+        timestamp: string;
+        isEdited: boolean;
+      };
+      message: string;
+    }>(`/api/v1/chat/sessions/${sessionId}/messages`, message),
+
+  // Command preview
+  generateCommandPreview: (command: { query: string; context?: string }) =>
+    httpClient.post<{
+      id: string;
+      query: string;
+      generatedCommand?: string;
+      explanation?: string;
+      safetyLevel: 'safe' | 'warning' | 'dangerous';
+      confidence: number;
+      approvalRequired: boolean;
+    }>('/api/v1/chat/commands/preview', command),
 };
 
 // Database API
@@ -547,11 +664,12 @@ export const webSocketApi = {
 export const api = {
   health: healthApi,
   auth: authApi,
+  chat: chatApi,
+  nlp: nlpApi,
   commands: commandsApi,
   clusters: clustersApi,
   audit: auditApi,
   security: securityApi,
-  nlp: nlpApi,
   database: databaseApi,
   performance: performanceApi,
   websocket: webSocketApi,

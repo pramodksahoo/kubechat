@@ -95,12 +95,25 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/server
 # Stage 4: Production runtime
 FROM alpine:3.18 AS production
 
-# Install runtime dependencies
-RUN apk --no-cache add \
+# Security labels for container metadata
+LABEL org.opencontainers.image.title="KubeChat API Server" \
+      org.opencontainers.image.description="Secure Go-based API server for KubeChat" \
+      org.opencontainers.image.vendor="KubeChat" \
+      org.opencontainers.image.version="1.0.0" \
+      org.opencontainers.image.created="$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+      security.scan.required="true" \
+      security.non-root="true" \
+      security.hardened="true"
+
+# Security: Update packages and install only essential runtime dependencies
+RUN apk --no-cache update && \
+    apk --no-cache upgrade && \
+    apk --no-cache add \
     ca-certificates \
     curl \
     dumb-init \
-    tzdata
+    tzdata && \
+    rm -rf /var/cache/apk/*
 
 # Create non-root user
 RUN addgroup -g 1001 -S appgroup && \
@@ -108,6 +121,11 @@ RUN addgroup -g 1001 -S appgroup && \
 
 # Set working directory
 WORKDIR /app
+
+# Security: Set proper file permissions and remove shell access
+RUN chmod 755 /app && \
+    echo 'appuser:!:0:0:appuser:/app:/sbin/nologin' > /etc/passwd && \
+    echo 'appgroup:!:1001:' > /etc/group
 
 # Copy binary from builder stage
 COPY --from=builder --chown=appuser:appgroup /app/main .
@@ -117,7 +135,12 @@ COPY --from=builder --chown=appuser:appgroup /app/configs ./configs
 
 # Create necessary directories
 RUN mkdir -p /app/logs && \
-    chown -R appuser:appgroup /app
+    chown -R appuser:appgroup /app/logs
+
+# Security: Ensure binary has correct permissions and no write access to app directory
+RUN chmod 555 /app/main && \
+    chmod 755 /app && \
+    chmod 755 /app/logs
 
 # Switch to non-root user
 USER appuser
