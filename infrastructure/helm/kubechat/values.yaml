@@ -267,61 +267,61 @@ api:
       emptyDir:
         sizeLimit: 1Gi
 
-## Ingress Configuration
-ingress:
-  enabled: true
-  className: "nginx"
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
-    nginx.ingress.kubernetes.io/rate-limit: "200"
-    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
-    nginx.ingress.kubernetes.io/server-snippet: |
-      add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
-      add_header X-Frame-Options "SAMEORIGIN" always;
-      add_header X-Content-Type-Options "nosniff" always;
-      add_header X-XSS-Protection "1; mode=block" always;
-      add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-  hosts:
-    - host: kubechat.com
-      paths:
-        - path: /
-          pathType: Prefix
-          service: kubechat-web
-        - path: /api
-          pathType: Prefix
-          service: kubechat-api
-    - host: www.kubechat.com
-      paths:
-        - path: /
-          pathType: Prefix
-          service: kubechat-web
-        - path: /api
-          pathType: Prefix
-          service: kubechat-api
-  tls:
-    - secretName: kubechat-production-tls
-      hosts:
-        - kubechat.com
-        - www.kubechat.com
+# ## Ingress Configuration
+# ingress:
+#   enabled: false
+#   className: "nginx"
+#   annotations:
+#     cert-manager.io/cluster-issuer: letsencrypt-prod
+#     nginx.ingress.kubernetes.io/ssl-redirect: "true"
+#     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+#     nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+#     nginx.ingress.kubernetes.io/rate-limit: "200"
+#     nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+#     nginx.ingress.kubernetes.io/server-snippet: |
+#       add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+#       add_header X-Frame-Options "SAMEORIGIN" always;
+#       add_header X-Content-Type-Options "nosniff" always;
+#       add_header X-XSS-Protection "1; mode=block" always;
+#       add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+#   hosts:
+#     - host: kubechat.com
+#       paths:
+#         - path: /
+#           pathType: Prefix
+#           service: kubechat-web
+#         - path: /api
+#           pathType: Prefix
+#           service: kubechat-api
+#     - host: www.kubechat.com
+#       paths:
+#         - path: /
+#           pathType: Prefix
+#           service: kubechat-web
+#         - path: /api
+#           pathType: Prefix
+#           service: kubechat-api
+#   tls:
+#     - secretName: kubechat-production-tls
+#       hosts:
+#         - kubechat.com
+#         - www.kubechat.com
 
-## TLS/Certificate Configuration
-tls:
-  enabled: true
-  certManager:
-    enabled: true
-    issuer:
-      name: letsencrypt-prod
-      server: https://acme-v02.api.letsencrypt.org/directory
-      email: security@kubechat.com
-    dns01:
-      enabled: true
-      provider: cloudflare
-  customCerts:
-    enabled: false
-    secretName: ""
+# ## TLS/Certificate Configuration
+# tls:
+#   enabled: true
+#   certManager:
+#     enabled: true
+#     issuer:
+#       name: letsencrypt-prod
+#       server: https://acme-v02.api.letsencrypt.org/directory
+#       email: security@kubechat.com
+#     dns01:
+#       enabled: true
+#       provider: cloudflare
+#   customCerts:
+#     enabled: false
+#     secretName: ""
 
 ## PostgreSQL Configuration (Production HA)
 postgresql:

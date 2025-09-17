@@ -24,10 +24,9 @@ web:
     pullPolicy: IfNotPresent  # Use local images for development
   
   service:
-    type: NodePort
+    type: ClusterIP
     port: 3000
     targetPort: 3000
-    nodePort: 30001
   
   resources:
     limits:
@@ -88,10 +87,9 @@ api:
     pullPolicy: IfNotPresent  # Use local images for development
   
   service:
-    type: NodePort
+    type: ClusterIP
     port: 8080
     targetPort: 8080
-    nodePort: 30080
   
   resources:
     limits:
@@ -137,7 +135,7 @@ api:
     BCRYPT_COST: "12"
     METRICS_ENABLED: "true"
     # ALLOWED_ORIGINS: Secure CORS origins
-    ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:30001,http://localhost:8080,http://kubechat.local"
+    ALLOWED_ORIGINS: "http://localhost:3000,http://kubechat.local"
 
   # Proper health checks using actual Go API endpoints
   livenessProbe:
@@ -178,14 +176,6 @@ ingress:
     traefik.ingress.kubernetes.io/router.entrypoints: web
   hosts:
     - host: kubechat.local
-      paths:
-        - path: /
-          pathType: Prefix
-          service: web
-        - path: /api
-          pathType: Prefix
-          service: api
-    - host: localhost
       paths:
         - path: /
           pathType: Prefix
