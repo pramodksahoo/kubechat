@@ -40,11 +40,9 @@ web:
   # Development environment variables
   env:
     NODE_ENV: "development"
-    NEXT_PUBLIC_API_BASE_URL: http://localhost:30080
+    # Use empty string for relative URLs - ingress handles routing
+    NEXT_PUBLIC_API_BASE_URL: ""
     NEXT_TELEMETRY_DISABLED: "1"
-    # API proxy configuration for Next.js rewrites
-    API_URL: "http://kubechat-dev-api:8080"
-    BACKEND_SERVICE_URL: "http://kubechat-dev-api:8080"
 
   # Proper health checks using actual Next.js endpoints
   livenessProbe:
@@ -60,7 +58,7 @@ web:
   readinessProbe:
     enabled: true
     httpGet:
-      path: /health  # Proxied to backend API health check
+      path: /api/health  # Native Next.js health endpoint
       port: 3000
     initialDelaySeconds: 45
     periodSeconds: 15
@@ -139,7 +137,7 @@ api:
     BCRYPT_COST: "12"
     METRICS_ENABLED: "true"
     # ALLOWED_ORIGINS: Secure CORS origins
-    ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:30001,http://kubechat.local"
+    ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:30001,http://localhost:8080,http://kubechat.local"
 
   # Proper health checks using actual Go API endpoints
   livenessProbe:
@@ -183,10 +181,18 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
-          service: kubechat-web
+          service: web
         - path: /api
           pathType: Prefix
-          service: kubechat-api
+          service: api
+    - host: localhost
+      paths:
+        - path: /
+          pathType: Prefix
+          service: web
+        - path: /api
+          pathType: Prefix
+          service: api
   tls: []
 
 ## TLS Configuration - Disabled for Development
