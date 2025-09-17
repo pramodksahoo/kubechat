@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { ApprovalRequest } from '@kubechat/shared/types';
-import { Card } from '../ui/Card';
-import { Button } from '../ui/Button';
-import { Modal } from '../ui/Modal';
+import { Card } from '../ui/Card/Card';
+import { Button } from '../ui/Button/Button';
+import { Modal } from '../ui/Modal/Modal';
 import { formatDistanceToNow } from 'date-fns';
 
 interface CommandApprovalInterfaceProps {

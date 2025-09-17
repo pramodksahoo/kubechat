@@ -21,6 +21,7 @@ export interface CardProps extends BaseComponentProps {
 }
 
 export interface InputProps extends BaseComponentProps {
+  id?: string;
   label?: string;
   placeholder?: string;
   value?: string;

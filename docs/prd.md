@@ -162,8 +162,8 @@ Enterprise adoption requires thorough testing given the operational criticality.
 **Epic 1: Foundation & Community Launch** ✅ **COMPLETED** *(65 points, 6 sprints)*
 Established Go microservices architecture, React frontend, core natural language translation, and **Helm-based deployment** for community adoption. **Open-source launch milestone achieved** with comprehensive documentation and contribution guidelines. All 10 user stories completed with enterprise-grade audit trails, security, and compliance features.
 
-**Epic 2: Ollama Integration & Enterprise Frontend Completion** *(48 points, 6-8 sprints)*
-Complete enterprise-grade frontend interfaces for existing backend APIs while adding Ollama as local AI provider. Bridge the gap between sophisticated backend capabilities and missing frontend UIs. Implement admin dashboards, command approval workflows, user management, and audit interfaces to deliver complete enterprise platform.
+**Epic 2: Enterprise Security Hardening & Frontend Completion with Ollama** *(71 points, 4 sprints)*
+Transform KubeChat from development-mode application to enterprise-ready platform by eliminating all security vulnerabilities, implementing proper authentication, and completing frontend interfaces for existing backend APIs. Includes Ollama integration as secure local AI provider with comprehensive admin and user management interfaces.
 
 **Epic 3: Air-Gapped Support & Local AI Enhancement** *(32 points, 4-5 sprints)*
 Enhance existing Ollama integration with advanced air-gapped deployment capabilities, offline model distribution, and comprehensive local data processing for regulated environments requiring complete network isolation.
@@ -324,9 +324,9 @@ so that **external developers can easily contribute and adopt KubeChat**.
 
 ---
 
-## Epic 2: Ollama Integration & Enterprise Frontend Completion
+## Epic 2: Enterprise Security Hardening & Frontend Completion with Ollama
 
-**Epic Goal:** Complete the enterprise-grade frontend interfaces for existing backend APIs while adding Ollama as a local AI provider option, enabling both online (OpenAI) and offline (Ollama) AI capabilities with comprehensive admin and user management interfaces. This epic bridges the gap between sophisticated backend capabilities and missing frontend UIs to deliver a complete enterprise platform.
+**Epic Goal:** Transform KubeChat from development-mode application to enterprise-ready platform by eliminating all security vulnerabilities, implementing proper authentication, and completing frontend interfaces for existing backend APIs with security-first approach. Includes Ollama integration as secure local AI provider with comprehensive admin and user management interfaces.
 
 ### Story 2.1: Ollama Integration & AI Provider Management UI
 
