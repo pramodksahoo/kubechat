@@ -48,6 +48,15 @@ func (h *Handler) RegisterRoutes(router *gin.RouterGroup) {
 		admin.GET("/users", h.ListUsers)
 		admin.GET("/users/:id", h.GetUser)
 	}
+
+	// Secure token cookie management routes
+	cookieRoutes := router.Group("/auth")
+	{
+		cookieRoutes.POST("/set-tokens", h.SetTokensCookie)
+		cookieRoutes.GET("/get-token", h.GetTokenCookie)
+		cookieRoutes.GET("/get-refresh-token", h.GetRefreshTokenCookie)
+		cookieRoutes.POST("/clear-tokens", h.ClearTokensCookie)
+	}
 }
 
 // Register handles user registration
@@ -149,6 +158,9 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
+	// Set secure HTTP-only cookie with the token
+	c.SetCookie("kubechat_token", loginResponse.SessionToken, 24*60*60, "/", "", c.Request.TLS != nil, true)
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Login successful",
 		"data": gin.H{
@@ -158,7 +170,6 @@ func (h *Handler) Login(c *gin.Context) {
 				"email":    loginResponse.User.Email,
 				"role":     loginResponse.User.Role,
 			},
-			"token":      loginResponse.SessionToken,
 			"expires_at": loginResponse.ExpiresAt,
 		},
 	})
@@ -197,6 +208,10 @@ func (h *Handler) Logout(c *gin.Context) {
 		})
 		return
 	}
+
+	// Clear authentication cookies
+	c.SetCookie("kubechat_token", "", -1, "/", "", c.Request.TLS != nil, true)
+	c.SetCookie("kubechat_refresh_token", "", -1, "/", "", c.Request.TLS != nil, true)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Logout successful",
@@ -247,6 +262,9 @@ func (h *Handler) RefreshSession(c *gin.Context) {
 		return
 	}
 
+	// Set secure HTTP-only cookie with the new token
+	c.SetCookie("kubechat_token", loginResponse.SessionToken, 24*60*60, "/", "", c.Request.TLS != nil, true)
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Session refreshed successfully",
 		"data": gin.H{
@@ -256,7 +274,6 @@ func (h *Handler) RefreshSession(c *gin.Context) {
 				"email":    loginResponse.User.Email,
 				"role":     loginResponse.User.Role,
 			},
-			"token":      loginResponse.SessionToken,
 			"expires_at": loginResponse.ExpiresAt,
 		},
 	})
@@ -389,5 +406,76 @@ func (h *Handler) GetUser(c *gin.Context) {
 			"created_at": user.CreatedAt,
 			"updated_at": user.UpdatedAt,
 		},
+	})
+}
+
+// SetTokensCookie handles setting secure HTTP-only cookies for tokens
+func (h *Handler) SetTokensCookie(c *gin.Context) {
+	var req struct {
+		AccessToken  string `json:"accessToken" binding:"required"`
+		RefreshToken string `json:"refreshToken"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request format",
+			"code":  "INVALID_REQUEST",
+		})
+		return
+	}
+
+	// Set access token cookie
+	c.SetCookie("kubechat_token", req.AccessToken, 24*60*60, "/", "", c.Request.TLS != nil, true)
+
+	// Set refresh token cookie if provided
+	if req.RefreshToken != "" {
+		c.SetCookie("kubechat_refresh_token", req.RefreshToken, 24*60*60*7, "/", "", c.Request.TLS != nil, true)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Tokens set successfully",
+	})
+}
+
+// GetTokenCookie retrieves the access token from HTTP-only cookie
+func (h *Handler) GetTokenCookie(c *gin.Context) {
+	token, err := c.Cookie("kubechat_token")
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"accessToken": "",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"accessToken": token,
+	})
+}
+
+// GetRefreshTokenCookie retrieves the refresh token from HTTP-only cookie
+func (h *Handler) GetRefreshTokenCookie(c *gin.Context) {
+	token, err := c.Cookie("kubechat_refresh_token")
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"refreshToken": "",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"refreshToken": token,
+	})
+}
+
+// ClearTokensCookie clears all authentication cookies
+func (h *Handler) ClearTokensCookie(c *gin.Context) {
+	// Clear access token cookie
+	c.SetCookie("kubechat_token", "", -1, "/", "", c.Request.TLS != nil, true)
+
+	// Clear refresh token cookie
+	c.SetCookie("kubechat_refresh_token", "", -1, "/", "", c.Request.TLS != nil, true)
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Tokens cleared successfully",
 	})
 }

@@ -73,6 +73,7 @@ import (
 	websocketHandler "github.com/pramodksahoo/kubechat/apps/api/internal/handlers/websocket"
 	"github.com/pramodksahoo/kubechat/apps/api/internal/models"
 	"github.com/pramodksahoo/kubechat/apps/api/internal/repositories"
+	"github.com/pramodksahoo/kubechat/apps/api/internal/services/admin"
 	auditService "github.com/pramodksahoo/kubechat/apps/api/internal/services/audit"
 	authService "github.com/pramodksahoo/kubechat/apps/api/internal/services/auth"
 	cacheService "github.com/pramodksahoo/kubechat/apps/api/internal/services/cache"
@@ -201,6 +202,23 @@ func main() {
 	userRepo := repositories.NewUserRepository(db)
 	auditRepo := repositories.NewAuditRepository(db)
 
+	// Initialize Admin Service to ensure admin user exists with secret-based password
+	adminConfig := &admin.Config{
+		Namespace:  "kubechat", // Default namespace, can be overridden by env var
+		SecretName: "kubechat-admin-secret",
+	}
+	adminSvc, err := admin.NewService(userRepo, adminConfig)
+	if err != nil {
+		log.Printf("Warning: Failed to initialize admin service: %v", err)
+	} else {
+		// Ensure admin user exists with password from Kubernetes secret
+		if err := adminSvc.EnsureAdminUser(context.Background()); err != nil {
+			log.Printf("Warning: Failed to ensure admin user: %v", err)
+		} else {
+			log.Println("✅ Admin user verified and password synced from Kubernetes secret")
+		}
+	}
+
 	// Initialize services with mandatory JWT secret validation
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
@@ -295,7 +313,7 @@ func main() {
 	// Initialize Command Execution Services (Story 1.6)
 	// Create a simple in-memory repository implementation for now
 	commandRepo := &mockCommandRepository{}
-	
+
 	// Initialize cache service
 	cacheConfig := &cacheService.Config{
 		RedisURL:               "redis://kubechat-dev-redis-master:6379",
@@ -311,10 +329,10 @@ func main() {
 		// Use a nil cache service for now
 		cacheSvc = nil
 	}
-	
+
 	commandSvc := commandService.NewService(commandRepo, kubeSvc, safetySvc, cacheSvc)
 	log.Println("Command execution service initialized with safety integration and caching")
-	
+
 	// Note: Rollback service requires proper repositories - skipping for now to avoid deployment issues
 
 	// Initialize Query Processing Service (Story 1.5 Task 3)
@@ -1090,7 +1108,7 @@ func main() {
 	communicationHandlerInstance := communicationHandler.NewHandler(commSvc)
 	databaseHandlerInstance := databaseHandler.NewHandler(dbSvc)
 	securityHandlerInstance := securityHandler.NewHandler(secSvc)
-	
+
 	// Initialize Command Handler (Story 1.6)
 	var commandHandlerInstance *commandHandler.Handler
 	if commandSvc != nil {
@@ -1164,11 +1182,11 @@ func main() {
 		}
 
 		c.JSON(http.StatusOK, gin.H{
-			"status":         overallStatus,
-			"service":        "kubechat-api-security",
-			"version":        "1.0.0",
+			"status":          overallStatus,
+			"service":         "kubechat-api-security",
+			"version":         "1.0.0",
 			"security_checks": securityChecks,
-			"timestamp":      time.Now(),
+			"timestamp":       time.Now(),
 		})
 	})
 
