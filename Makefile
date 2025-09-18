@@ -138,8 +138,8 @@ dev-deploy: ## Deploy complete development stack
 	@echo ""
 	@echo "Access URLs:"
 	@echo "============"
-	@echo "Frontend:        http://localhost:30001"
-	@echo "API:             http://localhost:30080"
+	@echo "Frontend:        http://kubechat.local"
+	@echo "API:             http://kubechat.local/api/v1/health/"
 	@echo "PgAdmin:         http://localhost:30050"
 	@echo "Redis Commander: http://localhost:30081"
 	@echo ""
@@ -168,8 +168,8 @@ dev-upgrade: ## Upgrade existing deployment (rebuilds containers + upgrades)
 	@echo ""
 	@echo "Access URLs:"
 	@echo "============"
-	@echo "Frontend: http://localhost:30001"
-	@echo "API:      http://localhost:30080"
+	@echo "Frontend: http://kubechat.local"
+	@echo "API:      http://kubechat.local/api/v1/health/"
 
 dev-status: ## Show deployment status
 	@echo "=== KubeChat Deployment Status ==="
@@ -219,21 +219,21 @@ dev-shell-web: ## Shell into web container
 	@echo "=== Opening shell in Web container ==="
 	@kubectl exec -it -n kubechat $$(kubectl get pod -n kubechat -l app.kubernetes.io/component=web -o jsonpath='{.items[0].metadata.name}') -- /bin/sh
 
-dev-port-forward: ## Setup port forwarding for local access
-	@echo "=== Setting up port forwarding ==="
-	@echo ""
-	@echo "Starting port forwarding (press Ctrl+C to stop)..."
-	@echo "Frontend: http://localhost:3000"
-	@echo "API: http://localhost:8080"
-	@echo "PostgreSQL: localhost:5432"
-	@echo "Redis: localhost:6379"
-	@echo ""
-	@kubectl port-forward -n kubechat svc/kubechat-dev-web 3000:3000 &
-	@kubectl port-forward -n kubechat svc/kubechat-dev-api 8080:8080 &
-	@kubectl port-forward -n kubechat svc/kubechat-dev-postgresql 5432:5432 &
-	@kubectl port-forward -n kubechat svc/kubechat-dev-redis-master 6379:6379 &
-	@echo "Port forwarding active in background"
-	@echo "Use 'pkill -f kubectl.*port-forward' to stop all port forwarding"
+# dev-port-forward: ## Setup port forwarding for local access
+# 	@echo "=== Setting up port forwarding ==="
+# 	@echo ""
+# 	@echo "Starting port forwarding (press Ctrl+C to stop)..."
+# 	@echo "Frontend: http://localhost:3000"
+# 	@echo "API: http://localhost:8080"
+# 	@echo "PostgreSQL: localhost:5432"
+# 	@echo "Redis: localhost:6379"
+# 	@echo ""
+# 	@kubectl port-forward -n kubechat svc/kubechat-dev-web 3000:3000 &
+# 	@kubectl port-forward -n kubechat svc/kubechat-dev-api 8080:8080 &
+# 	@kubectl port-forward -n kubechat svc/kubechat-dev-postgresql 5432:5432 &
+# 	@kubectl port-forward -n kubechat svc/kubechat-dev-redis-master 6379:6379 &
+# 	@echo "Port forwarding active in background"
+# 	@echo "Use 'pkill -f kubectl.*port-forward' to stop all port forwarding"
 
 # Database Management
 dev-db-connect: ## Connect to development database
@@ -424,7 +424,7 @@ dev-upgrade-web: ## Upgrade web container only (faster for frontend changes)
 	@kubectl rollout status deployment/kubechat-dev-web -n kubechat --timeout=300s
 	@echo ""
 	@echo "✅ Web container upgraded successfully!"
-	@echo "Frontend: http://localhost:30001"
+	@echo "Frontend: http://kubechat.local"
 
 dev-upgrade-api: ## Upgrade API container only (faster for backend changes)
 	@echo "=== Upgrading API Container Only ==="
@@ -441,7 +441,7 @@ dev-upgrade-api: ## Upgrade API container only (faster for backend changes)
 	@kubectl rollout status deployment/kubechat-dev-api -n kubechat --timeout=300s
 	@echo ""
 	@echo "✅ API container upgraded successfully!"
-	@echo "API: http://localhost:30080"
+	@echo "API: http://kubechat.local/api/v1/status"
 
 # Project initialization (run once)
 init: ## Initialize project for first-time setup
@@ -456,7 +456,7 @@ init: ## Initialize project for first-time setup
 	@echo "🎉 KubeChat development environment is ready!"
 	@echo ""
 	@echo "Next steps:"
-	@echo "1. Visit http://localhost:30001 for the frontend"
-	@echo "2. Check http://localhost:30080/health for API health"
+	@echo "1. Visit http://kubechat.local for the frontend"
+	@echo "2. Check http://kubechat.local/health for API health"
 	@echo "3. Use 'make dev-logs' to view application logs"
 	@echo "4. Use 'make help' to see all available commands"
