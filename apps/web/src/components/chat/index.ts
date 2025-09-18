@@ -1,3 +1,9 @@
+// Story 2.2 Enhanced Components
+export { EnhancedChatInterface } from './EnhancedChatInterface';
+export { SessionSelector } from './SessionSelector';
+export { CollaborationPanel } from './CollaborationPanel';
+
+// Existing Components
 export { ChatInterface } from './ChatInterface';
 export { ChatMessageList } from './ChatMessageList';
 export { ChatMessageBubble } from './ChatMessageBubble';

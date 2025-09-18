@@ -202,6 +202,10 @@ export const commandsApi = {
 
   getHealth: () => httpClient.get('/api/v1/commands/health'),
 
+  // Command control
+  cancelExecution: (executionId: string) =>
+    httpClient.post(`/api/v1/commands/executions/${executionId}/cancel`),
+
   // Rollback operations
   createRollbackPlan: (executionId: string) =>
     httpClient.post(`/api/v1/commands/executions/${executionId}/rollback/plan`),
@@ -547,6 +551,19 @@ export const chatApi = {
       };
       message: string;
     }>(`/api/v1/chat/sessions/${sessionId}/messages`, message),
+
+  // Session management extensions
+  deleteSession: (sessionId: string) =>
+    httpClient.delete(`/api/v1/chat/sessions/${sessionId}`),
+
+  updateSession: (sessionId: string, data: any) =>
+    httpClient.put(`/api/v1/chat/sessions/${sessionId}`, data),
+
+  shareSession: (sessionId: string, data: { userIds: string[] }) =>
+    httpClient.post(`/api/v1/chat/sessions/${sessionId}/share`, data),
+
+  joinSharedSession: (shareId: string) =>
+    httpClient.post(`/api/v1/chat/sessions/shared/${shareId}/join`),
 
   // Command preview
   generateCommandPreview: (command: { query: string; context?: string }) =>
