@@ -135,7 +135,7 @@ export const healthApi = {
 // Authentication API - Updated to match backend endpoints
 export const authApi = {
   login: (credentials: { username: string; password: string }) =>
-    httpClient.post<{ user: unknown; token: string }>('/api/v1/auth/login', credentials),
+    httpClient.post<{ user: unknown; expires_at: string }>('/api/v1/auth/login', credentials),
 
   logout: () => httpClient.post('/api/v1/auth/logout'),
 

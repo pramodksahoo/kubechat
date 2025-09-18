@@ -27,11 +27,26 @@ export interface TokenService {
 
 // Secure cookie-based token storage implementation
 class SecureTokenService implements TokenService {
+  private readonly TOKEN_KEY = 'kubechat_auth_token';
+  private readonly REFRESH_TOKEN_KEY = 'kubechat_refresh_token';
 
   /**
-   * Store tokens in secure httpOnly cookies via API call
+   * Store tokens - in production uses secure httpOnly cookies via API call,
+   * in development uses localStorage directly
    */
   async setTokens(accessToken: string, refreshToken?: string): Promise<void> {
+    if (typeof window === 'undefined') return;
+
+    // In development mode, use localStorage directly
+    if (process.env.NODE_ENV !== 'production') {
+      localStorage.setItem(this.TOKEN_KEY, accessToken);
+      if (refreshToken) {
+        localStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
+      }
+      return;
+    }
+
+    // In production mode, use secure cookie API
     try {
       const response = await fetch('/api/auth/set-tokens', {
         method: 'POST',

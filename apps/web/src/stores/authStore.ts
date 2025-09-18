@@ -21,15 +21,18 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         try {
           const response = await api.auth.login(credentials);
 
-          if (!response.data || !response.data.token) {
+          if (!response.data) {
             throw new Error('Invalid login response');
           }
 
-          const { user, token } = response.data;
+          const { user } = response.data;
           const typedUser = user as User;
 
-          // Store tokens securely
-          await tokenService.setTokens(token);
+          // Get token from secure cookie (backend sets it automatically)
+          const token = await tokenService.getAccessToken();
+          if (!token) {
+            throw new Error('Token not found after login');
+          }
 
           // Create tokens object
           const tokens = createAuthTokens(token);
@@ -117,11 +120,16 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
           const response = await api.auth.refresh();
 
-          if (!response.data || !response.data.token) {
+          if (!response.data) {
             throw new Error('Token refresh failed');
           }
 
-          const { token } = response.data;
+          // Get token from secure cookie (backend sets it automatically)
+          const token = await tokenService.getAccessToken();
+          if (!token) {
+            throw new Error('Token not found after refresh');
+          }
+
           await tokenService.setTokens(token);
 
           const tokens = createAuthTokens(token);

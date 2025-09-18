@@ -1,5 +1,6 @@
 import { User, Role, Permission } from '../types/user';
 import { api } from './api';
+import { tokenService } from './tokenService';
 
 export interface LoginCredentials {
   username: string;
@@ -51,9 +52,18 @@ class AuthService {
     try {
       const response = await api.auth.login(credentials);
 
+      // Wait briefly for cookie to be set by backend
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Get token from secure cookie (backend sets it automatically)
+      const token = await tokenService.getAccessToken();
+      if (!token) {
+        throw new Error('Token not found after login');
+      }
+
       const authResponse: AuthResponse = {
         user: (response.data as any).user as User,
-        token: (response.data as any).token,
+        token: token,
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
       };
 
