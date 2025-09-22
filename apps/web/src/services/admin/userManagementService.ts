@@ -28,7 +28,7 @@ class AdminUserManagementService {
         ...(filters?.search && { search: filters.search })
       });
 
-      const response = await httpClient.get(`/api/v1/admin/users?${params.toString()}`);
+      const response = await httpClient.get(`/api/v1/auth/admin/users?${params.toString()}`);
 
       if (!response.data) {
         throw new Error('Invalid response from user management API');
@@ -48,7 +48,7 @@ class AdminUserManagementService {
 
   async getUserById(userId: string): Promise<AdminUser> {
     try {
-      const response = await httpClient.get(`/api/v1/admin/users/${userId}`);
+      const response = await httpClient.get(`/api/v1/auth/admin/users/${userId}`);
 
       if (!response.data) {
         throw new Error('User not found');
@@ -65,7 +65,7 @@ class AdminUserManagementService {
       // Validate user data
       this.validateUserData(userData);
 
-      const response = await httpClient.post('/api/v1/admin/users', {
+      const response = await httpClient.post('/api/v1/auth/admin/users', {
         username: userData.username,
         email: userData.email,
         password: userData.password,
@@ -91,7 +91,7 @@ class AdminUserManagementService {
       // Validate update data
       this.validateUpdateData(updates);
 
-      const response = await httpClient.put(`/api/v1/admin/users/${userId}`, {
+      const response = await httpClient.put(`/api/v1/auth/admin/users/${userId}`, {
         email: updates.email,
         role: updates.role,
         permissions: updates.permissions,
@@ -114,7 +114,7 @@ class AdminUserManagementService {
 
   async deleteUser(userId: string): Promise<void> {
     try {
-      await httpClient.delete(`/api/v1/admin/users/${userId}`);
+      await httpClient.delete(`/api/v1/auth/admin/users/${userId}`);
     } catch (error: any) {
       throw this.handleApiError(error, 'Failed to delete user');
     }
@@ -122,7 +122,7 @@ class AdminUserManagementService {
 
   async resetUserPassword(userId: string, newPassword?: string): Promise<{ tempPassword?: string }> {
     try {
-      const response = await httpClient.post(`/api/v1/admin/users/${userId}/reset-password`, {
+      const response = await httpClient.post(`/api/v1/auth/admin/users/${userId}/reset-password`, {
         new_password: newPassword
       });
 
@@ -136,7 +136,7 @@ class AdminUserManagementService {
 
   async lockUser(userId: string, reason?: string): Promise<void> {
     try {
-      await httpClient.post(`/api/v1/admin/users/${userId}/lock`, {
+      await httpClient.post(`/api/v1/auth/admin/users/${userId}/lock`, {
         reason: reason || 'Administrative action'
       });
     } catch (error: any) {
@@ -146,7 +146,7 @@ class AdminUserManagementService {
 
   async unlockUser(userId: string): Promise<void> {
     try {
-      await httpClient.post(`/api/v1/admin/users/${userId}/unlock`);
+      await httpClient.post(`/api/v1/auth/admin/users/${userId}/unlock`);
     } catch (error: any) {
       throw this.handleApiError(error, 'Failed to unlock user account');
     }
@@ -155,7 +155,7 @@ class AdminUserManagementService {
   // Security policy management
   async getSecurityPolicies(): Promise<SecurityPolicy[]> {
     try {
-      const response = await httpClient.get('/api/v1/admin/security/policies');
+      const response = await httpClient.get('/api/v1/auth/admin/security/policies');
 
       return ((response.data as any))?.policies || [];
     } catch (error: any) {
@@ -165,7 +165,7 @@ class AdminUserManagementService {
 
   async updateSecurityPolicy(policyId: string, updates: Partial<SecurityPolicy>): Promise<SecurityPolicy> {
     try {
-      const response = await httpClient.put(`/api/v1/admin/security/policies/${policyId}`, updates);
+      const response = await httpClient.put(`/api/v1/auth/admin/security/policies/${policyId}`, updates);
 
       if (!response.data) {
         throw new Error('Failed to update security policy');
@@ -180,7 +180,7 @@ class AdminUserManagementService {
   // Bulk operations
   async bulkUpdateUsers(userIds: string[], updates: Partial<UpdateUserRequest>): Promise<AdminUser[]> {
     try {
-      const response = await httpClient.post('/api/v1/admin/users/bulk-update', {
+      const response = await httpClient.post('/api/v1/auth/admin/users/bulk-update', {
         user_ids: userIds,
         updates: updates
       });
@@ -193,7 +193,7 @@ class AdminUserManagementService {
 
   async bulkDeleteUsers(userIds: string[]): Promise<void> {
     try {
-      await httpClient.post('/api/v1/admin/users/bulk-delete', {
+      await httpClient.post('/api/v1/auth/admin/users/bulk-delete', {
         user_ids: userIds
       });
     } catch (error: any) {
@@ -211,7 +211,7 @@ class AdminUserManagementService {
     recentLogins: number;
   }> {
     try {
-      const response = await httpClient.get('/api/v1/admin/users/statistics');
+      const response = await httpClient.get('/api/v1/auth/admin/users/statistics');
 
       const data = response.data as any;
       return data || {

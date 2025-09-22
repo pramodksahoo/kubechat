@@ -8,7 +8,7 @@ import type { UserSession, AdminSessionsResponse } from '../../types/admin';
 class AdminSessionService {
   async getActiveSessions(): Promise<AdminSessionsResponse> {
     try {
-      const response = await httpClient.get('/api/v1/admin/sessions');
+      const response = await httpClient.get('/api/v1/auth/admin/sessions');
 
       return {
         sessions: ((response.data as any))?.sessions || [],
@@ -22,7 +22,7 @@ class AdminSessionService {
 
   async terminateSession(sessionId: string): Promise<void> {
     try {
-      await httpClient.delete(`/api/v1/admin/sessions/${sessionId}`);
+      await httpClient.delete(`/api/v1/auth/admin/sessions/${sessionId}`);
     } catch (error: any) {
       throw this.handleApiError(error, 'Failed to terminate session');
     }

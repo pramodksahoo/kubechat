@@ -16,7 +16,7 @@ export interface LoginFormProps {
 
 export const LoginForm: React.FC<LoginFormProps> = ({
   onSuccess,
-  redirectTo = '/dashboard'
+  redirectTo
 }) => {
   const router = useRouter();
   const { login, isLoading, error, clearError } = useAuthStore();
@@ -57,8 +57,18 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
     try {
       await login(credentials);
+      
+      // Get the updated user info after login
+      const { user } = useAuthStore.getState();
+      
+      // Determine redirect based on user role if no explicit redirectTo is provided
+      let finalRedirect = redirectTo;
+      if (!finalRedirect) {
+        finalRedirect = user?.role === 'admin' ? '/admin' : '/';
+      }
+      
       onSuccess?.();
-      router.push(redirectTo);
+      router.push(finalRedirect);
     } catch (error) {
       // Error is handled by the store
       console.error('Login failed:', error);

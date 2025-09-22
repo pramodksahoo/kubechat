@@ -5,14 +5,11 @@ import Head from 'next/head';
 import { useEffect } from 'react';
 import { ErrorBoundary } from '../components/error/ErrorBoundary';
 import { ThemeProvider } from '../providers/ThemeProvider';
-import { initializeAuth, startTokenRefresh, stopTokenRefresh } from '../stores/authStore';
+import { startTokenRefresh, stopTokenRefresh } from '../stores/authStore';
 
 export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
-    // Initialize authentication on app start
-    initializeAuth();
-
-    // Start token refresh interval
+    // Start token refresh interval for authenticated users
     startTokenRefresh();
 
     // Cleanup on unmount

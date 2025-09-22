@@ -8,7 +8,7 @@ import type { AuditLogEntry, AdminAuditResponse } from '../../types/admin';
 class AdminAuditService {
   async getAuditLogs(page = 1, limit = 50): Promise<AdminAuditResponse> {
     try {
-      const response = await httpClient.get(`/api/v1/admin/audit?page=${page}&limit=${limit}`);
+      const response = await httpClient.get(`/audit/logs?page=${page}&limit=${limit}`);
 
       return {
         logs: ((response.data as any))?.logs || [],

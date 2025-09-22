@@ -8,7 +8,7 @@ import type { Role, Permission, AdminRolesResponse } from '../../types/admin';
 class AdminRoleManagementService {
   async getAllRoles(): Promise<AdminRolesResponse> {
     try {
-      const response = await httpClient.get('/api/v1/admin/roles');
+      const response = await httpClient.get('/api/v1/auth/admin/roles');
 
       return {
         roles: ((response.data as any))?.roles || [],
@@ -21,7 +21,7 @@ class AdminRoleManagementService {
 
   async createRole(roleData: Omit<Role, 'id' | 'createdAt' | 'updatedAt'>): Promise<Role> {
     try {
-      const response = await httpClient.post('/api/v1/admin/roles', roleData);
+      const response = await httpClient.post('/api/v1/auth/admin/roles', roleData);
       return response.data as Role;
     } catch (error: any) {
       throw this.handleApiError(error, 'Failed to create role');
@@ -30,7 +30,7 @@ class AdminRoleManagementService {
 
   async updateRole(roleId: string, updates: Partial<Role>): Promise<Role> {
     try {
-      const response = await httpClient.put(`/api/v1/admin/roles/${roleId}`, updates);
+      const response = await httpClient.put(`/api/v1/auth/admin/roles/${roleId}`, updates);
       return response.data as Role;
     } catch (error: any) {
       throw this.handleApiError(error, 'Failed to update role');
@@ -39,7 +39,7 @@ class AdminRoleManagementService {
 
   async deleteRole(roleId: string): Promise<void> {
     try {
-      await httpClient.delete(`/api/v1/admin/roles/${roleId}`);
+      await httpClient.delete(`/api/v1/auth/admin/roles/${roleId}`);
     } catch (error: any) {
       throw this.handleApiError(error, 'Failed to delete role');
     }
@@ -47,7 +47,7 @@ class AdminRoleManagementService {
 
   async getAllPermissions(): Promise<Permission[]> {
     try {
-      const response = await httpClient.get('/api/v1/admin/permissions');
+      const response = await httpClient.get('/api/v1/auth/admin/permissions');
       return ((response.data as any))?.permissions || [];
     } catch (error: any) {
       throw this.handleApiError(error, 'Failed to load permissions');

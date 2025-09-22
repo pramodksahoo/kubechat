@@ -11,16 +11,28 @@ const LoginPage: React.FC = () => {
   const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
-    // Redirect authenticated users to dashboard
+    // Redirect authenticated users based on their role
     if (isAuthenticated) {
       const returnUrl = router.query.returnUrl as string;
-      router.replace(returnUrl || '/dashboard');
+      if (returnUrl) {
+        router.replace(returnUrl);
+      } else {
+        // Redirect based on user role: admin users to /admin, regular users to /
+        const { user } = useAuthStore.getState();
+        const defaultRedirect = user?.role === 'admin' ? '/admin' : '/';
+        router.replace(defaultRedirect);
+      }
     }
   }, [isAuthenticated, router]);
 
   const handleLoginSuccess = () => {
     const returnUrl = router.query.returnUrl as string;
-    router.push(returnUrl || '/dashboard');
+    if (returnUrl) {
+      router.push(returnUrl);
+    } else {
+      // Role-based redirect will be handled by LoginForm component
+      // No need to redirect here as LoginForm handles it
+    }
   };
 
   if (isAuthenticated) {

@@ -11,9 +11,11 @@ const RegisterPage: React.FC = () => {
   const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
-    // Redirect authenticated users to dashboard
+    // Redirect authenticated users based on their role
     if (isAuthenticated) {
-      router.replace('/dashboard');
+      const { user } = useAuthStore.getState();
+      const defaultRedirect = user?.role === 'admin' ? '/admin' : '/';
+      router.replace(defaultRedirect);
     }
   }, [isAuthenticated, router]);
 

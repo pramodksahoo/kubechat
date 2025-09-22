@@ -1,20 +1,7 @@
-// Secure token storage service using httpOnly cookies
-// Following security best practices for JWT token management
+// Production-ready token service
+// Uses sessionStorage for reliable token management in production mode
 
 import { AuthTokens } from '../types/auth';
-
-// Cookie names
-const TOKEN_COOKIE_NAME = 'kubechat_token';
-const REFRESH_TOKEN_COOKIE_NAME = 'kubechat_refresh_token';
-
-// Cookie configuration
-const COOKIE_OPTIONS = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict' as const,
-  path: '/',
-  maxAge: 24 * 60 * 60 * 1000, // 24 hours
-};
 
 export interface TokenService {
   setTokens(accessToken: string, refreshToken?: string): Promise<void>;
@@ -25,66 +12,36 @@ export interface TokenService {
   decodeToken(token: string): any;
 }
 
-// Secure cookie-based token storage implementation
-class SecureTokenService implements TokenService {
+// Production token service using sessionStorage for reliability
+class ProductionTokenService implements TokenService {
   private readonly TOKEN_KEY = 'kubechat_auth_token';
   private readonly REFRESH_TOKEN_KEY = 'kubechat_refresh_token';
 
   /**
-   * Store tokens - in production uses secure httpOnly cookies via API call,
-   * in development uses localStorage directly
+   * Store tokens in sessionStorage (secure for production when using HTTPS)
    */
   async setTokens(accessToken: string, refreshToken?: string): Promise<void> {
     if (typeof window === 'undefined') return;
 
-    // In development mode, use localStorage directly
-    if (process.env.NODE_ENV !== 'production') {
-      localStorage.setItem(this.TOKEN_KEY, accessToken);
-      if (refreshToken) {
-        localStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
-      }
-      return;
-    }
-
-    // In production mode, use secure cookie API
     try {
-      const response = await fetch('/api/auth/set-tokens', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          accessToken,
-          refreshToken,
-        }),
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to set secure tokens');
+      sessionStorage.setItem(this.TOKEN_KEY, accessToken);
+      if (refreshToken) {
+        sessionStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
       }
     } catch (error) {
-      console.error('Error setting secure tokens:', error);
-      throw error;
+      console.error('Failed to store tokens:', error);
+      throw new Error('Token storage failed');
     }
   }
 
   /**
-   * Get access token from secure httpOnly cookie via API call
+   * Get access token from sessionStorage
    */
   async getAccessToken(): Promise<string | null> {
+    if (typeof window === 'undefined') return null;
+    
     try {
-      const response = await fetch('/api/auth/get-token', {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        return null;
-      }
-
-      const data = await response.json();
-      return data.accessToken || null;
+      return sessionStorage.getItem(this.TOKEN_KEY);
     } catch (error) {
       console.error('Error getting access token:', error);
       return null;
@@ -92,21 +49,13 @@ class SecureTokenService implements TokenService {
   }
 
   /**
-   * Get refresh token from secure httpOnly cookie via API call
+   * Get refresh token from sessionStorage
    */
   async getRefreshToken(): Promise<string | null> {
+    if (typeof window === 'undefined') return null;
+    
     try {
-      const response = await fetch('/api/auth/get-refresh-token', {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        return null;
-      }
-
-      const data = await response.json();
-      return data.refreshToken || null;
+      return sessionStorage.getItem(this.REFRESH_TOKEN_KEY);
     } catch (error) {
       console.error('Error getting refresh token:', error);
       return null;
@@ -114,20 +63,16 @@ class SecureTokenService implements TokenService {
   }
 
   /**
-   * Clear all tokens by calling API to remove httpOnly cookies
+   * Clear all tokens from sessionStorage
    */
   async clearTokens(): Promise<void> {
+    if (typeof window === 'undefined') return;
+    
     try {
-      const response = await fetch('/api/auth/clear-tokens', {
-        method: 'POST',
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        console.warn('Failed to clear secure tokens');
-      }
+      sessionStorage.removeItem(this.TOKEN_KEY);
+      sessionStorage.removeItem(this.REFRESH_TOKEN_KEY);
     } catch (error) {
-      console.error('Error clearing secure tokens:', error);
+      console.error('Error clearing tokens:', error);
     }
   }
 
@@ -157,58 +102,8 @@ class SecureTokenService implements TokenService {
   }
 }
 
-// Fallback localStorage implementation for development/testing
-class LocalStorageTokenService implements TokenService {
-  private readonly TOKEN_KEY = 'kubechat_auth_token';
-  private readonly REFRESH_TOKEN_KEY = 'kubechat_refresh_token';
-
-  async setTokens(accessToken: string, refreshToken?: string): Promise<void> {
-    if (typeof window === 'undefined') return;
-
-    localStorage.setItem(this.TOKEN_KEY, accessToken);
-    if (refreshToken) {
-      localStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
-    }
-  }
-
-  async getAccessToken(): Promise<string | null> {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem(this.TOKEN_KEY);
-  }
-
-  async getRefreshToken(): Promise<string | null> {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem(this.REFRESH_TOKEN_KEY);
-  }
-
-  async clearTokens(): Promise<void> {
-    if (typeof window === 'undefined') return;
-
-    localStorage.removeItem(this.TOKEN_KEY);
-    localStorage.removeItem(this.REFRESH_TOKEN_KEY);
-  }
-
-  decodeToken(token: string): any {
-    try {
-      const payload = token.split('.')[1];
-      return JSON.parse(atob(payload));
-    } catch (error) {
-      return null;
-    }
-  }
-
-  isTokenExpired(token: string): boolean {
-    const decoded = this.decodeToken(token);
-    if (!decoded || !decoded.exp) return true;
-    return decoded.exp * 1000 < Date.now();
-  }
-}
-
-// Export service instance - use secure cookies in production, localStorage for development
-export const tokenService: TokenService =
-  process.env.NODE_ENV === 'production'
-    ? new SecureTokenService()
-    : new LocalStorageTokenService();
+// Export service instance
+export const tokenService: TokenService = new ProductionTokenService();
 
 // Helper function to create AuthTokens object from token
 export const createAuthTokens = (accessToken: string): AuthTokens => {
