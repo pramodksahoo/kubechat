@@ -6,11 +6,48 @@ import { api } from '../services/api';
 import { tokenService, createAuthTokens } from '../services/tokenService';
 import type { AuthState, LoginCredentials, RegisterData, User, AuthTokens } from '../types/auth';
 
-export const useAuthStore = create<AuthState>()((set, get) => ({
-      // Initial state
-      user: null,
-      tokens: null,
+// Helper function to get initial auth state from sessionStorage during SSR
+const getInitialAuthState = (): Pick<AuthState, 'isAuthenticated' | 'user' | 'tokens'> => {
+  // During SSR, always return unauthenticated state
+  if (typeof window === 'undefined') {
+    return {
       isAuthenticated: false,
+      user: null,
+      tokens: null
+    };
+  }
+
+  // During client-side hydration, check for existing token
+  try {
+    const token = sessionStorage.getItem('kubechat_auth_token');
+    if (token && !tokenService.isTokenExpired(token)) {
+      // If we have a valid token, assume authenticated state initially
+      // The actual user data will be loaded by initializeAuth
+      return {
+        isAuthenticated: true,
+        user: null, // Will be loaded by initializeAuth
+        tokens: createAuthTokens(token)
+      };
+    }
+  } catch (error) {
+    console.warn('Failed to read token from sessionStorage:', error);
+  }
+
+  return {
+    isAuthenticated: false,
+    user: null,
+    tokens: null
+  };
+};
+
+export const useAuthStore = create<AuthState>()((set, get) => {
+  const initialState = getInitialAuthState();
+  
+  return {
+      // Initial state - SSR-safe with token check
+      user: initialState.user,
+      tokens: initialState.tokens,
+      isAuthenticated: initialState.isAuthenticated,
       isLoading: false,
       error: null,
 
@@ -25,17 +62,25 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
             throw new Error('Invalid login response');
           }
 
-          const { user } = response.data;
+          const { user, token } = response.data;
           const typedUser = user as User;
 
-          // Get token from secure cookie (backend sets it automatically)
-          const token = await tokenService.getAccessToken();
+          // Validate token is present in response
           if (!token) {
-            throw new Error('Token not found after login');
+            throw new Error('Token not found in login response');
           }
 
-          // Create tokens object
+          // Create tokens object from response
           const tokens = createAuthTokens(token);
+
+          // Store token in sessionStorage directly for persistence
+          if (typeof window !== 'undefined') {
+            try {
+              sessionStorage.setItem('kubechat_auth_token', token);
+            } catch (error) {
+              console.warn('Failed to store token in sessionStorage:', error);
+            }
+          }
 
           set({
             user: typedUser,
@@ -90,8 +135,15 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
       // Logout action
       logout: async () => {
-        // Clear secure tokens
-        await tokenService.clearTokens();
+        // Clear tokens from sessionStorage directly
+        if (typeof window !== 'undefined') {
+          try {
+            sessionStorage.removeItem('kubechat_auth_token');
+            sessionStorage.removeItem('kubechat_refresh_token');
+          } catch (error) {
+            console.warn('Failed to clear tokens from sessionStorage:', error);
+          }
+        }
 
         // Call logout API endpoint
         api.auth.logout().catch(console.error);
@@ -108,9 +160,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       // Refresh token action
       refreshToken: async () => {
         const currentTokens = get().tokens;
-        const refreshToken = await tokenService.getRefreshToken();
-
-        if (!currentTokens || !refreshToken) {
+        
+        if (!currentTokens) {
           await get().logout();
           return;
         }
@@ -120,17 +171,20 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
           const response = await api.auth.refresh();
 
-          if (!response.data) {
-            throw new Error('Token refresh failed');
+          if (!response.data || !response.data.token) {
+            throw new Error('Token refresh failed - no token in response');
           }
 
-          // Get token from secure cookie (backend sets it automatically)
-          const token = await tokenService.getAccessToken();
-          if (!token) {
-            throw new Error('Token not found after refresh');
+          const { token } = response.data;
+          
+          // Store new token in sessionStorage directly
+          if (typeof window !== 'undefined') {
+            try {
+              sessionStorage.setItem('kubechat_auth_token', token);
+            } catch (error) {
+              console.warn('Failed to store token in sessionStorage:', error);
+            }
           }
-
-          await tokenService.setTokens(token);
 
           const tokens = createAuthTokens(token);
 
@@ -160,22 +214,52 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       setLoading: (loading: boolean) => {
         set({ isLoading: loading });
       }
-    }));
+    };
+});
 
 // Initialize auth store with existing token
-export const initializeAuth = async () => {
-  const token = await tokenService.getAccessToken();
+export const initializeAuth = async (): Promise<boolean> => {
+  // Skip during SSR
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  // Get token from sessionStorage directly
+  let token: string | null = null;
+  try {
+    token = sessionStorage.getItem('kubechat_auth_token');
+  } catch (error) {
+    console.warn('Failed to get token from sessionStorage:', error);
+    return false;
+  }
 
   if (!token) {
-    return;
+    // No token found, ensure auth state is cleared
+    useAuthStore.setState({
+      user: null,
+      tokens: null,
+      isAuthenticated: false,
+      isLoading: false,
+      error: null
+    });
+    return false;
   }
 
   if (tokenService.isTokenExpired(token)) {
-    await useAuthStore.getState().refreshToken();
-    return;
+    // Token expired, try to refresh
+    try {
+      await useAuthStore.getState().refreshToken();
+      return useAuthStore.getState().isAuthenticated;
+    } catch (error) {
+      console.error('Token refresh during initialization failed:', error);
+      return false;
+    }
   }
 
   try {
+    // Set loading state
+    useAuthStore.setState({ isLoading: true });
+
     // Verify token with backend and get user info
     const response = await api.auth.me();
 
@@ -189,11 +273,30 @@ export const initializeAuth = async () => {
         isLoading: false,
         error: null
       });
+      return true;
+    } else {
+      throw new Error('No user data in response');
     }
   } catch (error) {
     console.error('Auth initialization failed:', error);
-    await tokenService.clearTokens();
-    await useAuthStore.getState().logout();
+    
+    // Clear token from sessionStorage and reset auth state
+    try {
+      sessionStorage.removeItem('kubechat_auth_token');
+      sessionStorage.removeItem('kubechat_refresh_token');
+    } catch (clearError) {
+      console.warn('Failed to clear tokens:', clearError);
+    }
+    
+    useAuthStore.setState({
+      user: null,
+      tokens: null,
+      isAuthenticated: false,
+      isLoading: false,
+      error: null
+    });
+    
+    return false;
   }
 };
 

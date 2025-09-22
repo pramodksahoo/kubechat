@@ -11,25 +11,57 @@ export class ChatService {
     this.loadLocalData();
   }
 
-  // Session Management - Using local storage since backend doesn't have chat sessions
+  // Session Management - Using backend chat API
   async createSession(clusterId?: string): Promise<ChatSession> {
-    const session: ChatSession = {
-      id: `session-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
-      userId: 'current-user', // TODO: Get from auth
-      title: `Chat Session ${new Date().toLocaleString()}`,
-      clusterId,
-      clusterName: clusterId ? 'Production Cluster' : undefined,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      status: 'active',
-      messageCount: 0
-    };
+    try {
+      // Call the backend API to create a session
+      const response = await api.chat.createSession({
+        clusterId: clusterId
+      });
 
-    this.sessions.unshift(session);
-    this.messages.set(session.id, []);
-    this.saveLocalData();
+      const backendSession = response.data.data;
+      
+      // Convert backend response to our ChatSession format
+      const session: ChatSession = {
+        id: backendSession.id,
+        userId: 'current-user', // Will be set by backend based on auth
+        title: backendSession.title || `Chat Session ${new Date().toLocaleString()}`,
+        clusterId: clusterId,
+        clusterName: clusterId ? 'Production Cluster' : undefined,
+        createdAt: backendSession.createdAt,
+        updatedAt: backendSession.updatedAt,
+        status: 'active',
+        messageCount: backendSession.messageCount || 0
+      };
 
-    return session;
+      // Store locally for offline access
+      this.sessions.unshift(session);
+      this.messages.set(session.id, []);
+      this.saveLocalData();
+
+      return session;
+    } catch (error) {
+      console.error('Backend session creation failed, falling back to local:', error);
+      
+      // Fallback to local session creation if backend fails
+      const session: ChatSession = {
+        id: `local-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+        userId: 'current-user',
+        title: `Chat Session ${new Date().toLocaleString()}`,
+        clusterId,
+        clusterName: clusterId ? 'Production Cluster' : undefined,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        status: 'active',
+        messageCount: 0
+      };
+
+      this.sessions.unshift(session);
+      this.messages.set(session.id, []);
+      this.saveLocalData();
+
+      return session;
+    }
   }
 
   async getSessions(): Promise<ChatSession[]> {
@@ -414,15 +446,15 @@ export class ChatService {
       const safetyIndicator = queryData.safetyLevel === 'dangerous' ? '⚠️ ' :
                               queryData.safetyLevel === 'warning' ? '⚡ ' : '✅ ';
 
-      let response = `${safetyIndicator}I've analyzed your request: "${userInput}"\n\n`;
-      response += `**Generated Command:** \`${queryData.generatedCommand}\`\n\n`;
+      let response = `${safetyIndicator}I've analyzed your request: "${userInput}"\\n\\n`;
+      response += `**Generated Command:** \`${queryData.generatedCommand}\`\\n\\n`;
 
       if (queryData.explanation) {
-        response += `**Explanation:** ${queryData.explanation}\n\n`;
+        response += `**Explanation:** ${queryData.explanation}\\n\\n`;
       }
 
       if (queryData.confidence) {
-        response += `**Confidence:** ${Math.round(queryData.confidence * 100)}%\n\n`;
+        response += `**Confidence:** ${Math.round(queryData.confidence * 100)}%\\n\\n`;
       }
 
       if (queryData.potentialImpact?.length > 0) {
@@ -461,15 +493,15 @@ export class ChatService {
 
   private generateFallbackResponse(userInput: string, errorDetails?: any): string {
     if (errorDetails) {
-      let response = `I encountered an issue while processing your message: "${userInput}"\n\n`;
-      response += `**Error:** ${errorDetails.type} error occurred.\n\n`;
+      let response = `I encountered an issue while processing your message: "${userInput}"\\n\\n`;
+      response += `**Error:** ${errorDetails.type} error occurred.\\n\\n`;
 
       if (errorDetails.suggestions && errorDetails.suggestions.length > 0) {
-        response += `**Suggestions:**\n`;
+        response += `**Suggestions:**\\n`;
         errorDetails.suggestions.forEach((suggestion: string) => {
-          response += `• ${suggestion}\n`;
+          response += `• ${suggestion}\\n`;
         });
-        response += '\n';
+        response += '\\n';
       }
 
       if (errorDetails.canRetry) {

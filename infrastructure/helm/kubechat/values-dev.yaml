@@ -1,12 +1,14 @@
 # KubeChat Helm Chart - Development Values
-# This file contains development-specific configurations optimized for local development
+# This file contains local production mode configurations
+# Runs all components in production mode (NODE_ENV=production, GIN_MODE=release)
+# with appropriate security settings adapted for local development environment
 
-## Global Configuration - Development Overrides
+## Global Configuration - Local Production Mode
 global:
   imageRegistry: ""
   imagePullSecrets: []
-  storageClass: "local-path"  # Use local-path for development
-  environment: "development"
+  storageClass: "local-path"  # Use local-path for Rancher Desktop
+  environment: "production"  # Production mode for security
 
 ## Namespace Configuration - Development Environment
 namespace:
@@ -36,12 +38,13 @@ web:
       cpu: 100m
       memory: 256Mi
   
-  # Development environment variables
+  # Production environment variables for local production simulation
   env:
-    NODE_ENV: "development"
+    NODE_ENV: "production"  # CRITICAL: Production mode for security
     # Use empty string for relative URLs - ingress handles routing
     NEXT_PUBLIC_API_BASE_URL: ""
     NEXT_TELEMETRY_DISABLED: "1"
+    LOG_LEVEL: "warn"
 
   # Proper health checks using actual Next.js endpoints
   livenessProbe:
@@ -99,23 +102,24 @@ api:
       cpu: 200m
       memory: 512Mi
   
-  # Development environment variables with security hardening
+  # Production environment variables with security hardening
   env:
-    GIN_MODE: "debug"  # Enable debug mode for development
-    LOG_LEVEL: debug
+    GIN_MODE: "release"  # CRITICAL: Production mode for security
+    LOG_LEVEL: "warn"
+    LOG_FORMAT: "json"
     # Database configuration for enhanced schema
     POSTGRES_HOST: kubechat-postgresql
     POSTGRES_PORT: "5432"
     POSTGRES_DB: kubechat
     POSTGRES_USER: kubechat
     # POSTGRES_PASSWORD: Provided via secret
-    POSTGRES_SSLMODE: prefer  # SECURITY: Use prefer instead of disable
+    POSTGRES_SSLMODE: disable  # Local PostgreSQL doesn't have SSL configured
     # Additional DB_* variables for authentication service
     DB_HOST: kubechat-postgresql
     DB_PORT: "5432"
     DB_NAME: kubechat
     DB_USER: kubechat
-    DB_SSL_MODE: disable  # Development override: Use disable for local PostgreSQL
+    DB_SSL_MODE: disable  # Local PostgreSQL doesn't have SSL configured
     DB_MAX_OPEN_CONNS: "25"
     DB_MAX_IDLE_CONNS: "5"
     DB_CONN_MAX_LIFETIME: "5m"
@@ -125,7 +129,7 @@ api:
     REDIS_PORT: "6379"
     # REDIS_PASSWORD: Provided via secret
     # Application settings
-    DEBUG: "true"
+    DEBUG: "false"  # SECURITY: Disable debug mode for production
     # Security settings - MUST be provided via secrets in development
     # JWT_SECRET: Provided via secret (mandatory)
     JWT_EXPIRY_MINUTES: "1440"  # 24 hours (within security validation range)
@@ -134,8 +138,12 @@ api:
     AUDIT_LOG_ENABLED: "true"
     BCRYPT_COST: "12"
     METRICS_ENABLED: "true"
-    # ALLOWED_ORIGINS: Secure CORS origins
-    ALLOWED_ORIGINS: "http://localhost:3000,http://kubechat.local"
+    # ALLOWED_ORIGINS: Allow both HTTP and HTTPS for local development
+    ALLOWED_ORIGINS: "http://kubechat.local,https://kubechat.local"
+    # Cookie security settings adapted for local development
+    COOKIE_SECURE: "false"  # Allow non-HTTPS cookies for local development
+    COOKIE_SAME_SITE: "lax"  # Relaxed same-site policy for local development
+    COOKIE_HTTP_ONLY: "true"  # SECURITY: HTTP-only cookies
 
   # Proper health checks using actual Go API endpoints
   livenessProbe:
@@ -168,7 +176,7 @@ api:
     timeoutSeconds: 5
     failureThreshold: 15
 
-## Ingress Configuration - Development
+## Ingress Configuration - HTTP for Local Development
 ingress:
   enabled: true
   className: "traefik"
@@ -185,7 +193,7 @@ ingress:
           service: api
   tls: []
 
-## TLS Configuration - Disabled for Development
+## TLS Configuration - Disabled for Local Development
 tls:
   enabled: false
   certManager:

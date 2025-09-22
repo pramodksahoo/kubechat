@@ -161,7 +161,8 @@ func (h *Handler) Login(c *gin.Context) {
 	// Set secure HTTP-only cookie with the token
 	c.SetCookie("kubechat_token", loginResponse.SessionToken, 24*60*60, "/", "", c.Request.TLS != nil, true)
 
-	c.JSON(http.StatusOK, gin.H{
+	// Return response with token included for development and proper frontend integration
+	responseData := gin.H{
 		"message": "Login successful",
 		"data": gin.H{
 			"user": gin.H{
@@ -171,8 +172,11 @@ func (h *Handler) Login(c *gin.Context) {
 				"role":     loginResponse.User.Role,
 			},
 			"expires_at": loginResponse.ExpiresAt,
+			"token":      loginResponse.SessionToken, // Include token in response for frontend
 		},
-	})
+	}
+
+	c.JSON(http.StatusOK, responseData)
 }
 
 // Logout handles user logout
@@ -275,6 +279,7 @@ func (h *Handler) RefreshSession(c *gin.Context) {
 				"role":     loginResponse.User.Role,
 			},
 			"expires_at": loginResponse.ExpiresAt,
+			"token":      loginResponse.SessionToken, // Include token in response for frontend
 		},
 	})
 }

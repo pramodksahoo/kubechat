@@ -20,7 +20,7 @@ class AdminCredentialSyncService implements IAdminCredentialSyncService {
   // K8s Secret operations
   async getK8sSecretCredentials(): Promise<K8sSecretCredentials> {
     try {
-      const response = await httpClient.get('/api/v1/admin/credentials/k8s-secret');
+      const response = await httpClient.get('/api/v1/auth/admin/credentials/k8s-secret');
 
       if (!response.data) {
         throw new Error('Failed to retrieve K8s Secret credentials');
@@ -34,7 +34,7 @@ class AdminCredentialSyncService implements IAdminCredentialSyncService {
 
   async updateK8sSecret(credentials: Partial<K8sSecretCredentials>): Promise<void> {
     try {
-      await httpClient.put('/api/v1/admin/credentials/k8s-secret', credentials);
+      await httpClient.put('/api/v1/auth/admin/credentials/k8s-secret', credentials);
     } catch (error: any) {
       throw this.handleApiError(error, 'Failed to update K8s Secret');
     }
@@ -42,7 +42,7 @@ class AdminCredentialSyncService implements IAdminCredentialSyncService {
 
   async validateK8sSecretExists(): Promise<boolean> {
     try {
-      const response = await httpClient.get('/api/v1/admin/credentials/k8s-secret/validate');
+      const response = await httpClient.get('/api/v1/auth/admin/credentials/k8s-secret/validate');
       return (response.data as any)?.exists || false;
     } catch (error: any) {
       console.error('K8s Secret validation failed:', error);
@@ -53,7 +53,7 @@ class AdminCredentialSyncService implements IAdminCredentialSyncService {
   // Database sync operations
   async syncFromK8sSecret(): Promise<AdminCredentialSyncRecord> {
     try {
-      const response = await httpClient.post('/api/v1/admin/credentials/sync/from-k8s');
+      const response = await httpClient.post('/api/v1/auth/admin/credentials/sync/from-k8s');
 
       if (!response.data) {
         throw new Error('Failed to sync from K8s Secret');
@@ -67,7 +67,7 @@ class AdminCredentialSyncService implements IAdminCredentialSyncService {
 
   async syncToK8sSecret(): Promise<AdminCredentialSyncRecord> {
     try {
-      const response = await httpClient.post('/api/v1/admin/credentials/sync/to-k8s');
+      const response = await httpClient.post('/api/v1/auth/admin/credentials/sync/to-k8s');
 
       if (!response.data) {
         throw new Error('Failed to sync to K8s Secret');
@@ -81,7 +81,7 @@ class AdminCredentialSyncService implements IAdminCredentialSyncService {
 
   async getSyncHistory(limit = 50): Promise<AdminCredentialSyncRecord[]> {
     try {
-      const response = await httpClient.get(`/api/v1/admin/credentials/sync/history?limit=${limit}`);
+      const response = await httpClient.get(`/api/v1/auth/admin/credentials/sync/history?limit=${limit}`);
 
       return ((response.data as any))?.sync_records?.map(this.transformSyncRecord) || [];
     } catch (error: any) {
@@ -91,7 +91,7 @@ class AdminCredentialSyncService implements IAdminCredentialSyncService {
 
   async getLatestSyncStatus(): Promise<AdminCredentialSyncRecord | null> {
     try {
-      const response = await httpClient.get('/api/v1/admin/credentials/sync/status');
+      const response = await httpClient.get('/api/v1/auth/admin/credentials/sync/status');
 
       if (!response.data) {
         return null;
@@ -107,7 +107,7 @@ class AdminCredentialSyncService implements IAdminCredentialSyncService {
   // Credential rotation
   async rotateCredentials(newPassword?: string): Promise<CredentialRotationResult> {
     try {
-      const response = await httpClient.post('/api/v1/admin/credentials/rotate', {
+      const response = await httpClient.post('/api/v1/auth/admin/credentials/rotate', {
         new_password: newPassword
       });
 
@@ -131,7 +131,7 @@ class AdminCredentialSyncService implements IAdminCredentialSyncService {
 
   async scheduleRotation(rotationDate: string): Promise<void> {
     try {
-      await httpClient.post('/api/v1/admin/credentials/schedule-rotation', {
+      await httpClient.post('/api/v1/auth/admin/credentials/schedule-rotation', {
         rotation_date: rotationDate
       });
     } catch (error: any) {
@@ -141,7 +141,7 @@ class AdminCredentialSyncService implements IAdminCredentialSyncService {
 
   async cancelScheduledRotation(): Promise<void> {
     try {
-      await httpClient.delete('/api/v1/admin/credentials/scheduled-rotation');
+      await httpClient.delete('/api/v1/auth/admin/credentials/scheduled-rotation');
     } catch (error: any) {
       throw this.handleApiError(error, 'Failed to cancel scheduled rotation');
     }
@@ -150,7 +150,7 @@ class AdminCredentialSyncService implements IAdminCredentialSyncService {
   // Compliance and audit
   async validateCompliance(): Promise<ComplianceValidationResult> {
     try {
-      const response = await httpClient.get('/api/v1/admin/credentials/compliance/validate');
+      const response = await httpClient.get('/api/v1/auth/admin/credentials/compliance/validate');
 
       if (!response.data) {
         throw new Error('Failed to validate compliance');
@@ -178,7 +178,7 @@ class AdminCredentialSyncService implements IAdminCredentialSyncService {
     period: { start: string; end: string }
   ): Promise<ComplianceReport> {
     try {
-      const response = await httpClient.post('/api/v1/admin/credentials/compliance/report', {
+      const response = await httpClient.post('/api/v1/auth/admin/credentials/compliance/report', {
         frameworks,
         period
       });
@@ -206,7 +206,7 @@ class AdminCredentialSyncService implements IAdminCredentialSyncService {
       if (filters?.date_range?.start) params.append('start_date', filters.date_range.start);
       if (filters?.date_range?.end) params.append('end_date', filters.date_range.end);
 
-      const response = await httpClient.get(`/api/v1/admin/credentials/audit?${params.toString()}`);
+      const response = await httpClient.get(`/api/v1/auth/admin/credentials/audit?${params.toString()}`);
 
       return ((response.data as any))?.audit_entries?.map(this.transformAuditEntry) || [];
     } catch (error: any) {
@@ -221,7 +221,7 @@ class AdminCredentialSyncService implements IAdminCredentialSyncService {
     business_impact: string;
   }): Promise<EmergencyAccessRecord> {
     try {
-      const response = await httpClient.post('/api/v1/admin/credentials/emergency-access/request', request);
+      const response = await httpClient.post('/api/v1/auth/admin/credentials/emergency-access/request', request);
 
       if (!response.data) {
         throw new Error('Failed to request emergency access');
@@ -244,7 +244,7 @@ class AdminCredentialSyncService implements IAdminCredentialSyncService {
   ): Promise<EmergencyAccessRecord> {
     try {
       const response = await httpClient.post(
-        `/api/v1/admin/credentials/emergency-access/${requestId}/approve`,
+        `/api/v1/auth/admin/credentials/emergency-access/${requestId}/approve`,
         approval
       );
 
@@ -260,7 +260,7 @@ class AdminCredentialSyncService implements IAdminCredentialSyncService {
 
   async revokeEmergencyAccess(requestId: string, revocation_reason: string): Promise<void> {
     try {
-      await httpClient.post(`/api/v1/admin/credentials/emergency-access/${requestId}/revoke`, {
+      await httpClient.post(`/api/v1/auth/admin/credentials/emergency-access/${requestId}/revoke`, {
         revocation_reason
       });
     } catch (error: any) {
@@ -271,7 +271,7 @@ class AdminCredentialSyncService implements IAdminCredentialSyncService {
   // Configuration
   async getConfig(): Promise<CredentialSyncConfig> {
     try {
-      const response = await httpClient.get('/api/v1/admin/credentials/config');
+      const response = await httpClient.get('/api/v1/auth/admin/credentials/config');
 
       const data = response.data as any;
       return data || this.getDefaultConfig();
@@ -282,7 +282,7 @@ class AdminCredentialSyncService implements IAdminCredentialSyncService {
 
   async updateConfig(config: Partial<CredentialSyncConfig>): Promise<CredentialSyncConfig> {
     try {
-      const response = await httpClient.put('/api/v1/admin/credentials/config', config);
+      const response = await httpClient.put('/api/v1/auth/admin/credentials/config', config);
 
       if (!response.data) {
         throw new Error('Failed to update configuration');
@@ -297,7 +297,7 @@ class AdminCredentialSyncService implements IAdminCredentialSyncService {
 
   async getPasswordPolicy(): Promise<PasswordPolicy> {
     try {
-      const response = await httpClient.get('/api/v1/admin/credentials/password-policy');
+      const response = await httpClient.get('/api/v1/auth/admin/credentials/password-policy');
 
       const data = response.data as any;
       return data || this.getDefaultPasswordPolicy();
@@ -308,7 +308,7 @@ class AdminCredentialSyncService implements IAdminCredentialSyncService {
 
   async updatePasswordPolicy(policy: Partial<PasswordPolicy>): Promise<PasswordPolicy> {
     try {
-      const response = await httpClient.put('/api/v1/admin/credentials/password-policy', policy);
+      const response = await httpClient.put('/api/v1/auth/admin/credentials/password-policy', policy);
 
       if (!response.data) {
         throw new Error('Failed to update password policy');
@@ -331,7 +331,7 @@ class AdminCredentialSyncService implements IAdminCredentialSyncService {
     details: Record<string, any>;
   }> {
     try {
-      const response = await httpClient.get('/api/v1/admin/credentials/health');
+      const response = await httpClient.get('/api/v1/auth/admin/credentials/health');
 
       const data = response.data as any;
       return data || {

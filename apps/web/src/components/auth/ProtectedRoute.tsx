@@ -4,6 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuthStore } from '../../stores/authStore';
+import { useAuthInitialization } from '../../hooks/useAuthInitialization';
 
 export interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -57,29 +58,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   fallback
 }) => {
   const router = useRouter();
-  const { user, isAuthenticated, isLoading } = useAuthStore();
-  const [isInitialized, setIsInitialized] = useState(false);
+  const { user, isAuthenticated } = useAuthStore();
+  const { isInitializing, isInitialized, initializationError } = useAuthInitialization();
 
   useEffect(() => {
-    // Initialize auth store if needed
-    const initAuth = async () => {
-      try {
-        const { initializeAuth } = await import('../../stores/authStore');
-        await initializeAuth();
-      } catch (error) {
-        console.error('Auth initialization failed:', error);
-      } finally {
-        setIsInitialized(true);
-      }
-    };
-
-    if (!isInitialized) {
-      initAuth();
-    }
-  }, [isInitialized]);
-
-  useEffect(() => {
-    if (!isInitialized || isLoading) return;
+    // Only proceed with route protection after auth is fully initialized
+    if (!isInitialized || isInitializing) return;
 
     // If authentication is required but user is not authenticated
     if (requireAuth && !isAuthenticated) {
@@ -95,14 +79,26 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       const hasRequiredRole = requiredRoles.includes(userRole);
 
       if (!hasRequiredRole) {
-        // User doesn't have required role - show access denied
+        router.replace('/403'); // Forbidden page
         return;
       }
     }
-  }, [isInitialized, isAuthenticated, isLoading, requireAuth, requiredRoles, user, router, redirectTo]);
+  }, [isInitialized, isInitializing, isAuthenticated, requireAuth, requiredRoles, user, router, redirectTo]);
 
-  // Show loading state
-  if (!isInitialized || isLoading) {
+  // Show loading state during initialization
+  if (isInitializing || !isInitialized) {
+    return fallback || <LoadingSpinner />;
+  }
+
+  // Show error if initialization failed (but still allow public routes)
+  if (initializationError && requireAuth) {
+    console.error('Auth initialization error:', initializationError);
+    // For auth errors, redirect to login
+    if (typeof window !== 'undefined') {
+      const currentPath = router.asPath;
+      const returnUrl = currentPath !== '/' ? `?returnUrl=${encodeURIComponent(currentPath)}` : '';
+      router.replace(`${redirectTo}${returnUrl}`);
+    }
     return fallback || <LoadingSpinner />;
   }
 

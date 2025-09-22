@@ -52,17 +52,14 @@ class AuthService {
     try {
       const response = await api.auth.login(credentials);
 
-      // Wait briefly for cookie to be set by backend
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Get token from secure cookie (backend sets it automatically)
-      const token = await tokenService.getAccessToken();
-      if (!token) {
-        throw new Error('Token not found after login');
+      if (!response.data || !response.data.token) {
+        throw new Error('Invalid login response - no token received');
       }
 
+      const { token, user } = response.data;
+
       const authResponse: AuthResponse = {
-        user: (response.data as any).user as User,
+        user: user as User,
         token: token,
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
       };
