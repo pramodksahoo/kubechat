@@ -1,3 +1,5 @@
+interface ComponentTypeLike<P = unknown> { (props: P): any; }
+
 export interface ClusterHealth {
   clusterId: string;
   clusterName: string;
@@ -32,7 +34,7 @@ export interface QuickAccessPanel {
   id: string;
   title: string;
   description?: string;
-  icon: React.ComponentType<any>;
+  icon: ComponentTypeLike<any>;
   action: () => void;
   badge?: string | number;
   disabled?: boolean;

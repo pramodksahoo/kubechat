@@ -21,7 +21,10 @@
     "test:performance": "jest --testPathPattern=tests/performance",
     "test:all": "pnpm test:unit && pnpm test:integration && pnpm test:a11y && pnpm test:e2e",
     "lint": "pnpm --recursive run lint",
-    "type-check": "pnpm --recursive run type-check"
+    "type-check": "pnpm --recursive run type-check",
+    "bmad:refresh": "bmad-method install -f -i codex",
+    "bmad:list": "bmad-method list:agents",
+    "bmad:validate": "bmad-method validate"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

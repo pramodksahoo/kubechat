@@ -7,7 +7,7 @@
 .PHONY: dev-logs dev-logs-api dev-logs-web dev-shell-api dev-shell-web dev-port-forward
 .PHONY: dev-db-connect dev-db-migrate dev-db-seed dev-db-reset dev-db-status dev-db-backup dev-db-health dev-db-integrity
 .PHONY: dev-test dev-test-unit dev-test-e2e
-.PHONY: dev-security-scan dev-security-scan-api dev-security-scan-web dev-security-report
+.PHONY: dev-security-scan dev-security-scan-api dev-security-scan-web dev-security-report get-admin-password
 
 # Default target
 help: ## Show this help message
@@ -197,6 +197,18 @@ dev-rollback: ## Restore previous working state
 	@echo "✅ Rollback completed"
 
 # Development Tools
+
+get-admin-password: ## Retrieve the current admin password from the Kubernetes secret
+	@echo "=== Retrieving Admin Credentials from KubeChat Secret ==="
+	@echo "Namespace: kubechat-system"
+	@echo "Secret:    kubechat-admin-secret"
+	@echo "Timestamp: $$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+	@echo "------------------------------------------------------------"
+	@kubectl get secret kubechat-admin-secret -n kubechat-system -o jsonpath='{.data.admin_password}' | base64 --decode
+	@echo ""
+	@echo "(Access attempt logged. Rotate credentials via admin console if unauthorized usage is detected.)"
+
+
 dev-logs: ## View aggregated application logs
 	@echo "=== KubeChat Application Logs ==="
 	@echo ""

@@ -56,7 +56,7 @@ export default function AdminSessionsPage() {
   };
 
   const filteredAndSortedSessions = React.useMemo(() => {
-    let filtered = sessions.filter(session => {
+    const filtered = sessions.filter(session => {
       // Filter by status
       if (filter === 'active' && !session.isActive) return false;
       if (filter === 'expired' && session.isActive) return false;
