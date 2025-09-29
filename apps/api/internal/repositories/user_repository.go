@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -20,6 +21,7 @@ type UserRepository interface {
 	Update(ctx context.Context, user *models.User) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, limit, offset int) ([]*models.User, error)
+	ListWithFilters(ctx context.Context, filters models.UserListFilters) ([]*models.User, int, error)
 
 	// Session management
 	CreateSession(ctx context.Context, session *models.UserSession) error
@@ -51,8 +53,8 @@ func (r *userRepository) Create(ctx context.Context, user *models.User) error {
 	user.UpdatedAt = time.Now()
 
 	query := `
-		INSERT INTO users (id, username, email, password_hash, role, created_at, updated_at)
-		VALUES (:id, :username, :email, :password_hash, :role, :created_at, :updated_at)`
+		INSERT INTO users (id, username, email, password_hash, role, created_at, updated_at, last_login, is_active, failed_login_attempts, account_locked_until, password_changed_at, must_change_password)
+		VALUES (:id, :username, :email, :password_hash, :role, :created_at, :updated_at, :last_login, :is_active, :failed_login_attempts, :account_locked_until, :password_changed_at, :must_change_password)`
 
 	_, err := r.db.NamedExecContext(ctx, query, user)
 	if err != nil {
@@ -66,7 +68,7 @@ func (r *userRepository) Create(ctx context.Context, user *models.User) error {
 func (r *userRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.User, error) {
 	var user models.User
 	query := `
-		SELECT id, username, email, password_hash, role, created_at, updated_at
+		SELECT id, username, email, password_hash, role, created_at, updated_at, last_login, is_active, failed_login_attempts, account_locked_until, password_changed_at, must_change_password
 		FROM users
 		WHERE id = $1`
 
@@ -85,7 +87,7 @@ func (r *userRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Use
 func (r *userRepository) GetByUsername(ctx context.Context, username string) (*models.User, error) {
 	var user models.User
 	query := `
-		SELECT id, username, email, password_hash, role, created_at, updated_at
+		SELECT id, username, email, password_hash, role, created_at, updated_at, last_login, is_active, failed_login_attempts, account_locked_until, password_changed_at, must_change_password
 		FROM users
 		WHERE username = $1`
 
@@ -104,7 +106,7 @@ func (r *userRepository) GetByUsername(ctx context.Context, username string) (*m
 func (r *userRepository) GetByEmail(ctx context.Context, email string) (*models.User, error) {
 	var user models.User
 	query := `
-		SELECT id, username, email, password_hash, role, created_at, updated_at
+		SELECT id, username, email, password_hash, role, created_at, updated_at, last_login, is_active, failed_login_attempts, account_locked_until, password_changed_at, must_change_password
 		FROM users
 		WHERE email = $1`
 
@@ -125,8 +127,10 @@ func (r *userRepository) Update(ctx context.Context, user *models.User) error {
 
 	query := `
 		UPDATE users
-		SET username = :username, email = :email, password_hash = :password_hash, 
-		    role = :role, updated_at = :updated_at
+		SET username = :username, email = :email, password_hash = :password_hash,
+		    role = :role, is_active = :is_active, failed_login_attempts = :failed_login_attempts,
+		    account_locked_until = :account_locked_until, must_change_password = :must_change_password,
+		    password_changed_at = :password_changed_at, updated_at = :updated_at
 		WHERE id = :id`
 
 	result, err := r.db.NamedExecContext(ctx, query, user)
@@ -172,26 +176,72 @@ func (r *userRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-// List retrieves users with pagination
+// List retrieves users with pagination (legacy helper)
 func (r *userRepository) List(ctx context.Context, limit, offset int) ([]*models.User, error) {
+	users, _, err := r.ListWithFilters(ctx, models.UserListFilters{
+		Limit:  limit,
+		Offset: offset,
+	})
+	return users, err
+}
+
+// ListWithFilters retrieves users with optional filtering and total count
+func (r *userRepository) ListWithFilters(ctx context.Context, filters models.UserListFilters) ([]*models.User, int, error) {
+	limit := filters.Limit
 	if limit <= 0 {
-		limit = 50 // Default limit
+		limit = 50
+	}
+	offset := filters.Offset
+
+	conditions := []string{"role != 'deleted'"}
+	args := []interface{}{}
+
+	if filters.Role != "" {
+		conditions = append(conditions, fmt.Sprintf("role = $%d", len(args)+1))
+		args = append(args, filters.Role)
 	}
 
-	query := `
-		SELECT id, username, email, password_hash, role, created_at, updated_at
+	if filters.Status != "" {
+		switch filters.Status {
+		case "active":
+			conditions = append(conditions, "is_active = true")
+		case "inactive":
+			conditions = append(conditions, "is_active = false")
+		}
+	}
+
+	if filters.Search != "" {
+		idx := len(args) + 1
+		conditions = append(conditions, fmt.Sprintf("(username ILIKE $%d OR email ILIKE $%d)", idx, idx))
+		args = append(args, "%"+filters.Search+"%")
+	}
+
+	whereClause := ""
+	if len(conditions) > 0 {
+		whereClause = "WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM users %s", whereClause)
+	var total int
+	if err := r.db.GetContext(ctx, &total, countQuery, args...); err != nil {
+		return nil, 0, fmt.Errorf("failed to count users: %w", err)
+	}
+
+	argsWithPaging := append([]interface{}{}, args...)
+	argsWithPaging = append(argsWithPaging, limit, offset)
+
+	query := fmt.Sprintf(`SELECT id, username, email, password_hash, role, created_at, updated_at, last_login, is_active, failed_login_attempts, account_locked_until, password_changed_at, must_change_password
 		FROM users
-		WHERE role != 'deleted'
+		%s
 		ORDER BY created_at DESC
-		LIMIT $1 OFFSET $2`
+		LIMIT $%d OFFSET $%d`, whereClause, len(args)+1, len(args)+2)
 
 	var users []*models.User
-	err := r.db.SelectContext(ctx, &users, query, limit, offset)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list users: %w", err)
+	if err := r.db.SelectContext(ctx, &users, query, argsWithPaging...); err != nil {
+		return nil, 0, fmt.Errorf("failed to list users: %w", err)
 	}
 
-	return users, nil
+	return users, total, nil
 }
 
 // CreateSession creates a new user session with security tracking

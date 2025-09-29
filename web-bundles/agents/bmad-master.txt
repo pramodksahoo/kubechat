@@ -117,12 +117,12 @@ dependencies:
     - project-brief-tmpl.yaml
     - story-tmpl.yaml
   workflows:
-    - brownfield-fullstack.md
-    - brownfield-service.md
-    - brownfield-ui.md
-    - greenfield-fullstack.md
-    - greenfield-service.md
-    - greenfield-ui.md
+    - brownfield-fullstack.yaml
+    - brownfield-service.yaml
+    - brownfield-ui.yaml
+    - greenfield-fullstack.yaml
+    - greenfield-service.yaml
+    - greenfield-ui.yaml
 ```
 ==================== END: .bmad-core/agents/bmad-master.md ====================
 
@@ -2916,8 +2916,8 @@ sections:
           - **UI/UX Consistency:** {{ui_compatibility}}
           - **Performance Impact:** {{performance_constraints}}
 
-  - id: tech-stack-alignment
-    title: Tech Stack Alignment
+  - id: tech-stack
+    title: Tech Stack
     instruction: |
       Ensure new components align with existing technology choices:
 
@@ -3079,8 +3079,8 @@ sections:
 
           **Error Handling:** {{error_handling_strategy}}
 
-  - id: source-tree-integration
-    title: Source Tree Integration
+  - id: source-tree
+    title: Source Tree
     instruction: |
       Define how new code will integrate with existing project structure:
 
@@ -3149,7 +3149,7 @@ sections:
           **Monitoring:** {{monitoring_approach}}
 
   - id: coding-standards
-    title: Coding Standards and Conventions
+    title: Coding Standards
     instruction: |
       Ensure new code follows existing project conventions:
 

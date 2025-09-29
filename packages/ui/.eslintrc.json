@@ -1,0 +1,12 @@
+{
+  "extends": ["../.eslintrc.package.json"],
+  "parserOptions": {
+    "project": "./tsconfig.json",
+    "tsconfigRootDir": "."
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  }
+}

@@ -2,6 +2,9 @@ package auth
 
 import (
 	"net/http"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -46,7 +49,14 @@ func (h *Handler) RegisterRoutes(router *gin.RouterGroup) {
 	admin.Use(auth.RequireRole("admin"))
 	{
 		admin.GET("/users", h.ListUsers)
+		admin.POST("/users", h.CreateAdminUser)
 		admin.GET("/users/:id", h.GetUser)
+		admin.PUT("/users/:id", h.UpdateAdminUser)
+		admin.DELETE("/users/:id", h.DeleteAdminUser)
+		admin.GET("/roles", h.ListRoles)
+		admin.GET("/permissions", h.ListPermissions)
+		admin.POST("/credentials/sync/from-k8s", h.SyncAdminCredentialsFromK8s)
+		admin.GET("/credentials/sync/status", h.GetAdminCredentialStatus)
 	}
 
 	// Secure token cookie management routes
@@ -360,10 +370,43 @@ func (h *Handler) GetProfile(c *gin.Context) {
 //	@Security		BearerAuth
 //	@Router			/auth/admin/users [get]
 func (h *Handler) ListUsers(c *gin.Context) {
-	// This is a placeholder - would need pagination implementation
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	limit, err := strconv.Atoi(c.DefaultQuery("limit", "50"))
+	if err != nil || limit <= 0 {
+		limit = 50
+	}
+
+	filters := models.UserListFilters{
+		Role:   c.Query("role"),
+		Status: c.Query("status"),
+		Search: c.Query("search"),
+		Limit:  limit,
+		Offset: (page - 1) * limit,
+	}
+
+	users, total, svcErr := h.authService.ListAdminUsers(c.Request.Context(), filters)
+	if svcErr != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to list users",
+			"code":  "LIST_USERS_ERROR",
+		})
+		return
+	}
+
+	response := make([]gin.H, 0, len(users))
+	for _, user := range users {
+		response = append(response, toAdminUserResponse(user))
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"message": "List users endpoint",
-		"data":    []interface{}{},
+		"page":  page,
+		"limit": limit,
+		"total": total,
+		"users": response,
 	})
 }
 
@@ -394,7 +437,7 @@ func (h *Handler) GetUser(c *gin.Context) {
 
 	// Get user
 	user, err := h.authService.GetUserByID(c.Request.Context(), id)
-	if err != nil {
+	if err != nil || user == nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "User not found",
 			"code":  "USER_NOT_FOUND",
@@ -402,16 +445,253 @@ func (h *Handler) GetUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": gin.H{
-			"id":         user.ID,
-			"username":   user.Username,
-			"email":      user.Email,
-			"role":       user.Role,
-			"created_at": user.CreatedAt,
-			"updated_at": user.UpdatedAt,
+	c.JSON(http.StatusOK, toAdminUserResponse(user))
+}
+
+// ListRoles provides available RBAC roles for the admin console
+func (h *Handler) ListRoles(c *gin.Context) {
+	stamp := time.Now().UTC().Format(time.RFC3339)
+	roles := []gin.H{
+		{
+			"id":           "admin",
+			"name":         "Administrator",
+			"description":  "Full system access with capability to manage infrastructure and security",
+			"permissions":  []string{"system:*,security:*,cluster:*"},
+			"isSystemRole": true,
+			"createdAt":    stamp,
+			"updatedAt":    stamp,
+			"userCount":    0,
 		},
+		{
+			"id":           "user",
+			"name":         "Operator",
+			"description":  "Standard operator access for day-to-day cluster tasks",
+			"permissions":  []string{"cluster:read", "cluster:write", "audit:read"},
+			"isSystemRole": true,
+			"createdAt":    stamp,
+			"updatedAt":    stamp,
+			"userCount":    0,
+		},
+		{
+			"id":           "viewer",
+			"name":         "ReadOnly",
+			"description":  "View-only access for compliance and audit teams",
+			"permissions":  []string{"cluster:read", "audit:read"},
+			"isSystemRole": true,
+			"createdAt":    stamp,
+			"updatedAt":    stamp,
+			"userCount":    0,
+		},
+		{
+			"id":           "auditor",
+			"name":         "Auditor",
+			"description":  "Audit-focused read access with enhanced reporting visibility",
+			"permissions":  []string{"audit:read", "security:read"},
+			"isSystemRole": true,
+			"createdAt":    stamp,
+			"updatedAt":    stamp,
+			"userCount":    0,
+		},
+		{
+			"id":           "compliance_officer",
+			"name":         "Compliance Officer",
+			"description":  "Compliance oversight with ability to manage legal holds",
+			"permissions":  []string{"audit:read", "compliance:manage"},
+			"isSystemRole": true,
+			"createdAt":    stamp,
+			"updatedAt":    stamp,
+			"userCount":    0,
+		},
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"roles": roles,
+		"total": len(roles),
 	})
+}
+
+// ListPermissions returns static permission catalog for RBAC UI
+func (h *Handler) ListPermissions(c *gin.Context) {
+	permissions := []gin.H{
+		{"id": "system:manage", "name": "Manage Platform", "description": "Full system management", "resource": "system", "action": "manage", "category": "system"},
+		{"id": "cluster:read", "name": "View Cluster", "description": "Read-only cluster visibility", "resource": "cluster", "action": "read", "category": "cluster"},
+		{"id": "cluster:write", "name": "Modify Cluster", "description": "Apply cluster changes", "resource": "cluster", "action": "write", "category": "cluster"},
+		{"id": "audit:read", "name": "View Audit Logs", "description": "Access audit trail records", "resource": "audit", "action": "read", "category": "user"},
+		{"id": "security:read", "name": "View Security Events", "description": "Read security alerts and posture", "resource": "security", "action": "read", "category": "system"},
+		{"id": "compliance:manage", "name": "Manage Compliance", "description": "Administer compliance holds", "resource": "compliance", "action": "manage", "category": "user"},
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"permissions": permissions,
+	})
+}
+
+// SyncAdminCredentialsFromK8s triggers a credential sync placeholder
+func (h *Handler) SyncAdminCredentialsFromK8s(c *gin.Context) {
+	c.JSON(http.StatusOK, buildCredentialSyncStatus("k8s_secret"))
+}
+
+// GetAdminCredentialStatus returns the latest credential sync metadata placeholder
+func (h *Handler) GetAdminCredentialStatus(c *gin.Context) {
+	c.JSON(http.StatusOK, buildCredentialSyncStatus("k8s_secret"))
+}
+
+func buildCredentialSyncStatus(source string) gin.H {
+	now := time.Now().UTC()
+	return gin.H{
+		"sync_status":          "success",
+		"sync_timestamp":       now.Format(time.RFC3339),
+		"sync_source":          source,
+		"sync_type":            "bootstrap",
+		"username":             "admin",
+		"email":                "admin@kubechat.dev",
+		"password_expires_at":  now.Add(90 * 24 * time.Hour).Format(time.RFC3339),
+		"rotation_count":       0,
+		"compliance_status":    "compliant",
+		"k8s_resource_version": "1",
+	}
+}
+
+// CreateAdminUser creates a new user via admin console
+func (h *Handler) CreateAdminUser(c *gin.Context) {
+	var req models.AdminCreateUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request body",
+			"code":  "INVALID_REQUEST",
+		})
+		return
+	}
+
+	user, err := h.authService.CreateAdminUser(c.Request.Context(), &req)
+	if err != nil {
+		status := http.StatusBadRequest
+		code := "CREATE_USER_ERROR"
+		msg := err.Error()
+		if strings.Contains(msg, "already exists") || strings.Contains(msg, "already in use") {
+			status = http.StatusConflict
+		} else if err == auth.ErrUserNotFound {
+			status = http.StatusNotFound
+			code = "USER_NOT_FOUND"
+		}
+
+		c.JSON(status, gin.H{
+			"error": msg,
+			"code":  code,
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, toAdminUserResponse(user))
+}
+
+// UpdateAdminUser updates an existing user record
+func (h *Handler) UpdateAdminUser(c *gin.Context) {
+	userID := c.Param("id")
+	id, err := uuid.Parse(userID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid user ID format",
+			"code":  "INVALID_USER_ID",
+		})
+		return
+	}
+
+	var req models.AdminUpdateUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request body",
+			"code":  "INVALID_REQUEST",
+		})
+		return
+	}
+
+	user, svcErr := h.authService.UpdateAdminUser(c.Request.Context(), id, &req)
+	if svcErr != nil {
+		status := http.StatusBadRequest
+		code := "UPDATE_USER_ERROR"
+		msg := svcErr.Error()
+		if svcErr == auth.ErrUserNotFound {
+			status = http.StatusNotFound
+			code = "USER_NOT_FOUND"
+		} else if strings.Contains(msg, "already exists") || strings.Contains(msg, "already in use") {
+			status = http.StatusConflict
+		}
+
+		c.JSON(status, gin.H{
+			"error": msg,
+			"code":  code,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, toAdminUserResponse(user))
+}
+
+// DeleteAdminUser removes a user via soft delete
+func (h *Handler) DeleteAdminUser(c *gin.Context) {
+	userID := c.Param("id")
+	id, err := uuid.Parse(userID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid user ID format",
+			"code":  "INVALID_USER_ID",
+		})
+		return
+	}
+
+	err = h.authService.DeleteAdminUser(c.Request.Context(), id)
+	if err != nil {
+		status := http.StatusInternalServerError
+		code := "DELETE_USER_ERROR"
+		if err == auth.ErrUserNotFound {
+			status = http.StatusNotFound
+			code = "USER_NOT_FOUND"
+		}
+
+		c.JSON(status, gin.H{
+			"error": err.Error(),
+			"code":  code,
+		})
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
+func toAdminUserResponse(user *models.User) gin.H {
+	var lastLogin string
+	if user.LastLogin != nil {
+		lastLogin = user.LastLogin.UTC().Format(time.RFC3339)
+	}
+
+	var lockUntil string
+	locked := false
+	if user.AccountLockedUntil != nil {
+		lockUntil = user.AccountLockedUntil.UTC().Format(time.RFC3339)
+		if user.AccountLockedUntil.After(time.Now()) {
+			locked = true
+		}
+	}
+
+	return gin.H{
+		"id":                  user.ID,
+		"username":            user.Username,
+		"email":               user.Email,
+		"role":                user.Role,
+		"permissions":         []string{},
+		"clusters":            []string{},
+		"createdAt":           user.CreatedAt.UTC().Format(time.RFC3339),
+		"updatedAt":           user.UpdatedAt.UTC().Format(time.RFC3339),
+		"lastLoginAt":         lastLogin,
+		"isActive":            user.IsActive,
+		"accountLocked":       locked,
+		"accountLockedUntil":  lockUntil,
+		"failedLoginAttempts": user.FailedLoginAttempts,
+		"mfaEnabled":          false,
+		"lastPasswordChange":  user.PasswordChangedAt.UTC().Format(time.RFC3339),
+		"mustChangePassword":  user.MustChangePassword,
+	}
 }
 
 // SetTokensCookie handles setting secure HTTP-only cookies for tokens

@@ -45,6 +45,12 @@ type Service interface {
 	GetUserByID(ctx context.Context, userID uuid.UUID) (*models.User, error)
 	GetCurrentUser(ctx context.Context, sessionToken string) (*models.User, error)
 
+	// Admin operations
+	ListAdminUsers(ctx context.Context, filters models.UserListFilters) ([]*models.User, int, error)
+	CreateAdminUser(ctx context.Context, req *models.AdminCreateUserRequest) (*models.User, error)
+	UpdateAdminUser(ctx context.Context, userID uuid.UUID, req *models.AdminUpdateUserRequest) (*models.User, error)
+	DeleteAdminUser(ctx context.Context, userID uuid.UUID) error
+
 	// Session management
 	ValidateSession(ctx context.Context, sessionToken string) (*models.UserSession, error)
 	CleanupExpiredSessions(ctx context.Context) error
@@ -82,12 +88,16 @@ func (s *service) RegisterUser(ctx context.Context, req *models.CreateUserReques
 
 	// Create new user
 	user := &models.User{
-		ID:        uuid.New(),
-		Username:  req.Username,
-		Email:     req.Email,
-		Role:      req.Role,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		ID:                  uuid.New(),
+		Username:            req.Username,
+		Email:               req.Email,
+		Role:                req.Role,
+		CreatedAt:           time.Now(),
+		UpdatedAt:           time.Now(),
+		IsActive:            true,
+		FailedLoginAttempts: 0,
+		PasswordChangedAt:   time.Now(),
+		MustChangePassword:  false,
 	}
 
 	// Set default role if not provided
@@ -246,6 +256,130 @@ func (s *service) GetCurrentUser(ctx context.Context, sessionToken string) (*mod
 	}
 
 	return s.userRepo.GetByID(ctx, session.UserID)
+}
+
+// ListAdminUsers returns users with optional filters and total count
+func (s *service) ListAdminUsers(ctx context.Context, filters models.UserListFilters) ([]*models.User, int, error) {
+	return s.userRepo.ListWithFilters(ctx, filters)
+}
+
+// CreateAdminUser provisions a new user from the admin console
+func (s *service) CreateAdminUser(ctx context.Context, req *models.AdminCreateUserRequest) (*models.User, error) {
+	if req.Username == "" || req.Email == "" || req.Password == "" {
+		return nil, fmt.Errorf("missing required fields")
+	}
+
+	if !models.ValidateRole(req.Role) {
+		return nil, fmt.Errorf("invalid role: %s", req.Role)
+	}
+
+	if existing, err := s.userRepo.GetByUsername(ctx, req.Username); err == nil && existing != nil {
+		return nil, fmt.Errorf("username already exists")
+	}
+
+	if existing, err := s.userRepo.GetByEmail(ctx, req.Email); err == nil && existing != nil {
+		return nil, fmt.Errorf("email already exists")
+	}
+
+	user := &models.User{
+		ID:                  uuid.New(),
+		Username:            req.Username,
+		Email:               req.Email,
+		Role:                req.Role,
+		CreatedAt:           time.Now(),
+		UpdatedAt:           time.Now(),
+		IsActive:            true,
+		FailedLoginAttempts: 0,
+		MustChangePassword:  req.RequirePasswordChange,
+		PasswordChangedAt:   time.Now(),
+	}
+
+	if err := user.HashPassword(req.Password); err != nil {
+		return nil, fmt.Errorf("failed to hash password: %w", err)
+	}
+
+	if err := s.userRepo.Create(ctx, user); err != nil {
+		return nil, fmt.Errorf("failed to create user: %w", err)
+	}
+
+	return user, nil
+}
+
+// UpdateAdminUser updates fields controlled by administrators
+func (s *service) UpdateAdminUser(ctx context.Context, userID uuid.UUID, req *models.AdminUpdateUserRequest) (*models.User, error) {
+	user, err := s.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, ErrUserNotFound
+	}
+
+	if req.Email != nil && *req.Email != user.Email {
+		if existing, err := s.userRepo.GetByEmail(ctx, *req.Email); err == nil && existing != nil && existing.ID != userID {
+			return nil, fmt.Errorf("email already in use")
+		}
+		user.Email = *req.Email
+	}
+
+	if req.Role != nil {
+		if !models.ValidateRole(*req.Role) {
+			return nil, fmt.Errorf("invalid role: %s", *req.Role)
+		}
+		user.Role = *req.Role
+	}
+
+	if req.IsActive != nil {
+		user.IsActive = *req.IsActive
+		if !*req.IsActive {
+			user.AccountLockedUntil = nil
+		}
+	}
+
+	if req.AccountLocked != nil {
+		if *req.AccountLocked {
+			t := time.Now().Add(24 * time.Hour)
+			user.AccountLockedUntil = &t
+			user.IsActive = false
+		} else {
+			user.AccountLockedUntil = nil
+			user.FailedLoginAttempts = 0
+		}
+	}
+
+	if req.ResetPassword || (req.NewPassword != nil && *req.NewPassword != "") {
+		password := ""
+		if req.NewPassword != nil && *req.NewPassword != "" {
+			password = *req.NewPassword
+		} else {
+			generated, genErr := models.GenerateSecureToken()
+			if genErr != nil {
+				return nil, fmt.Errorf("failed to generate password: %w", genErr)
+			}
+			if len(generated) > 32 {
+				password = generated[:32]
+			} else {
+				password = generated
+			}
+		}
+
+		if err := user.HashPassword(password); err != nil {
+			return nil, fmt.Errorf("failed to hash password: %w", err)
+		}
+		user.MustChangePassword = true
+		user.PasswordChangedAt = time.Now()
+	}
+
+	if err := s.userRepo.Update(ctx, user); err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+// DeleteAdminUser soft deletes the specified user
+func (s *service) DeleteAdminUser(ctx context.Context, userID uuid.UUID) error {
+	return s.userRepo.Delete(ctx, userID)
 }
 
 // ValidateSession validates a session token and returns the session

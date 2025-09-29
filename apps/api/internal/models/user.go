@@ -11,13 +11,19 @@ import (
 
 // User represents a user in the system with authentication capabilities
 type User struct {
-	ID           uuid.UUID `json:"id" db:"id"`
-	Username     string    `json:"username" db:"username"`
-	Email        string    `json:"email" db:"email"`
-	PasswordHash string    `json:"-" db:"password_hash"` // Never expose in JSON
-	Role         string    `json:"role" db:"role"`
-	CreatedAt    time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
+	ID                  uuid.UUID  `json:"id" db:"id"`
+	Username            string     `json:"username" db:"username"`
+	Email               string     `json:"email" db:"email"`
+	PasswordHash        string     `json:"-" db:"password_hash"` // Never expose in JSON
+	Role                string     `json:"role" db:"role"`
+	CreatedAt           time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt           time.Time  `json:"updated_at" db:"updated_at"`
+	LastLogin           *time.Time `json:"last_login,omitempty" db:"last_login"`
+	IsActive            bool       `json:"is_active" db:"is_active"`
+	FailedLoginAttempts int        `json:"failed_login_attempts" db:"failed_login_attempts"`
+	AccountLockedUntil  *time.Time `json:"account_locked_until,omitempty" db:"account_locked_until"`
+	PasswordChangedAt   time.Time  `json:"password_changed_at" db:"password_changed_at"`
+	MustChangePassword  bool       `json:"must_change_password" db:"must_change_password"`
 }
 
 // UserSession represents a user session with security tracking
@@ -60,9 +66,11 @@ type LoginResponse struct {
 
 // UserRole constants for role-based access control
 const (
-	RoleAdmin  = "admin"
-	RoleUser   = "user"
-	RoleViewer = "viewer"
+	RoleAdmin             = "admin"
+	RoleUser              = "user"
+	RoleViewer            = "viewer"
+	RoleAuditor           = "auditor"
+	RoleComplianceOfficer = "compliance_officer"
 )
 
 // Security configuration constants
@@ -146,5 +154,35 @@ func (s *UserSession) Extend(duration time.Duration) {
 
 // ValidateRole validates if the provided role is valid
 func ValidateRole(role string) bool {
-	return role == RoleAdmin || role == RoleUser || role == RoleViewer
+	switch role {
+	case RoleAdmin, RoleUser, RoleViewer, RoleAuditor, RoleComplianceOfficer:
+		return true
+	default:
+		return false
+	}
+}
+
+type UserListFilters struct {
+	Role   string
+	Status string
+	Search string
+	Limit  int
+	Offset int
+}
+
+type AdminCreateUserRequest struct {
+	Username              string `json:"username"`
+	Email                 string `json:"email"`
+	Password              string `json:"password"`
+	Role                  string `json:"role"`
+	RequirePasswordChange bool   `json:"require_password_change"`
+}
+
+type AdminUpdateUserRequest struct {
+	Email         *string `json:"email"`
+	Role          *string `json:"role"`
+	IsActive      *bool   `json:"is_active"`
+	AccountLocked *bool   `json:"account_locked"`
+	ResetPassword bool    `json:"reset_password"`
+	NewPassword   *string `json:"new_password"`
 }

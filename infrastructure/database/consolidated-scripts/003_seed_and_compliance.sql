@@ -284,15 +284,6 @@ $$ LANGUAGE plpgsql;
 -- SEED DATA AND INITIAL SETUP
 -- =================================================================
 
--- Create default admin user (password: admin123 - change in production!)
-INSERT INTO users (id, username, email, password_hash, role) VALUES (
-    gen_random_uuid(),
-    'admin',
-    'admin@kubechat.dev',
-    '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewNxn0h8P8O9gOJm', -- bcrypt hash of 'admin123'
-    'admin'
-) ON CONFLICT (username) DO NOTHING;
-
 -- Create compliance officer user
 INSERT INTO users (id, username, email, password_hash, role) VALUES (
     gen_random_uuid(),
@@ -372,6 +363,11 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM audit_logs LIMIT 1) THEN
         -- Get admin user ID
         SELECT id INTO admin_user_id FROM users WHERE username = 'admin' LIMIT 1;
+
+        IF admin_user_id IS NULL THEN
+            RAISE NOTICE 'Admin user not found, skipping sample audit seed';
+            RETURN;
+        END IF;
 
         -- Create a test session
         INSERT INTO user_sessions (user_id, session_token, expires_at, ip_address)

@@ -67,6 +67,14 @@ func (m *MockUserRepository) List(ctx context.Context, limit, offset int) ([]*mo
 	return args.Get(0).([]*models.User), args.Error(1)
 }
 
+func (m *MockUserRepository) ListWithFilters(ctx context.Context, filters models.UserListFilters) ([]*models.User, int, error) {
+	users, err := m.List(ctx, filters.Limit, filters.Offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	return users, len(users), nil
+}
+
 func (m *MockUserRepository) CreateSession(ctx context.Context, session *models.UserSession) error {
 	args := m.Called(ctx, session)
 	return args.Error(0)

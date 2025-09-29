@@ -1066,14 +1066,6 @@ data:
     -- SEED DATA
     -- =================================================================
 
-    -- Insert default users with proper roles
-    INSERT INTO users (username, email, password_hash, role) VALUES
-    ('admin', 'admin@kubechat.dev', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewNxn0h8P8O9gOJm', 'admin'),
-    ('compliance_officer', 'compliance@kubechat.dev', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewNxn0h8P8O9gOJm', 'compliance_officer'),
-    ('auditor', 'auditor@kubechat.dev', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewNxn0h8P8O9gOJm', 'auditor'),
-    ('security_analyst', 'security@kubechat.dev', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewNxn0h8P8O9gOJm', 'user')
-    ON CONFLICT (username) DO NOTHING;
-
     -- Insert comprehensive retention policies
     INSERT INTO retention_policies (
         name, description, retention_days, applies_to, automatic, compliance_frameworks, archive_location, priority

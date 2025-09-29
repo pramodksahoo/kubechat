@@ -456,3 +456,6 @@ tests/
 apps/api/server
 apps/web/tests/
 security-scan-results
+# BMAD (local only)
+.bmad-core/
+.bmad-*/

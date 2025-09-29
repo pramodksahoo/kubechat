@@ -6,6 +6,7 @@ import { Sidebar } from './Sidebar';
 export interface MainLayoutProps extends BaseComponentProps {
   title?: string;
   showSidebar?: boolean;
+  children?: React.ReactNode;
 }
 
 export const MainLayout: React.FC<MainLayoutProps> = ({

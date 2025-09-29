@@ -1,6 +1,9 @@
+type ReactNodeLike = any;
+interface ComponentTypeLike<P = unknown> { (props: P): any; }
+
 export interface BaseComponentProps {
   className?: string;
-  children?: React.ReactNode;
+  children?: ReactNodeLike;
   'data-testid'?: string;
 }
 
@@ -51,7 +54,7 @@ export interface NavigationItem {
   id: string;
   label: string;
   href?: string;
-  icon?: React.ComponentType<any>;
+  icon?: ComponentTypeLike<any>;
   onClick?: () => void;
   badge?: string | number;
   children?: NavigationItem[];
