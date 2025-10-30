@@ -1,0 +1,58 @@
+version: "2"
+run:
+  concurrency: 4
+  go: "1.24"
+output:
+  formats:
+    text:
+      path: stdout
+      print-linter-name: true
+      print-issued-lines: true
+linters:
+  default: none
+  enable:
+  - bodyclose
+  - dogsled
+  - errcheck
+  - exhaustive
+  - gochecknoinits
+  - goconst
+  - gocritic
+  - gocyclo
+  - goprintffuncname
+  - govet
+  - ineffassign
+  - misspell
+  - nakedret
+  - nilerr
+  - noctx
+  - nolintlint
+  - rowserrcheck
+  - staticcheck
+  - unconvert
+  - unparam
+  - unused
+  - wastedassign
+  - whitespace
+  exclusions:
+    generated: lax
+    presets:
+    - comments
+    - common-false-positives
+    - legacy
+    - std-error-handling
+    paths:
+    - vendor
+    - third_party$
+    - builtin$
+    - examples$
+formatters:
+  enable:
+  - gofmt
+  exclusions:
+    generated: lax
+    paths:
+    - vendor
+    - third_party$
+    - builtin$
+    - examples$

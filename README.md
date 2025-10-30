@@ -64,314 +64,119 @@ KubeChat is an **open-source Natural Language Kubernetes Management Platform** t
 
 ## 🏗️ Architecture
 
+
+---
+
+## ✨ Current Capabilities (MVP)
+
+| Area | Status | Description |
+|------|--------|-------------|
+| Natural-language prompt ingestion | ✅ | `POST /api/v1/prompts` accepts user intents, classifies cluster/namespace scope, and emits structured plans with per-step metadata. |
+| Plan builder heuristics | ✅ | `internal/plan` enriches steps with operation types, target descriptors, risk notes, and affected resources derived from prompt context. |
+| Plan persistence | ✅ | Plans are cached via an in-memory repository so they can be reloaded (`GET /api/v1/plans/{id}`) and rehydrated in the UI. |
+| Metrics & logging | ✅ | `plan_generation_duration_seconds` Prometheus histogram plus structured logs (request ID, cluster, namespace, risk level). |
+| Plan preview UI | ✅ | React-based drawer showing plan header, namespace/cluster chips, affected-resource summaries, and copyable step commands. |
+| Chat integration | ✅ | The chat workflow triggers plan creation automatically and deep-links the preview drawer using `?plan=<id>`. |
+
+> These features satisfy Acceptance Criteria 1 and partially satisfy Acceptance Criteria 2 of story `1-1-capture-natural-language-intents`.
+
+---
+
+## 🗺️ Roadmap Alignment (from PRD / Epics)
+
+| Epic / FR | Description | Status |
+|-----------|-------------|--------|
+| **E1 / FR-1** AI-Assisted Command Planning | Natural-language intents → explainable kubectl plan | 🚧 In progress (MVP delivered, editing/approval workflows forthcoming) |
+| **E2 / FR-2** Guarded Execution & Approvals | Dry-run enforcement, approvals, RBAC, rollback | ⏳ Planned |
+| **E3 / FR-3** Multi-Cluster Visibility | Aggregated diagnostics, scoped actions | ⏳ Planned |
+| **E4 / FR-4** Streaming Observability | Live logs, rollout status, AI summaries | ⏳ Planned |
+| **E5 / FR-5** Audit & Reporting | Tamper-evident audit trails, exports | ⏳ Planned |
+| **E6 / FR-6** Packaging & AI Abstraction | Single binary, Helm chart, provider plugins | ⏳ Planned |
+| **FR-7** Workflow Governance | Guardrailed recipes, post-incident notes | ⏳ Planned |
+
+For full requirements and design principles, see:
+- [Product Requirements Document](docs/PRD.md)
+- [Epic definitions](docs/epics.md)
+- [Architecture overview](docs/architecture.md)
+
+---
+
+## 🧱 Architecture Snapshot
+
 ```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   React UI      │    │   Go Backend     │    │   Kubernetes    │
-│   (Dashboard)   │◄──►│   Microservices  │◄──►│   Cluster       │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-                                │                        
-                                ▼                        
-                       ┌──────────────────┐              
-                       │   AI Processing  │              
-                       │  Ollama/OpenAI   │              
-                       └──────────────────┘              
+┌────────────────────────┐   REST + SSE    ┌────────────────────────┐
+│ React UI (Plan Drawer) │ ◄──────────────►│ Go API (internal/api)   │
+└────────────────────────┘                │  - PromptController     │
+                                          │  - PlanRepository       │
+                                          │  - Telemetry exposure   │
+                                          └────────────┬───────────┘
+                                                       ▼
+                                            ┌────────────────────┐
+                                            │ Plan Builder       │
+                                            │ (internal/plan)    │
+                                            └────────────────────┘
 ```
 
-**🏛️ Technical Stack:**
-- **Backend:** Go microservices with Gin framework
-- **Frontend:** React + TypeScript + Tailwind CSS  
-- **Database:** PostgreSQL (audit logs), Redis (caching)
-- **AI:** Ollama (local), OpenAI (optional cloud)
-- **Deployment:** Helm charts, Docker containers
-- **K8s Integration:** Native client-go library
+- **Backend:** Go 1.24 module (`backend/`) with Echo router, SSE server, and Prometheus metrics.
+- **Frontend:** React + TypeScript + Tailwind drawer rendered within the shell layout (`client/`).
+- **Telemetrics:** Histogram and structured logging keyed by `request_id`.
+- **Persistence:** In-memory repository (future stories will wire PostgreSQL per PRD).
 
-## 🛠️ Quick Start
+---
 
-### Prerequisites
-
-- **Kubernetes cluster** with 4GB+ available RAM
-- **kubectl** configured for cluster access  
-- **Helm 3.x** for deployment
-
-### 1️⃣ Deploy with Helm
+## 🛠️ Local Development
 
 ```bash
-# Clone the repository
-git clone https://github.com/pramodksahoo/kubechat.git
-cd kubechat
+# Backend
+cd backend
+Go env GOWORK=off go mod tidy
+Go env GOWORK=off go test ./internal/...
 
-# Deploy to Kubernetes (includes Ollama)
-helm install kubechat ./chart \
-  --create-namespace \
-  --namespace kubechat
-
-# Wait for deployment (Ollama model download takes ~5 minutes)
-kubectl get pods -n kubechat -w
+# Frontend
+cd ../client
+pnpm install
+pnpm run lint   # Note: legacy warnings remain; see eslint output for backlog items
+pnpm run dev    # Starts Vite dev server with the React plan drawer
 ```
 
-### 2️⃣ Access KubeChat
+> ⚠️ Running `go test ./...` in restricted environments may fail when the MCP handler attempts to bind to localhost. Use `go test ./internal/...` for targeted coverage.
 
-```bash
-# Port forward to access locally
-kubectl port-forward svc/kubechat 8080:8080 -n kubechat
+---
 
-# Open in your browser
-open http://localhost:8080
+## 📁 Repository Structure
+
+```
+backend/                      # Go services (API, plan builder, telemetry)
+client/                       # React application (plan drawer, chat integration)
+third_party/github.com/kubechat/sse/v2
+                              # Vendored SSE fork used via go.mod replace
+charts/                       # Helm assets (placeholder, upcoming stories)
+docs/                         # PRD, epics, architecture, and sprint docs
 ```
 
-### 3️⃣ Start Chatting!
-
-Try these example queries:
-```
-"Show me all pods in the default namespace"
-"Which nodes are running in my cluster?"
-"Display logs for pods with errors"
-"Get resource usage for the kube-system namespace"
-```
-
-## 🐳 Container-First Development
-
-KubeChat follows **container-first development principles** - all development happens inside containers deployed to Kubernetes.
-
-### Prerequisites
-- **Rancher Desktop** with Kubernetes enabled (recommended)
-- **Docker, kubectl, Helm 3.15+, PNPM 8+, Go 1.23+**
-
-### One-Command Setup
-```bash
-# Clone and initialize complete environment
-git clone https://github.com/pramodksahoo/kubechat.git
-cd kubechat
-
-# Initialize development environment (first time)
-make init
-
-# This will:
-# ✅ Validate all prerequisites 
-# ✅ Build application containers
-# ✅ Deploy to Kubernetes with PostgreSQL & Redis
-# ✅ Set up all development tools
-```
-
-### Development Workflow
-```bash
-# Check deployment status
-make dev-status
-
-# Make code changes in your editor
-
-# Rebuild containers (choose one)
-make dev-rebuild-api    # For backend changes
-make dev-rebuild-web    # For frontend changes
-
-# Deploy changes to Kubernetes
-helm upgrade kubechat-dev infrastructure/helm/kubechat \
-  --namespace kubechat \
-  --values infrastructure/helm/kubechat/values-dev.yaml
-
-# View logs and test
-make dev-logs
-curl http://localhost:30080/health  # API
-curl http://localhost:30001         # Frontend
-```
-
-### Access URLs (Development)
-- **Frontend:** http://localhost:30001
-- **API:** http://localhost:30080  
-- **PgAdmin:** http://localhost:30050
-- **Redis Commander:** http://localhost:30081
-
-### Why Container-First?
-- **Production Parity:** Development matches production exactly
-- **No Local Dependencies:** No conflicting Node.js/Go versions
-- **Consistent Environment:** All developers work identically
-- **Air-Gap Ready:** Supports offline development
-
-## ⚙️ Configuration Options
-
-### Multi-LLM Setup
-
-```bash
-# Use external Ollama instance
-helm install kubechat ./chart \
-  --set llm.ollama.deploy=false \
-  --set llm.ollama.url="http://your-ollama-service:11434"
-
-# Enable OpenAI (requires API key)
-helm install kubechat ./chart \
-  --set llm.provider=openai \
-  --set llm.openai.enabled=true \
-  --set llm.openai.apiKey="your-api-key"
-```
-
-### Production Deployment
-
-```bash
-# Production setup with ingress and resource optimization
-helm install kubechat ./chart \
-  --set ingress.enabled=true \
-  --set ingress.hosts[0].host=kubechat.yourcompany.com \
-  --set resources.requests.memory="512Mi" \
-  --set llm.ollama.resources.requests.memory="4Gi" \
-  --namespace kubechat --create-namespace
-```
-
-### Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `LLM_PROVIDER` | AI provider (`ollama` or `openai`) | `ollama` |
-| `OLLAMA_URL` | Ollama service URL | `http://localhost:11434` |
-| `OLLAMA_MODEL` | Ollama model name | `llama2` |
-| `OPENAI_API_KEY` | OpenAI API key | `""` |
-| `LOG_LEVEL` | Logging level | `info` |
-
-## 🔒 Security & Compliance
-
-KubeChat is built with **security-first principles** for enterprise environments:
-
-- ✅ **Air-gap ready** - Complete offline operation with Ollama
-- ✅ **RBAC integration** - Respects existing Kubernetes permissions  
-- ✅ **Audit logging** - Complete command and query trails
-- ✅ **Input validation** - Prevents injection attacks and malicious prompts
-- ✅ **Encrypted storage** - Audit logs and sensitive data protection
-- ✅ **Zero external calls** - No data leaves your cluster (with Ollama)
-
-### Compliance Features
-
-- **SOX, HIPAA, SOC 2** audit trail support
-- **Complete operational history** with user attribution
-- **Command preview** and approval workflows  
-- **Role-based access** control integration
-- **Data sovereignty** with local AI processing
-
-## 📊 Monitoring & Observability
-
-Built-in monitoring capabilities:
-
-```bash
-# Health check endpoints
-curl http://localhost:8080/api/health
-curl http://localhost:8080/api/audit?limit=10
-
-# Application logs
-kubectl logs -f deployment/kubechat -n kubechat
-
-# Ollama AI service logs
-kubectl logs -f deployment/kubechat-ollama -n kubechat
-```
+---
 
 ## 🤝 Contributing
 
-We welcome contributions! KubeChat thrives on community input.
+1. Fork the repository at [github.com/pramodksahoo/kubechat](https://github.com/pramodksahoo/kubechat)
+2. Create a feature branch: `git checkout -b feature/plan-editor`
+3. Run Go and frontend unit tests relevant to your change
+4. Submit a pull request referencing the story / acceptance criteria
 
-### Getting Started
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Make your changes and test thoroughly
-4. Submit a pull request with a clear description
-
-### Development Guidelines
-- **Backend:** Go 1.21+, follow effective Go practices
-- **Frontend:** React + TypeScript, component-based architecture  
-- **Testing:** Include unit tests for new features
-- **Documentation:** Update docs for user-facing changes
-
-### Code of Conduct
-We maintain a welcoming, inclusive community. Please review our [Code of Conduct](CODE_OF_CONDUCT.md).
-
-## 📋 Roadmap
-
-**🎯 Current Focus (MVP)**
-- ✅ Natural language to kubectl translation
-- ✅ Real-time cluster monitoring dashboard
-- ✅ Multi-LLM support (Ollama + OpenAI)
-- ✅ Enterprise-grade audit logging
-- 🔄 Advanced RBAC integration
-
-**🚀 Coming Soon**
-- Multi-cluster management capabilities
-- Custom dashboard creation and sharing
-- Advanced troubleshooting workflows
-- Performance optimization recommendations
-- Enhanced compliance reporting
-
-## 🔐 Security & Responsible Disclosure
-
-KubeChat takes security seriously. If you discover a security vulnerability, please follow our responsible disclosure process:
-
-### 🚨 Reporting Security Vulnerabilities
-
-**DO NOT** create public GitHub issues for security vulnerabilities. Instead:
-
-1. **Email:** security@kubechat.dev (GPG key available on request)
-2. **GitHub:** Use [private security reporting](https://github.com/pramodksahoo/kubechat/security/advisories/new)
-3. **Response Time:** We aim to respond within 24 hours
-
-### 🛡️ Security Best Practices
-
-When deploying KubeChat:
-- ✅ Use the latest stable release
-- ✅ Enable RBAC with least-privilege principles
-- ✅ Deploy in isolated namespaces
-- ✅ Regular security scanning with tools like Trivy
-- ✅ Monitor audit logs for suspicious activity
-- ✅ Keep Kubernetes cluster updated
-
-### 🔒 Compliance & Privacy
-
-- **Data Residency:** All AI processing can happen locally with Ollama
-- **Audit Trails:** Complete immutable logs for compliance (SOX, HIPAA, SOC 2)
-- **Zero Data Leakage:** No external API calls required
-- **Encryption:** All sensitive data encrypted at rest and in transit
-
-For detailed security architecture, see [docs/architecture/security.md](docs/architecture/security.md)
-
-## 📄 License
-
-This project is licensed under the **Apache License 2.0** - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support & Community
-
-- **📚 Documentation:** [docs/](docs/)
-- **🐛 Bug Reports:** [GitHub Issues](https://github.com/pramodksahoo/kubechat/issues)
-- **💬 Discussions:** [GitHub Discussions](https://github.com/pramodksahoo/kubechat/discussions)
-- **🌐 Website:** Coming soon
-- **📧 Contact:** [hello@kubechat.dev](mailto:hello@kubechat.dev)
-
-## ⭐ Show Your Support
-
-If KubeChat helps simplify your Kubernetes operations, please consider:
-- ⭐ **Starring** the repository
-- 🐛 **Reporting issues** you encounter
-- 🤝 **Contributing** code or documentation
-- 📢 **Sharing** with your DevOps community
+Please review the [code of conduct](CODE_OF_CONDUCT.md) before contributing.
 
 ---
 
-## 🎯 Quick Summary
+## 📣 Support & Feedback
 
-**For Kubernetes Administrators:**
-```bash
-helm install kubechat ./chart --namespace kubechat --create-namespace
-kubectl port-forward svc/kubechat 8080:8080 -n kubechat
-# Visit http://localhost:8080 and start chatting with your cluster
-```
-
-**For Developers:**
-```bash
-make init  # Container-first development setup
-```
-
-**Key Features:**
-- 🤖 **Natural Language** → kubectl commands
-- 🔒 **Air-gap Ready** with local Ollama AI  
-- 📊 **Real-time Dashboard** with cluster monitoring
-- ✅ **Enterprise Security** and compliance logging
-- 🌐 **Multi-user** collaborative troubleshooting
+- Issues & feature requests: [GitHub Issues](https://github.com/pramodksahoo/kubechat/issues)
+- Discussions & design questions: [GitHub Discussions](https://github.com/pramodksahoo/kubechat/discussions)
+- Documentation hub: [`docs/`](docs/)
 
 ---
 
-**Built with ❤️ for the Kubernetes community**
+## ⭐ Project Vision
 
-*Making Kubernetes accessible through the power of natural language AI while maintaining enterprise-grade security and compliance.*
+Kubechat aims to make Kubernetes safer and more approachable by combining conversational interfaces with governed execution. The current milestone proves out plan generation; upcoming stories will layer in approvals, audit trails, and packaging aligned with the PRD roadmap.
+
+> Built with ❤️ for platform engineers and SREs who want confidence before they hit “apply”.
