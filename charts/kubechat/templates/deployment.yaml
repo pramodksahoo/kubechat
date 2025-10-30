@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "kubechat.fullname" . }}
+  labels:
+    {{- include "kubechat.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "kubechat.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "kubechat.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "kubechat.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          command: [ "kubechat", "--no-open-browser" ]
+          args:
+           - --certFile=/etc/ssl/certs/tls.crt
+           - --keyFile=/etc/ssl/certs/tls.key
+            {{- if .Values.service.listen }}
+           - --listen={{ .Values.service.listen }}
+            {{- end }}
+            {{- if .Values.k8s_client_burst }}
+           - --k8s-client-burst={{ .Values.k8s_client_burst }}
+            {{- end }}
+            {{- if .Values.k8s_client_qps }}
+           - --k8s-client-qps={{ .Values.k8s_client_qps }}
+            {{- end }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: https
+              containerPort: {{ include "kubechat.listenPort" . | int }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: https
+              scheme: HTTPS
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: https
+              scheme: HTTPS
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+          - name: tls-certs
+            mountPath: "/etc/ssl/certs"
+            readOnly: true
+          - name: kubechat-data
+            mountPath: {{ .Values.kubechatData.mountPath }}
+      volumes:
+      - name: tls-certs
+        secret:
+          secretName: {{ include "helm-chart.kubechat-tls-secret-name" . }}
+      - name: kubechat-data
+        persistentVolumeClaim:
+          claimName: {{ .Values.pvc.name }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -1,853 +1,143 @@
-# KubeChat Product Requirements Document (PRD)
+# kubechat Product Requirements Document (PRD)
+
+**Author:** pramoda
+**Date:** 2025-10-30T08:05:58.188389Z
+**Project Level:** 4
+**Target Scale:** 5–50 clusters (50–1,000 nodes; 5k–30k pods) across cloud + on-prem
+
+---
 
 ## Goals and Background Context
 
 ### Goals
-- Enable enterprise DevOps teams to manage Kubernetes clusters through natural language interfaces while maintaining full compliance and audit trails
-- Reduce Kubernetes operational complexity and onboarding time from 6-8 weeks to 2 weeks for new team members  
-- Provide air-gapped, secure cluster management solution for regulated industries (finance, healthcare, government)
-- Build institutional knowledge system that captures and systematizes team Kubernetes expertise
-- Achieve 40%+ reduction in time spent on routine Kubernetes operations within 90 days of adoption
-- Establish market-leading position in AI-powered Kubernetes management for enterprise environments
+
+- Reduce MTTR across P1/P2 incidents by 30–50%.
+- Convert 70–90% of production clusters to guarded workflows with previews/approvals and RBAC enforcement.
+- Cut audit preparation from days to under two hours via exportable, consolidated logs.
+- Launch OSS MVP + Helm chart, onboard 10–20 design partners, reach 30+ external contributors, and exceed 200 weekly active operators.
+- Enable an enterprise tier (Postgres, SSO, policy packs) by months 9–12 to unlock monetization.
 
 ### Background Context
 
-KubeChat addresses a critical gap in the Kubernetes ecosystem where existing tools force enterprises to choose between operational simplicity and regulatory compliance. Our competitive analysis revealed that no current solution combines web-based accessibility, air-gapped deployment, and enterprise-grade audit trails. The PoC has successfully validated the core technical approach, demonstrating functional natural language translation to kubectl commands through Go microservices with multi-LLM support.
-
-The market timing is optimal with 78% of enterprises struggling to find qualified Kubernetes talent while regulatory scrutiny of infrastructure operations intensifies. KubeChat's compliance-first architecture, validated through the working PoC, positions it to capture the underserved air-gapped enterprise segment worth $750M+ in addressable market.
-
-### Change Log
-| Date | Version | Description | Author |
-|------|---------|-------------|---------|
-| 2025-01-10 | 1.0 | Initial PRD creation from Project Brief and competitive analysis | John (PM) |
-| 2025-01-15 | 1.1 | Epic 1 marked completed, Epic 2 revised to focus on frontend-backend integration + Ollama | Bob (Scrum Master) |
+- A 4–6 person SRE/Platform core team plus 5–10 on-call developers manages 24×7 Kubernetes operations entirely through manual `kubectl`, ad-hoc scripts, and siloed dashboards.
+- Live changes lack standardized preview/approval gates; wrong-context or overly broad commands surface roughly 1–2 times per quarter despite informal peer checks.
+- Weekly CLI mistakes and inconsistent scripting add 20–60 minutes to remediation, with cross-cluster triage consuming an additional 10–20 minutes and requiring multiple terminals.
+- 60–80% of direct cluster activity lacks a concise, human-readable audit trail, making “who ran what, where, when, why” investigations slow and compliance-heavy.
+- Process gaps translate into ~4–6 engineer-hours of rework each month and 1–3 avoidable customer-impacting incidents per year.
 
 ---
 
 ## Requirements
 
-### Functional
+### Functional Requirements
 
-**FR1:** Natural Language Query Processing - The system shall accept natural language queries in English and translate them to appropriate kubectl commands with >95% accuracy for common operations and >85% for complex scenarios.
+- **FR-0 Kubechat Foundation**
+  - Fork and extend the Kubechat (https://github.com/pramodksahoo/kubechat) codebase as the starting point for Kubechat.
+  - Preserve upstream compatibility to consume future Kubechat improvements while layering Kubechat-specific capabilities.
+  - Document divergences and merge strategy so engineering teams can track deltas across releases.
 
-**FR2:** Multi-LLM Backend Support - The system shall support pluggable AI backends including Ollama (air-gapped), OpenAI, Claude, and Anthropic with intelligent failover and load balancing capabilities.
+- **FR-1 Natural-Language Operations Console**
+  - Accept natural-language intents and generate explicit, explainable kubectl/API plans with scoped cluster/namespace targeting.
+  - Provide per-step risk annotations, blast-radius estimates, and editable parameters before execution.
 
-**FR3:** Real-Time Command Execution - The system shall execute kubectl commands against connected Kubernetes clusters and return structured results within 3 seconds for standard operations.
+- **FR-2 Guarded Execution Pipeline**
+  - Enforce dry-run previews and require explicit confirmation (including optional two-person approvals) for destructive or production-scoped actions.
+  - Perform RBAC checks prior to execution and surface actionable denial reasons.
+  - Capture rollback context (previous replicas/images/manifests) and expose one-click revert paths.
 
-**FR4:** Complete Audit Trail Management - The system shall automatically log all user queries, generated commands, execution results, and user actions with immutable timestamps and user attribution for regulatory compliance.
+- **FR-3 Multi-Cluster Visibility & Control**
+  - Aggregate diagnostics (events, logs, metrics, pod status) across selected clusters with clear cluster badges and fast pivots.
+  - Support safe scoped actions (describe, logs, scale, restart) across clusters with guardrails applied per target.
 
-**FR5:** Role-Based Access Control Integration - The system shall respect and enforce existing Kubernetes RBAC policies, dynamically adapting the interface based on user permissions without allowing privilege escalation.
+- **FR-4 Observability & Streaming Feedback**
+  - Stream live command output, rollout status, and log/exec sessions inside the chat console with AI-authored summaries (e.g., suspected root cause, follow-up suggestions).
+  - Correlate telemetry (recent deploys, alerts, config changes) into the incident thread.
 
-**FR6:** Safety Classification System - The system shall classify all generated commands as "safe" (read-only), "warning" (write operations), or "dangerous" (destructive operations) with mandatory approval workflows for non-safe operations.
+- **FR-5 Audit & Reporting Layer**
+  - Maintain tamper-evident audit logs capturing operator identity, command inputs, approvals, outputs, and context tags.
+  - Provide exportable evidence packages (CSV/JSON) suitable for SOC 2/ISO/PCI/HIPAA reviews and link to generated incident notes.
 
-**FR7:** Web-Based Multi-User Interface - The system shall provide a responsive web application supporting concurrent users with real-time collaboration features and WebSocket-based live updates.
+- **FR-6 Packaging & Deployment Experience**
+  - Deliver a single binary (embedding the React UI) for local use and a Helm chart with CRDs (AIProvider, AuditPolicy) for cluster deployment.
+  - Provide offline-first AI provider abstraction: default to Ollama with configurable GPT/Claude/Gemini connectors.
 
-**FR8:** Air-Gapped Deployment Support - The system shall operate completely offline using local AI models (Ollama) with no external dependencies or data transmission requirements.
+- **FR-7 Workflow Governance & Runbooks**
+  - Allow creation and reuse of approved command “recipes” or runbooks with guardrails.
+  - Expose post-incident summaries and follow-up suggestions directly in the console.
 
-**FR9:** Contextual Cluster Information - The system shall maintain awareness of cluster state, available namespaces, and resource topology to provide intelligent command suggestions and validation.
+### Non-Functional Requirements
 
-**FR10:** Command Preview and Explanation - The system shall display generated kubectl commands with plain-English explanations before execution, allowing user review and approval.
+- **Performance & Responsiveness**: Initial UI load <3 seconds on target hardware; API latency p95 <200 ms under standard load; command planning turnaround <5 seconds with local Ollama models.
+- **Reliability**: Service availability ≥99.9%; graceful degradation when optional integrations (external LLMs, observability backends) are unreachable.
+- **Scalability**: Support 5–50 clusters (5k–30k pods) with server-side pagination/filtering; accommodate growth to 1,000 nodes without manual tuning.
+- **Security & Compliance**: Enforce RBAC, TLS, secret redaction, and tamper-evident audit logs; preserve data residency within the user’s cluster; operate in air-gapped/offline contexts by default.
+- **Privacy**: Redact PII/secrets from prompts/logs; provide opt-in controls for any telemetry or cloud egress; default deny outbound network access.
+- **Extensibility**: Enable pluggable AI providers and future policy packs without core rewrites; offer signed plugin surface for custom resource panels.
+- **Operability**: Provide health endpoints, structured logs, metrics, and documentation for deployment/upgrade/rollback workflows.
+- **Maintainability**: Preserve merge path with upstream Kubechat; enforce PR-only workflow with Codex-generated code reviewed by humans.
 
-### Non-Functional
+---
 
-**NFR1:** High Availability and Reliability - The system shall maintain 99.9% uptime with graceful degradation when individual components fail, including automatic LLM provider failover.
+## User Journeys
 
-**NFR2:** Enterprise Security Standards - The system shall implement HTTPS-only communication, secure credential storage, input sanitization, rate limiting, and audit trail encryption at rest.
+1. **Incident Commander Executes Guarded Remediation**
+   - Alert fires in PagerDuty → Commander opens Kubechat → Issues NL prompt “Investigate crashloop pods for payment in prod”.
+   - System returns plan with diagnostics, proposed remedial commands, risk notes, and blast radius.
+   - Commander reviews dry-run output, requests peer approval, executes command; live stream confirms rollout success and AI summarizes root cause.
+   - Audit entry and post-incident note automatically generated with follow-up tasks.
 
-**NFR3:** Scalability and Performance - The system shall support up to 100 concurrent users per deployment instance with sub-3-second response times and horizontal scaling capabilities.
+2. **On-Call Developer Performs Guided Investigation**
+   - Developer joins incident channel → filters affected clusters/namespaces via multi-cluster view.
+   - Uses chat to request logs, metrics, and recent deploy history without leaving console.
+   - Identifies misconfiguration, triggers pre-approved rollback recipe, and documents outcome via auto-generated summary.
 
-**NFR4:** Cross-Platform Kubernetes Compatibility - The system shall support Kubernetes versions 1.24+ across major cloud providers (EKS, GKE, AKS) and on-premises distributions (OpenShift, Rancher, VMware Tanzu).
+3. **Compliance Lead Conducts Weekly Review**
+   - Compliance user opens audit dashboard → filters privileged actions by cluster and operator.
+  - Exports CSV evidence covering commands, approvals, and context for the week.
+  - Flags any out-of-policy actions and assigns follow-up in ticketing system via webhook.
 
-**NFR5:** Compliance and Audit Readiness - The system shall generate compliance-ready audit reports supporting SOX, HIPAA, PCI DSS, SOC 2, and FedRAMP requirements with automated documentation and trail verification.
+---
 
-**NFR6:** Resource Efficiency - The system shall optimize memory usage for air-gapped deployments with local LLM models, targeting <4GB RAM usage for standard enterprise configurations.
+## UX Design Principles
 
-**NFR7:** Browser and Device Support - The system shall support modern browsers (Chrome 90+, Firefox 88+, Safari 14+, Edge 90+) with responsive design optimized for desktop and tablet interfaces.
-
-**NFR8:** Data Sovereignty - The system shall provide configurable data residency options and GDPR compliance features for international enterprise deployments.
+- Prioritize explainability: every AI-generated action must show underlying commands, risks, and approvals.
+- Guardrail-first interactions: defaults favor safety (read-only, dry-run) with explicit escalation for writes.
+- Maintain shared situational awareness through synchronized chat + visual context with timeline markers.
+- Optimize for speed under pressure: keyboard acceleration, quick cluster pivots, and minimal modal friction.
+- Design for offline/air-gapped use, eliminating assumptions about external connectivity.
+- Make compliance effortless with built-in transparency and exportable evidence.
 
 ---
 
 ## User Interface Design Goals
 
-### Overall UX Vision
-KubeChat delivers a **"Kubernetes-Aware, kubectl-Agnostic"** interface that assumes users understand basic Kubernetes concepts (pods, services, deployments) without requiring kubectl command syntax knowledge. The interface progressively discloses complexity through beginner, standard, and expert modes while maintaining enterprise-grade professionalism and security-first design principles.
-
-### Key Interaction Paradigms
-**Conversational Command Interface:** Primary interaction through natural language chat with persistent conversation history, command preview, and approval workflows for safety-critical operations.
-
-**Visual Dashboard Integration:** Real-time cluster monitoring dashboards with clickable elements that generate natural language queries (e.g., clicking high-memory pod auto-fills "show me logs for pod xyz").
-
-**Progressive Disclosure:** Interface adapts to user expertise level - beginners see guided templates and explanations, experts get direct command access with optional kubectl equivalents displayed.
-
-**Safety-First Design:** All destructive operations require explicit confirmation with impact preview, and dangerous commands display clear warnings with rollback options.
-
-### Core Screens and Views
-**Main Dashboard:** Cluster health overview with real-time metrics, recent activities, and quick-access natural language query interface integrated prominently.
-
-**Chat Interface:** Persistent conversational view with command history, favorites, and collaborative sharing features for team knowledge building.
-
-**Audit Trail View:** Compliance-focused interface showing all operations with filtering, search, and export capabilities designed for regulatory review.
-
-**Cluster Explorer:** Visual resource topology with drill-down capabilities and contextual natural language query generation from visual elements.
-
-**User Management:** RBAC-aware interface showing permissions, access levels, and administrative controls aligned with Kubernetes security model.
-
-### Accessibility: WCAG AA
-Enterprise accessibility compliance supporting keyboard navigation, screen readers, and high contrast modes to meet government and large enterprise requirements.
-
-### Branding
-**Professional Enterprise Aesthetic:** Clean, modern interface with Kubernetes ecosystem visual consistency. Color palette emphasizes trust and reliability (blues, grays) with clear status indicators (green/yellow/red) for operational states. Subtle animations for state transitions without distracting from operational focus.
-
-### Target Device and Platforms: Web Responsive
-Optimized for desktop and tablet interfaces with mobile-responsive fallback. Primary focus on desktop usage patterns typical in enterprise DevOps environments, with tablet support for operational monitoring and incident response scenarios.
-
----
-
-## Technical Assumptions
-
-### Repository Structure: Monorepo
-Single repository containing frontend (React/TypeScript), backend (Go microservices), LLM integration layer, and Kubernetes client wrapper with shared type definitions. This aligns with the PoC structure and simplifies dependency management for enterprise deployment.
-
-### Service Architecture
-**Microservices within Monorepo:** Clean Go microservices architecture with dedicated services for:
-- Authentication and RBAC enforcement
-- Natural language processing and LLM integration  
-- Kubernetes API proxy and command execution
-- Audit logging and compliance reporting
-- WebSocket real-time cluster monitoring
-- Frontend React application with Next.js SSR capabilities
-
-This architecture, validated by the PoC, provides scalability while maintaining deployment simplicity for air-gapped environments.
-
-### Testing Requirements
-**Full Testing Pyramid:** Comprehensive testing strategy including:
-- Unit tests for individual Go services and React components
-- Integration tests for LLM provider interactions and Kubernetes API calls
-- End-to-end tests for critical user workflows (natural language → command → execution)
-- Security testing for audit trails and RBAC enforcement
-- Performance testing for concurrent user scenarios and LLM response times
-
-Enterprise adoption requires thorough testing given the operational criticality.
-
-### Additional Technical Assumptions and Requests
-
-**Technology Stack (from PoC validation):**
-- **Frontend:** React.js with TypeScript, Next.js for SSR, Tailwind CSS for rapid development
-- **Backend:** Go with Gin framework for API services, optimal Kubernetes ecosystem alignment
-- **Database:** PostgreSQL for audit logs and user data, Redis for caching and sessions, InfluxDB consideration for time-series metrics
-- **Container Platform:** Docker with Helm charts for Kubernetes deployment
-- **Security:** HTTPS-only, secure credential storage, input validation for LLM queries
-
-**LLM Integration Architecture:**
-- Pluggable provider system supporting Ollama (air-gapped), OpenAI, Claude, Anthropic
-- Intelligent failover with performance monitoring and cost optimization
-- Local model caching and optimization for air-gapped deployments
-
-**Kubernetes Integration:**
-- Native client-go library integration for optimal API performance
-- Support for multiple cluster contexts and configurations
-- Real-time cluster state monitoring with WebSocket updates
-
-**Deployment and Operations:**
-- Helm charts for streamlined Kubernetes deployment
-- Air-gapped installation support via bundled container images
-- Horizontal scaling capabilities for concurrent user support
-- Monitoring and observability integration (Prometheus, Grafana)
+- Persistent cluster/context banner with warning badges when scope changes.
+- Dual-pane layout: conversational thread alongside context-aware resource panels.
+- Inline diff/previews for proposed mutations with clear accept/reject controls.
+- Streaming log/output viewer with AI annotations and quick filters.
+- Audit timeline widget highlighting who/what/when/how for recent actions.
+- Responsive virtualized tables for large pod lists and event streams.
 
 ---
 
 ## Epic List
 
-**Epic 1: Foundation & Community Launch** ✅ **COMPLETED** *(65 points, 6 sprints)*
-Established Go microservices architecture, React frontend, core natural language translation, and **Helm-based deployment** for community adoption. **Open-source launch milestone achieved** with comprehensive documentation and contribution guidelines. All 10 user stories completed with enterprise-grade audit trails, security, and compliance features.
+- **E1. AI-Assisted Command Planning** – Transform natural-language intents into explainable kubectl plans with risk analysis and editable parameters.
+- **E2. Guarded Execution & Approvals** – Enforce dry-run previews, RBAC checks, and approval workflows before mutating operations run.
+- **E3. Multi-Cluster Visibility Console** – Provide aggregated diagnostics, scoped actions, and synchronized UI/chat state across clusters.
+- **E4. Streaming Observability & Insights** – Deliver live logs, exec sessions, rollout status, and AI-written summaries inside the chat experience.
+- **E5. Audit, Compliance & Policy Framework** – Capture tamper-evident audit trails, export evidence, and manage guardrail policies.
+- **E6. Packaging, Deployment & AI Provider Abstraction** – Ship single-binary and Helm packages with pluggable AI providers and baseline configuration tooling.
 
-**Epic 2: Enterprise Security Hardening & Frontend Completion with Ollama** *(71 points, 4 sprints)*
-Transform KubeChat from development-mode application to enterprise-ready platform by eliminating all security vulnerabilities, implementing proper authentication, and completing frontend interfaces for existing backend APIs. Includes Ollama integration as secure local AI provider with comprehensive admin and user management interfaces.
-
-**Epic 3: Air-Gapped Support & Local AI Enhancement** *(32 points, 4-5 sprints)*
-Enhance existing Ollama integration with advanced air-gapped deployment capabilities, offline model distribution, and comprehensive local data processing for regulated environments requiring complete network isolation.
-
-**Epic 4: Real-Time Observability Layer** *(45 points, 5-6 sprints)*  
-Implement comprehensive cluster health monitoring, workload status tracking, WebSocket live updates, and visual dashboards to provide essential DevOps operational capabilities.
-
-**Epic 5: Open Source Product Release & Documentation** *(38 points, 4-5 sprints)*  
-Transform KubeChat from internal project into professional open-source product with comprehensive documentation, community infrastructure, and release processes that establish market credibility.
-
-**Epic 6: Multi-LLM Integration & Intelligence** *(52 points, 6-7 sprints)*  
-Build pluggable AI backend system with OpenAI, Claude, Anthropic support, intelligent failover, LLM response caching strategy, and performance optimization to establish AI reliability and cost management.
-
-**Epic 7: Intelligent Recommendations & Predictive Insights** *(44 points, 5-6 sprints)*  
-Add AI-powered optimization suggestions, predictive failure analysis, remediation recommendations, and proactive cluster management to **bridge open-source users to enterprise upsell opportunities**.
-
-**Epic 8: Enterprise Scale & Multi-Tenant Features** *(58 points, 7-8 sprints)*  
-Complete enterprise feature set with multi-cluster management, advanced export APIs, enterprise SSO integration, and professional services capabilities for large-scale adoption.
-
-**Total Project Scope:** *387 story points across 38-46 sprints*
+> **Note:** Detailed epic breakdown with full story specifications is available in [epics.md](./epics.md)
 
 ---
 
-## Epic 1: Foundation & Community Launch
-
-**Epic Goal:** Establish the core KubeChat platform with essential natural language to kubectl translation functionality, professional web interface, and community-ready deployment infrastructure. This epic delivers a working, deployable system that validates the core value proposition while building initial market momentum through open-source community adoption.
-
-### Story 1.1: Project Infrastructure and Development Environment
-
-As a **developer contributor**,
-I want **a containerized development environment using Helm charts deployed to Rancher Desktop**,
-so that **I can work in a production-like environment from day one and ensure deployment consistency**.
-
-#### Acceptance Criteria
-1. Monorepo structure with Helm chart as the primary development and deployment method
-2. **Helm templates for local development** including PostgreSQL and Redis dependencies
-3. **Rancher Desktop integration** with development values.yaml for local cluster deployment
-4. **No direct pnpm run dev or go run** - all development through Docker container builds and Helm deployment
-5. Development Dockerfile optimized for Go hot-reload and React development builds
-6. Helm values.yaml.dev for local development with appropriate resource limits and debug configurations
-7. Makefile commands: `make dev-deploy`, `make dev-clean`, `make dev-logs` for container-first workflow
-8. Documentation emphasizing container-first development approach with Rancher Desktop setup instructions
-
-### Story 1.2: Core Backend Services Architecture
-
-As a **platform architect**,
-I want **well-defined Go microservices with clear separation of concerns**,
-so that **the system is maintainable, testable, and scalable for enterprise deployment**.
-
-#### Acceptance Criteria
-1. Authentication service with basic user management and session handling
-2. Kubernetes client service with cluster connection management using client-go
-3. Natural language processing service with LLM integration abstraction layer
-4. Audit logging service with PostgreSQL persistence and structured logging
-5. WebSocket service for real-time cluster state updates
-6. API gateway service (Gin) with CORS configuration and route management
-7. Health check endpoints for all services with dependency status reporting
-8. Service-to-service communication patterns established with error handling
-
-### Story 1.3: Basic Natural Language to kubectl Translation
-
-As a **DevOps engineer**,
-I want **to enter natural language queries and receive appropriate kubectl commands**,
-so that **I can interact with Kubernetes clusters without memorizing complex command syntax**.
-
-#### Acceptance Criteria
-1. Natural language query processing endpoint accepting user input
-2. Basic prompt engineering for kubectl command generation covering common operations (get pods, services, deployments, nodes)
-3. Command validation and safety classification (safe/warning/dangerous)
-4. Structured response format with generated command, explanation, and safety level
-5. Support for namespace specification and context awareness
-6. Error handling for malformed queries and invalid cluster contexts
-7. Unit tests covering common query patterns and edge cases
-8. Integration with at least one LLM provider (OpenAI or Ollama) with proper error handling
-
-### Story 1.4: Kubernetes Cluster Integration and Command Execution
-
-As a **cluster administrator**,
-I want **the system to safely execute kubectl commands against my cluster**,
-so that **I can perform actual cluster management operations through the natural language interface**.
-
-#### Acceptance Criteria
-1. Kubernetes client configuration supporting multiple cluster contexts
-2. Safe command execution for read-only operations (get, describe, logs)
-3. Command result parsing and structured data return (JSON format)
-4. Namespace filtering and resource-specific query support
-5. Error handling for cluster connectivity issues and permission errors
-6. Timeout management for long-running operations
-7. Basic resource caching to improve response times
-8. Support for common kubectl operations: get pods, services, deployments, nodes, logs
-
-### Story 1.5: Web Frontend with Enterprise UI Components
-
-As a **DevOps team member**,
-I want **a professional enterprise web application with comprehensive navigation and feature organization**,
-so that **I can efficiently access all KubeChat capabilities through an elegant, enterprise-grade interface**.
-
-#### Acceptance Criteria
-1. **Professional Navigation Bar** with KubeChat branding, user profile dropdown, and main navigation menu
-2. **Dashboard View** as landing page showing cluster health overview, recent activities, and quick access panels
-3. **Chat Interface Window** as primary interaction component with persistent conversation history and command preview
-4. **User Profile Management** with account settings, permissions display, and session information
-5. **Compliance Dashboard Component** showing audit trail summaries, compliance status, and recent regulatory activities
-6. **Sidebar Navigation** for secondary features: audit trails, cluster explorer, settings, help documentation
-7. **Responsive Layout System** with collapsible navigation and adaptive component sizing for different screen sizes
-8. **Enterprise Design System** with consistent color palette, typography, and component styling matching professional DevOps tools
-9. **Real-time Status Indicators** throughout the UI showing cluster connectivity, LLM availability, and system health
-10. **Accessibility Compliance** with WCAG AA standards for keyboard navigation and screen reader support
-
-### Story 1.6: Audit Trail and Basic Compliance Logging
-
-As a **compliance officer**,
-I want **complete audit trails of all KubeChat operations**,
-so that **I can demonstrate regulatory compliance and track system usage**.
-
-#### Acceptance Criteria
-1. Comprehensive audit logging for all user queries, commands, and results
-2. Immutable audit trail storage with timestamp and user attribution
-3. Structured audit log format supporting compliance reporting
-4. Basic audit trail web interface with filtering and search capabilities
-5. Export functionality for audit logs (CSV, JSON formats)
-6. Audit log retention policies and cleanup procedures
-7. Database schema designed for audit trail integrity and performance
-8. Log rotation and archival strategies for long-term compliance storage
-
-### Story 1.7: Helm Chart Deployment and Documentation
-
-As a **Kubernetes administrator**,
-I want **simple Helm-based deployment of KubeChat**,
-so that **I can easily install and manage the application in my cluster**.
-
-#### Acceptance Criteria
-1. Complete Helm chart with all necessary Kubernetes resources (deployments, services, ingress, configmaps)
-2. Configurable values.yaml supporting different deployment scenarios
-3. RBAC configuration with appropriate service accounts and permissions
-4. Database initialization and migration scripts
-5. TLS/HTTPS configuration with certificate management
-6. Resource limits and requests properly configured for enterprise environments
-7. Installation and configuration documentation with troubleshooting guides
-8. Upgrade and rollback procedures documented and tested
-
-### Story 1.8: Open Source Community Launch Preparation
-
-As a **project maintainer**,
-I want **comprehensive community documentation and contribution frameworks**,
-so that **external developers can easily contribute and adopt KubeChat**.
-
-#### Acceptance Criteria
-1. Complete README.md with project overview, installation, and usage instructions
-2. CONTRIBUTING.md with development setup, coding standards, and pull request process
-3. LICENSE file (appropriate open source license selection)
-4. Issue templates for bug reports and feature requests
-5. GitHub Actions CI/CD pipeline for automated testing and releases
-6. Code of conduct and community guidelines
-7. Architecture documentation explaining system design and extension points
-8. API documentation for integration developers
-9. Demo deployment instructions and sample configurations
-
----
-
-## Epic 2: Enterprise Security Hardening & Frontend Completion with Ollama
-
-**Epic Goal:** Transform KubeChat from development-mode application to enterprise-ready platform by eliminating all security vulnerabilities, implementing proper authentication, and completing frontend interfaces for existing backend APIs with security-first approach. Includes Ollama integration as secure local AI provider with comprehensive admin and user management interfaces.
-
-### Story 2.1: Ollama Integration & AI Provider Management UI
-
-As a **System Administrator and End User**,
-I want **Ollama integrated as a local AI provider with provider selection UI**,
-so that **I can choose between OpenAI (online) and Ollama (local) AI providers through the interface**.
-
-#### Acceptance Criteria
-1. Ollama service deployed in Kubernetes cluster alongside existing services
-2. AI provider selection interface in chat UI (OpenAI vs Ollama toggle)
-3. Model management interface for Ollama models (load/unload/monitor)
-4. Integration with existing `/ai/providers` and `/ai/models` backend APIs
-5. Provider performance comparison dashboard
-6. Fallback mechanism when selected provider is unavailable
-7. Cost tracking for both providers (tokens for OpenAI, resource usage for Ollama)
-
-### Story 2.2: Command Approval Workflow UI Integration
-
-As a **System Administrator and DevOps Engineer**,
-I want **complete frontend interface for the existing command approval workflow**,
-so that **I can manage dangerous command approvals and monitor command executions through the UI**.
-
-#### Acceptance Criteria
-1. Pending approvals dashboard using existing `/commands/approvals/pending` API
-2. Command approval interface for dangerous operations via `/commands/approve` API
-3. Execution history viewer using `/commands/executions` API
-4. Rollback planning interface using `/commands/executions/{id}/rollback/plan` API
-5. Real-time command execution status monitoring
-6. Approval workflow notifications and alerts
-7. Command execution analytics dashboard using `/commands/stats` API
-
-### Story 2.3: Admin User Management Interface
-
-As a **System Administrator**,
-I want **comprehensive user management interface for existing user APIs**,
-so that **I can manage users, roles, and permissions through the UI**.
-
-#### Acceptance Criteria
-1. User CRUD interface using existing `/users` APIs
-2. Auto-admin user creation during Helm deployment with K8s secrets
-3. User role and permission management UI
-4. Password management through Kubernetes secrets
-5. User session management interface using `/sessions` APIs
-6. User activity monitoring dashboard
-7. Bulk user operations (import/export)
-
-### Story 2.4: Audit Trail & Compliance Dashboard
-
-As a **Compliance Officer and System Administrator**,
-I want **comprehensive audit trail interface for existing audit APIs**,
-so that **I can monitor system compliance and security through dashboards**.
-
-#### Acceptance Criteria
-1. Audit log viewer using existing `/audit/logs` APIs
-2. Dangerous operations monitoring via `/audit/dangerous` API
-3. Failed operations dashboard using `/audit/failed` API
-4. Compliance reporting interface with export capabilities
-5. Real-time audit event streaming using `/audit/stream` API
-6. Audit log search and filtering capabilities
-7. Compliance metrics and trending analysis
-
-### Story 2.5: Kubernetes Resource Explorer Interface
-
-As a **DevOps Engineer and Developer**,
-I want **Kubernetes resource management interface for existing K8s APIs**,
-so that **I can explore and manage cluster resources through the UI**.
-
-#### Acceptance Criteria
-1. K8s resource browser using existing `/kubernetes/resources` APIs
-2. Namespace explorer and resource listing
-3. Resource detail views with YAML/JSON display
-4. Cluster health dashboard using `/kubernetes/health` APIs
-5. Node and pod monitoring interface
-6. Resource scaling and management controls
-7. K8s events and logs viewer
-
-### Story 2.6: User-Kubernetes RBAC Integration UI
-
-As a **System Administrator**,
-I want **individual ServiceAccount creation and RBAC management interface**,
-so that **each user has proper K8s permissions with granular access control**.
-
-#### Acceptance Criteria
-1. Individual ServiceAccount creation interface per user
-2. K8s permissions management per user with role selection
-3. Namespace access control UI with permission matrix
-4. ServiceAccount token management interface
-5. RBAC testing and validation tools
-6. Permission conflict detection and resolution
-7. Kubernetes identity audit trail per user
-
----
-
-## Epic 3: Air-Gapped Support & Local AI
-
-**Epic Goal:** Enable complete offline operation with Ollama local AI models as the default deployment, ensuring KubeChat works immediately without external dependencies while providing the unique air-gapped capability that differentiates from all competitors. This epic delivers true data sovereignty and zero-cost AI processing for the open-source community.
-
-### Story 3.1: Ollama Integration and Local Model Management
-
-As a **DevOps engineer in a secure environment**,
-I want **KubeChat to work with local Ollama AI models without any external network dependencies**,
-so that **I can use natural language Kubernetes management in air-gapped or security-restricted environments**.
-
-#### Acceptance Criteria
-1. Ollama client integration with Go SDK for local AI model communication
-2. Default Ollama model selection optimized for Kubernetes command generation (Llama 2 or CodeLlama variants)
-3. Model download and installation automation within Helm chart deployment
-4. Local model health checking and availability monitoring
-5. Model version management with upgrade procedures and compatibility testing
-6. Resource requirement calculation and optimization for different deployment sizes
-7. Fallback mechanisms when Ollama service is unavailable or overloaded
-8. Integration testing with common Ollama models and performance benchmarking
-
-### Story 3.2: Air-Gapped Deployment Architecture
-
-As a **security administrator in regulated industry**,
-I want **complete air-gapped deployment with no external network requirements**,
-so that **we can deploy KubeChat in classified or highly regulated environments without security concerns**.
-
-#### Acceptance Criteria
-1. Fully self-contained Helm chart with all dependencies bundled (including Ollama models)
-2. Offline container image registry support with image bundling procedures
-3. Air-gapped installation documentation with network isolation verification steps
-4. Local certificate management without external certificate authorities
-5. Offline help documentation and troubleshooting guides bundled in deployment
-6. Network connectivity validation with clear error messages for detected external dependencies
-7. Resource requirements documentation for completely offline operation
-8. Security validation testing in isolated network environments
-
-### Story 3.3: Local Model Performance Optimization
-
-As a **platform administrator**,
-I want **optimized local AI model performance for responsive natural language processing**,
-so that **users get acceptable response times without requiring expensive external AI services**.
-
-#### Acceptance Criteria
-1. Ollama model optimization for Kubernetes-specific prompt patterns and responses
-2. GPU acceleration support for environments with available GPU resources
-3. CPU-optimized model selection and configuration for standard server environments
-4. Memory management and model loading strategies to minimize resource usage
-5. Response time benchmarking and performance tuning guidelines
-6. Concurrent request handling with queuing and load management
-7. Model warm-up procedures to reduce initial query response times
-8. Performance monitoring dashboard showing local AI model metrics and utilization
-
-### Story 3.4: Kubernetes-Specific Prompt Engineering for Local Models
-
-As a **Kubernetes expert**,
-I want **highly accurate kubectl command generation optimized for local AI models**,
-so that **air-gapped deployments provide reliable results comparable to cloud AI services**.
-
-#### Acceptance Criteria
-1. Kubernetes-optimized prompt templates designed specifically for Ollama model capabilities
-2. Local model fine-tuning procedures with Kubernetes domain-specific training data
-3. Command accuracy testing framework comparing local vs. cloud AI performance
-4. Progressive prompt improvement based on user feedback and command validation
-5. Safety-first prompt design emphasizing dangerous operation detection
-6. Context injection strategies optimized for local model memory and processing constraints
-7. Command suggestion confidence scoring calibrated for local model outputs
-8. Documentation for prompt customization and improvement by enterprise users
-
-### Story 3.5: Offline Documentation and Help System
-
-As a **isolated environment user**,
-I want **comprehensive offline help and documentation integrated into KubeChat**,
-so that **I can learn and troubleshoot without external internet access**.
-
-#### Acceptance Criteria
-1. Complete Kubernetes reference documentation embedded in air-gapped deployment
-2. Interactive help system with context-aware suggestions and examples
-3. Offline troubleshooting guides with common issues and solutions
-4. Built-in Kubernetes best practices and security guidelines
-5. Local search functionality across all embedded documentation
-6. Progressive disclosure help system matching user expertise levels
-7. Offline tutorial system for new users learning natural language Kubernetes management
-8. Documentation versioning aligned with supported Kubernetes versions
-
-### Story 3.6: Data Sovereignty and Privacy Controls
-
-As a **data protection officer**,
-I want **guaranteed data locality with no external data transmission**,
-so that **we can deploy KubeChat while meeting strict data residency and privacy regulations**.
-
-#### Acceptance Criteria
-1. Network traffic monitoring and alerting for any attempted external communications
-2. Data flow documentation proving all processing happens locally within the deployment
-3. Privacy controls ensuring no query data or cluster information leaves the local environment
-4. Audit trail proving data sovereignty compliance for regulatory reporting
-5. Encryption of all local data processing and storage with local key management
-6. User consent and privacy policy management for different data processing levels
-7. Data retention policies for locally processed queries and responses
-8. GDPR, HIPAA, and other privacy regulation compliance documentation
-
-### Story 3.7: Local Model Customization and Enterprise Training
-
-As a **enterprise AI administrator**,
-I want **the ability to customize and fine-tune local models for our specific Kubernetes environment**,
-so that **KubeChat learns our organizational patterns and naming conventions**.
-
-#### Acceptance Criteria
-1. Model fine-tuning procedures with organization-specific Kubernetes configurations
-2. Custom prompt template management for enterprise-specific terminology and procedures
-3. Local training data collection and model improvement workflows
-4. Model versioning and rollback capabilities for customization management
-5. Performance comparison tools showing improvement from customization
-6. Documentation for enterprise model customization and maintenance procedures
-7. Integration with enterprise MLOps platforms for model lifecycle management
-8. Custom model validation and testing frameworks
-
-### Story 3.8: Hybrid Deployment Support (Local + Optional Cloud)
-
-As a **flexible deployment administrator**,
-I want **the option to enhance local Ollama with cloud AI when connectivity allows**,
-so that **we can optimize for both security and performance based on operational requirements**.
-
-#### Acceptance Criteria
-1. Configurable hybrid mode with local-first, cloud-optional operation
-2. Intelligent routing between local and cloud models based on query complexity
-3. Graceful degradation when cloud services are unavailable or restricted
-4. Cost and performance comparison tools for hybrid vs. local-only operation
-5. Security controls ensuring sensitive queries always use local models
-6. Helm configuration options for different hybrid deployment scenarios
-7. Monitoring and alerting for hybrid mode performance and cost optimization
-8. Documentation for hybrid deployment security assessment and configuration
-
----
-
-## Epic 4: Real-Time Observability Layer
-
-**Epic Goal:** Implement comprehensive cluster health monitoring, workload status tracking, and visual dashboards to provide essential DevOps operational capabilities. This epic transforms KubeChat from a query tool into a complete operational interface, delivering critical value for daily DevOps workflows while bridging open-source users toward enterprise features.
-
-### Story 4.1: Real-Time Cluster Health Monitoring
-
-As a **DevOps engineer**,
-I want **real-time visibility into cluster health and resource utilization**,
-so that **I can proactively identify and resolve issues before they impact applications**.
-
-#### Acceptance Criteria
-1. Live cluster health dashboard showing node status, resource utilization, and system component health
-2. Real-time metrics collection from Kubernetes API with WebSocket updates to frontend
-3. Resource utilization monitoring for CPU, memory, disk, and network across nodes and namespaces
-4. Cluster-wide health scoring algorithm with color-coded status indicators
-5. Historical health trends with configurable time ranges (1h, 6h, 24h, 7d)
-6. Health alert thresholds with visual indicators for warning and critical states
-7. Multi-cluster health aggregation for environments with multiple cluster contexts
-8. Performance optimization ensuring monitoring doesn't impact cluster performance
-
-### Story 4.2: Workload Status and Deployment Monitoring
-
-As a **application owner**,
-I want **comprehensive visibility into my application workloads and their health status**,
-so that **I can quickly identify deployment issues and application problems**.
-
-#### Acceptance Criteria
-1. Real-time pod status monitoring with restart counts, readiness, and liveness status
-2. Deployment rollout status tracking with progress indicators and failure detection
-3. Service endpoint health monitoring with connectivity and response time metrics
-4. Container resource usage tracking with limits and requests comparison
-5. Workload topology visualization showing relationships between deployments, services, and pods
-6. Application-centric grouping and filtering by labels, annotations, and namespaces
-7. Deployment history and rollback status tracking with change attribution
-8. Integration with natural language queries for workload-specific troubleshooting
-
-### Story 4.3: Interactive Visual Dashboard Components
-
-As a **operations manager**,
-I want **intuitive visual dashboards that allow drill-down from high-level metrics to detailed views**,
-so that **I can efficiently navigate from alerts to root cause analysis**.
-
-#### Acceptance Criteria
-1. Interactive cluster topology view with clickable nodes, pods, and services
-2. Resource utilization charts with time-series data and zoom capabilities
-3. Namespace-level resource allocation and usage visualization
-4. Pod lifecycle visualization showing creation, running, and termination patterns
-5. Service mesh traffic flow visualization (when service mesh is detected)
-6. Clickable dashboard elements that auto-generate relevant natural language queries
-7. Customizable dashboard layouts with drag-and-drop widget arrangement
-8. Dashboard sharing and collaboration features for team operational awareness
-
-### Story 4.4: Live Log Streaming and Aggregation
-
-As a **troubleshooting engineer**,
-I want **real-time log streaming and aggregation across multiple pods and containers**,
-so that **I can efficiently debug issues without switching between multiple tools**.
-
-#### Acceptance Criteria
-1. Real-time log streaming from multiple pods with WebSocket-based delivery
-2. Log aggregation and correlation across related containers and services
-3. Advanced log filtering and search with regex pattern matching
-4. Log level filtering (error, warning, info, debug) with color-coded display
-5. Log export capabilities for offline analysis and sharing
-6. Integration with natural language queries for log analysis ("show me errors from payment service")
-7. Log retention management with configurable storage and cleanup policies
-8. Performance optimization for high-volume log environments
-
-### Story 4.5: Resource Usage Analytics and Trends
-
-As a **capacity planner**,
-I want **detailed resource usage analytics with trend analysis and forecasting**,
-so that **I can make informed decisions about cluster scaling and resource allocation**.
-
-#### Acceptance Criteria
-1. Historical resource usage analysis with trend identification and growth patterns
-2. Resource efficiency scoring comparing actual usage to requested resources
-3. Cost analysis and optimization recommendations based on resource utilization
-4. Capacity forecasting with projected resource needs based on historical trends
-5. Right-sizing recommendations for over/under-provisioned workloads
-6. Resource usage comparison across namespaces, deployments, and time periods
-7. Export capabilities for capacity planning reports and budget analysis
-8. Integration with natural language queries for resource optimization advice
-
-### Story 4.6: Custom Metrics and KPI Tracking
-
-As a **platform engineer**,
-I want **the ability to track custom metrics and KPIs relevant to our specific applications**,
-so that **we can monitor business-critical indicators alongside infrastructure metrics**.
-
-#### Acceptance Criteria
-1. Custom metrics collection from Prometheus endpoints and application annotations
-2. KPI dashboard creation with business-relevant metrics and thresholds
-3. Custom alerting rules based on application-specific metrics and conditions
-4. Integration with existing monitoring infrastructure (Prometheus, Grafana compatibility)
-5. Business metric correlation with infrastructure performance indicators
-6. Custom metric visualization with charts, gauges, and trend indicators
-7. Metric export and integration with external analytics platforms
-8. Documentation and templates for common custom metric patterns
-
-### Story 4.7: Alerting and Notification System
-
-As a **on-call engineer**,
-I want **intelligent alerting with context-aware notifications and escalation procedures**,
-so that **I can respond quickly to issues with relevant information for resolution**.
-
-#### Acceptance Criteria
-1. Configurable alert rules based on cluster health, resource usage, and application metrics
-2. Multi-channel notification support (email, Slack, webhook, PagerDuty integration)
-3. Alert correlation and deduplication to reduce notification noise
-4. Context-enriched alerts including relevant logs, metrics, and suggested remediation
-5. Alert escalation procedures with time-based escalation and team rotation support
-6. Alert acknowledgment and resolution tracking with audit trail
-7. Integration with natural language interface for alert investigation and resolution
-8. Alert analytics and reporting for operational improvement initiatives
-
-### Story 4.8: Performance Monitoring and Optimization Insights
-
-As a **performance engineer**,
-I want **detailed performance monitoring with optimization recommendations**,
-so that **I can continuously improve cluster and application performance**.
-
-#### Acceptance Criteria
-1. Application performance monitoring with response times, throughput, and error rates
-2. Resource bottleneck identification with root cause analysis and recommendations
-3. Performance baseline establishment and deviation alerting
-4. Optimization opportunity identification (scaling, resource allocation, configuration)
-5. Performance trend analysis with historical comparison and improvement tracking
-6. Integration with cluster autoscaling and resource optimization tools
-7. Performance report generation with actionable insights and improvement plans
-8. A/B testing support for performance optimization validation
-
----
-
-## Epic 5: Open Source Product Release & Documentation
-
-**Epic Goal:** Transform KubeChat from internal project into professional open-source product with comprehensive documentation, community infrastructure, and release processes. This epic establishes KubeChat as a credible, production-ready solution that attracts community adoption and validates market demand before enterprise feature development.
-
-### Story 5.1: Professional Documentation Site Architecture
-
-As a **potential user discovering KubeChat**,
-I want **a professional documentation website with clear navigation and compelling value proposition**,
-so that **I can quickly understand KubeChat's benefits and get started efficiently**.
-
-#### Acceptance Criteria
-1. Static site documentation system (Hugo, Docusaurus, or GitBook) with modern, responsive design
-2. Clear homepage messaging: "The only open-source, web-based Kubernetes AI assistant that runs completely within your cluster"
-3. Professional navigation structure: Overview, Installation, Configuration, API Reference, Examples, Community
-4. Dual-mode branding (light/dark themes) with consistent KubeChat visual identity
-5. Interactive demo or screenshot carousel showing key features and UI
-6. Clear value proposition highlighting air-gapped capability and multi-user collaboration
-7. Prominent "Get Started" call-to-action with direct links to installation documentation
-8. SEO optimization for discoverability by DevOps teams searching for Kubernetes management tools
-
-### Story 5.2: Comprehensive Installation and Quick Start Guide
-
-As a **Kubernetes administrator**,
-I want **clear, tested installation instructions for multiple deployment scenarios**,
-so that **I can quickly deploy KubeChat in my environment without trial and error**.
-
-#### Acceptance Criteria
-1. **Quick Start Guide** with single-command Helm installation for immediate evaluation
-2. **Production Installation** with detailed configuration options, security considerations, and scaling guidance
-3. **Air-Gapped Installation** with offline bundle procedures and local model setup instructions
-4. **Development Setup** for contributors with local development environment configuration
-5. Prerequisites documentation covering Kubernetes versions, resource requirements, and dependencies
-6. Multiple installation methods: Helm charts, Kubernetes manifests, and Docker Compose for local testing
-7. Installation verification procedures with troubleshooting for common deployment issues
-8. Upgrade and migration procedures with version compatibility matrix
-
-### Story 5.3: Configuration and Customization Documentation
-
-As a **platform engineer**,
-I want **comprehensive configuration documentation with examples and best practices**,
-so that **I can customize KubeChat for our specific environment and requirements**.
-
-#### Acceptance Criteria
-1. **Helm Values Reference** with complete parameter documentation and default value explanations
-2. **Configuration Examples** for common scenarios: development, staging, production, air-gapped
-3. **Security Configuration** with RBAC setup, TLS configuration, and authentication options
-4. **LLM Configuration** with Ollama model selection, performance tuning, and resource optimization
-5. **Integration Examples** with existing monitoring tools, authentication systems, and CI/CD pipelines
-6. **Customization Guide** for branding, UI modifications, and enterprise-specific adaptations
-7. **Environment-Specific Guides** for major cloud providers (AWS EKS, GCP GKE, Azure AKS)
-8. **Troubleshooting Configuration** with common misconfiguration symptoms and solutions
-
-### Story 5.4: User Guide and Feature Documentation
-
-As a **DevOps team member**,
-I want **comprehensive user documentation with examples and best practices**,
-so that **I can effectively use all KubeChat features and teach others on my team**.
-
-#### Acceptance Criteria
-1. **Getting Started Tutorial** with step-by-step walkthrough from installation to first successful query
-2. **Natural Language Guide** with query examples, command patterns, and syntax tips for different Kubernetes operations
-3. **Dashboard Tour** with annotated screenshots explaining all UI components and navigation
-4. **Advanced Features Guide** covering audit trails, compliance reporting, and multi-user collaboration
-5. **Best Practices Documentation** for security, performance, and operational efficiency
-6. **Common Use Cases** with detailed examples: troubleshooting, monitoring, resource management
-7. **Team Workflow Examples** demonstrating collaborative troubleshooting and knowledge sharing
-8. **Video Tutorials** for key workflows and complex setup scenarios
-
-### Story 5.5: API Documentation and Integration Guide
-
-As a **developer integrating with KubeChat**,
-I want **complete API documentation with examples and SDKs**,
-so that **I can build custom integrations and extend KubeChat functionality**.
-
-#### Acceptance Criteria
-1. **OpenAPI Specification** with complete REST API documentation and interactive testing interface
-2. **WebSocket API Documentation** for real-time cluster monitoring and chat integration
-3. **Integration Examples** with popular tools: Slack bots, CI/CD webhooks, monitoring alerts
-4. **SDK Development** with Go and JavaScript/TypeScript client libraries
-5. **Plugin Architecture Documentation** for extending natural language processing and command handling
-6. **Webhook Configuration** for external system integrations and automated workflows
-7. **Authentication Guide** for API access with service accounts and token management
-8. **Rate Limiting and Usage Guidelines** for production API integration
-
-### Story 5.6: Community Infrastructure and Contribution Framework
-
-As a **potential contributor**,
-I want **clear contribution guidelines and well-organized community infrastructure**,
-so that **I can effectively contribute to KubeChat's development and improvement**.
-
-#### Acceptance Criteria
-1. **Contribution Guide** with development setup, coding standards, and pull request processes
-2. **Code of Conduct** establishing inclusive community standards and enforcement procedures
-3. **Issue Templates** for bug reports, feature requests, and security vulnerabilities
-4. **GitHub Actions CI/CD** with automated testing, security scanning, and release processes
-5. **Community Forums** or Discord server for discussions, support, and collaboration
-6. **Maintainer Documentation** with release processes, security procedures, and governance structure
-7. **Contributor Recognition** system acknowledging community contributions and maintainers
-8. **Roadmap Transparency** with public feature planning and community input processes
-
-### Story 5.7: Release Engineering and Distribution
-
-As a **release manager**,
-I want **automated release processes and professional distribution channels**,
-so that **users can easily access stable KubeChat releases through standard package managers**.
-
-#### Acceptance Criteria
-1. **Semantic Versioning** with clear release notes and changelog generation
-2. **Automated Release Pipeline** with GitHub Actions building and publishing releases
-3. **Multi-Architecture Builds** supporting AMD64, ARM64, and other enterprise architectures
-4. **Helm Chart Repository** with automated chart publishing and version management
-5. **Container Registry Distribution** through Docker Hub, Quay.io, and GitHub Container Registry
-6. **Package Manager Integration** with Homebrew for local development and testing
-7. **Security Signing** with container image and Helm chart signing for supply chain security
-8. **Release Validation Testing** with automated smoke tests across supported Kubernetes versions
-
-### Story 5.8: Marketing and Community Launch Strategy
-
-As a **project maintainer**,
-I want **comprehensive launch strategy and community outreach**,
-so that **KubeChat gains visibility and adoption in the Kubernetes community**.
-
-#### Acceptance Criteria
-1. **Launch Blog Post** with technical overview, use cases, and getting started instructions
-2. **Community Presentations** at KubeCon, local Kubernetes meetups, and DevOps conferences
-3. **Social Media Campaign** with Twitter, LinkedIn, and Reddit engagement strategy
-4. **Influencer Outreach** to Kubernetes community leaders, bloggers, and YouTube content creators
-5. **Technical Articles** for publication in DevOps publications and community blogs
-6. **Demo Videos** showcasing key features, installation process, and use cases
-7. **Community Partnerships** with complementary open-source projects and CNCF engagement
-8. **Success Metrics Tracking** for downloads, GitHub stars, community engagement, and user feedback
-
----
-
-## Remaining Epic Summaries (6-8)
-
-### Epic 6: Multi-LLM Integration & Intelligence (Enterprise Enhancement)  
-**Story Points: 52** | **Duration: 6-7 Sprints**  
-Implement universal LLM integration layer supporting 10+ providers with intelligent routing, cost optimization, and specialized AI agents for different Kubernetes domains. Builds upon successful Ollama foundation to create premium enterprise AI capabilities with 40% cost reduction through intelligent routing.
-
-### Epic 7: Intelligent Recommendations & Predictive Insights (Enterprise Premium)  
-**Story Points: 44** | **Duration: 5-6 Sprints**  
-Build AI-driven recommendation engine with predictive analytics, automated optimization suggestions, and proactive cluster management capabilities. Provides 80% accuracy in predictive issue detection with 15-minute early warning and 60% reduction in manual optimization tasks.
-
-### Epic 8: Enterprise Scale & Multi-Tenant Features (Fortune 500 Ready)  
-**Story Points: 58** | **Duration: 7-8 Sprints**  
-Transform KubeChat into enterprise-scale multi-tenant platform supporting 10,000+ concurrent users across 100+ organizations with global deployment capabilities. Enables Fortune 500 deployments with comprehensive organizational support and 99.99% uptime.
-
----
-
-## Next Steps
-
-### UX Expert Prompt
-"Design comprehensive user experience for KubeChat MVP (Epics 1-4) focusing on enterprise-grade web interface with natural language chat, real-time cluster monitoring, and audit trails. Emphasize professional aesthetic, progressive disclosure, and accessibility compliance. Reference competitive analysis showing web-first advantage over CLI tools."
-
-### Architect Prompt  
-"Architect KubeChat technical system based on validated PoC, supporting natural language Kubernetes management with Ollama-first AI, real-time monitoring, and enterprise security. Design for container-first development, air-gapped deployment, and future multi-LLM/multi-tenant scaling. Reference existing Go microservices PoC and brief technical specifications."
-
----
-
-*🤖 Generated with [Claude Code](https://claude.ai/code)*
-
-*Co-Authored-By: KubeChat <hello@kubechat.dev>*
+## Out of Scope
+
+- Cross-cluster rollout orchestration (waves, canaries, advanced health gating).
+- Topology/graph visualizations and deep dependency mapping.
+- Cost/right-sizing insights, SLO/error-budget analytics, and advanced dashboards.
+- Policy packs marketplace, plugin SDK, and deep runbook automation tooling.
+- Enterprise SSO/SAML/OIDC, multi-step managerial approvals, and executive dashboards.
+- Proactive AI recommendations beyond targeted hints; rich third-party integrations (Slack, PagerDuty, Jira) beyond initial webhooks.

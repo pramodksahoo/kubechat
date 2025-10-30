@@ -1,0 +1,262 @@
+project_name: "kubechat"
+version: 2
+
+before:
+  hooks:
+    - sh -c "yarn --cwd client install && yarn --cwd client run build && rm -rf backend/routes/static && mv client/dist backend/routes/static"
+
+builds:
+  - main: main.go
+    dir: ./backend
+    binary: kubechat
+    goos: ["linux", "darwin", "windows", "freebsd"]
+    goarch: ["386", "amd64", "arm64"]
+    flags:
+      - -trimpath
+    ldflags:
+      - -s
+      - -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.ShortCommit}}
+    env:
+      - CGO_ENABLED=0
+
+universal_binaries:
+  - replace: true
+
+archives:
+  - formats: ["tar.gz"]
+    # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    # use zip for windows archives
+    format_overrides:
+      - goos: windows
+        formats: ["zip"]
+
+sboms:
+  - artifacts: archive
+
+nfpms:
+  - id: kubechat
+    vendor: kubechat
+    homepage: "https://github.com/pramodksahoo/kubechat"
+    maintainer: "Abhimanyu Sharma <abhimanyusharma003@gmail.com>"
+    description: "kubechat is a single binary to manage multiple clusters."
+    license: "Apache License 2.0"
+    formats:
+      - deb
+      - rpm
+      - archlinux
+    bindir: /usr/bin
+    recommends:
+      - kubectl
+
+homebrew_casks:
+  - name: kubechat
+    homepage: "https://github.com/pramodksahoo/kubechat"
+    description: "kubechat is a single binary to manage multiple clusters."
+    repository:
+      owner: kubechat
+      name: homebrew-tap
+    hooks:
+      post:
+        # This hook is needed until this binary is signed and notarized
+        install: |
+          if system_command("/usr/bin/xattr", args: ["-h"]).exit_status == 0
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/kubechat"]
+          end
+    custom_block: |
+      def caveats
+        <<~EOS
+          \e[1mTo run kubechat cli simply run:\e[0m
+            \e[32mkubechat\e[0m
+
+          \e[1mTo run kubechat on specific ip and port:\e[0m
+            \e[32mkubechat --listen :7080\e[0m
+        EOS
+      end
+
+scoops:
+  - repository:
+      owner: kubechat
+      name: scoop-bucket
+      token: "{{ .Env.GITHUB_TOKEN }}"
+    name: kubechat
+    homepage: "https://github.com/pramodksahoo/kubechat"
+    description: "kubechat is a single binary to manage multiple clusters."
+    license: "Apache License 2.0"
+
+aurs:
+  - name: kubechat-bin
+    homepage: "https://github.com/pramodksahoo/kubechat"
+    description: "kubechat is a single binary to manage multiple clusters."
+    maintainers:
+      - "Abhimanyu Sharma <abhimanyusharma003@gmail.com>"
+    license: "Apache License 2.0"
+    private_key: "{{ .Env.AUR_KEY }}"
+    git_url: "ssh://aur@aur.archlinux.org/kubechat-bin.git"
+    commit_author:
+      name: Abhimanyu Sharma
+      email: abhimanyusharma003@gmail.com
+
+snapcrafts:
+  - name: kubechat
+    publish: true
+    summary: A single binary Kubernetes Open-Source Dashboard.
+    description: |
+      kubechat is single binary Kubernetes Open-Source Dashboard.
+    grade: stable
+    confinement: strict
+    license: "Apache-2.0"
+    base: core20
+    channel_templates:
+      - stable
+    apps:
+      kubechat:
+        plugs: ["home", "network", "network-bind"]
+
+dockers:
+  - skip_push: false
+    use: buildx
+    dockerfile: .goreleaser.Dockerfile
+    image_templates:
+      - ghcr.io/kubechat/{{ .ProjectName }}:{{ .Version }}-amd64
+      - docker.io/kubechat/{{ .ProjectName }}:{{ .Version }}-amd64
+    build_flag_templates:
+      - --platform=linux/amd64
+      - --label=org.opencontainers.image.version={{ .Version }}
+      - --label=org.opencontainers.image.revision={{ .Commit }}
+      - --label=org.opencontainers.image.title={{ .ProjectName }}
+      - --label=org.opencontainers.image.created={{ .Date }}
+      - --label=org.opencontainers.image.description=a single binary to manage multiple clusters
+      - --label=org.opencontainers.image.vendor=kubechat
+      - --label=org.opencontainers.image.licenses=Apache License 2.0
+      - --label=org.opencontainers.image.source=https://github.com/pramodksahoo/kubechat
+      - --label=org.opencontainers.image.authors=Abhimanyu Sharma <abhimanyusharma003@gmail.com>
+
+  - skip_push: false
+    goarch: arm64
+    use: buildx
+    dockerfile: .goreleaser.Dockerfile
+    image_templates:
+      - ghcr.io/kubechat/{{ .ProjectName }}:{{ .Version }}-arm64
+      - docker.io/kubechat/{{ .ProjectName }}:{{ .Version }}-arm64
+    build_flag_templates:
+      - --platform=linux/arm64
+      - --label=org.opencontainers.image.version={{ .Version }}
+      - --label=org.opencontainers.image.revision={{ .Commit }}
+      - --label=org.opencontainers.image.title={{ .ProjectName }}
+      - --label=org.opencontainers.image.created={{ .Date }}
+      - --label=org.opencontainers.image.description=a single binary to manage multiple clusters
+      - --label=org.opencontainers.image.vendor=kubechat
+      - --label=org.opencontainers.image.licenses=Apache License 2.0
+      - --label=org.opencontainers.image.source=https://github.com/pramodksahoo/kubechat
+      - --label=org.opencontainers.image.authors=Abhimanyu Sharma <abhimanyusharma003@gmail.com>
+docker_manifests:
+  - name_template: ghcr.io/kubechat/{{ .ProjectName }}:{{ .Version }}
+    image_templates:
+      - ghcr.io/kubechat/{{ .ProjectName }}:{{ .Version }}-amd64
+      - ghcr.io/kubechat/{{ .ProjectName }}:{{ .Version }}-arm64
+  - name_template: ghcr.io/kubechat/{{ .ProjectName }}:latest
+    image_templates:
+      - ghcr.io/kubechat/{{ .ProjectName }}:{{ .Version }}-amd64
+      - ghcr.io/kubechat/{{ .ProjectName }}:{{ .Version }}-arm64
+  - name_template: docker.io/kubechat/{{ .ProjectName }}:{{ .Version }}
+    image_templates:
+      - docker.io/kubechat/{{ .ProjectName }}:{{ .Version }}-amd64
+      - docker.io/kubechat/{{ .ProjectName }}:{{ .Version }}-arm64
+  - name_template: docker.io/kubechat/{{ .ProjectName }}:latest
+    image_templates:
+      - docker.io/kubechat/{{ .ProjectName }}:{{ .Version }}-amd64
+      - docker.io/kubechat/{{ .ProjectName }}:{{ .Version }}-arm64
+
+signs:
+  - cmd: cosign
+    signature: "${artifact}.sig"
+    certificate: "${artifact}.pem"
+    output: true
+    artifacts: checksum
+    args:
+      - sign-blob
+      - "--oidc-provider=github-actions"
+      - "--output-certificate=${certificate}"
+      - "--output-signature=${signature}"
+      - "${artifact}"
+      - --yes
+
+docker_signs:
+  - cmd: cosign
+    artifacts: manifests
+    output: true
+    args:
+      - "sign"
+      - "--oidc-provider=github-actions"
+      - "${artifact}@${digest}"
+      - --yes
+
+winget:
+  - name: kubechat
+    publisher: kubechat
+    publisher_url: https://github.com/pramodksahoo/kubechat
+    short_description: A single binary kubernetes dashboard to manage your multiple clusters.
+    license: "Apache License 2.0"
+    commit_author:
+      name: Abhimanyu Sharma
+      email: abhimanyusharma003@gmail.com
+    homepage: https://github.com/pramodksahoo/kubechat
+    license_url: https://github.com/pramodksahoo/kubechat/blob/master/LICENSE
+    copyright: Copyright (c) 2024-{{ .Now.Format "2006" }} kubechat
+    release_notes: "{{ .Changelog }}"
+    release_notes_url: https://github.com/pramodksahoo/kubechat/releases/tag/{{ .Tag }}
+    tags:
+      - kubernetes
+      - kubernetes-dashboard
+      - kubernetes-gui
+      - transform
+      - devutil
+      - productivity
+    author: Abhimanyu Sharma
+    publisher_support_url: https://github.com/pramodksahoo/kubechat/issues
+    repository:
+      owner: kubechat
+      name: winget-pkgs
+      branch: kubechat-{{ .Version }}
+      token: "{{ .Env.GITHUB_TOKEN }}"
+      pull_request:
+        enabled: true
+        base:
+          owner: microsoft
+          name: winget-pkgs
+          branch: master
+
+release:
+  footer: |
+    ## Quick Download Links - {{ .Tag }}
+
+    **MacOS**
+    [Binary](https://github.com/pramodksahoo/kubechat/releases/download/{{ .Tag }}/kubechat_Darwin_all.tar.gz) ( Multi-Architecture )
+
+    **Linux (Binaries)**
+    [amd64](https://github.com/pramodksahoo/kubechat/releases/download/{{ .Tag }}/kubechat_Linux_x86_64.tar.gz) | [arm64](https://github.com/pramodksahoo/kubechat/releases/download/{{ .Tag }}/kubechat_Linux_arm64.tar.gz) | [i386](https://github.com/pramodksahoo/kubechat/releases/download/{{ .Tag }}/kubechat_Linux_i386.tar.gz)
+
+    **Windows (Exe)**
+    [amd64](https://github.com/pramodksahoo/kubechat/releases/download/{{ .Tag }}/kubechat_Windows_x86_64.zip) | [arm64](https://github.com/pramodksahoo/kubechat/releases/download/{{ .Tag }}/kubechat_Windows_arm64.zip) | [i386](https://github.com/pramodksahoo/kubechat/releases/download/{{ .Tag }}/kubechat_Windows_i386.zip)
+
+    **FreeBSD (Binaries)**
+    [amd64](https://github.com/pramodksahoo/kubechat/releases/download/{{ .Tag }}/kubechat_Freebsd_x86_64.tar.gz) | [arm64](https://github.com/pramodksahoo/kubechat/releases/download/{{ .Tag }}/kubechat_Freebsd_arm64.tar.gz) | [i386](https://github.com/pramodksahoo/kubechat/releases/download/{{ .Tag }}/kubechat_Freebsd_i386.tar.gz)
+
+    **Packages**
+    * **Debian / Ubuntu (.deb):**
+    [amd64](https://github.com/pramodksahoo/kubechat/releases/download/{{ .Tag }}/kubechat_{{ replace .Tag "v" "" }}_linux_amd64.deb) | [arm64](https://github.com/pramodksahoo/kubechat/releases/download/{{ .Tag }}/kubechat_{{ replace .Tag "v" "" }}_linux_arm64.deb) | [i386](https://github.com/pramodksahoo/kubechat/releases/download/{{ .Tag }}/kubechat_{{ replace .Tag "v" "" }}_linux_386.deb)
+
+    * **Red Hat / CentOS / Fedora (.rpm):**
+    [amd64](https://github.com/pramodksahoo/kubechat/releases/download/{{ .Tag }}/kubechat_{{ replace .Tag "v" "" }}_linux_amd64.rpm) | [arm64](https://github.com/pramodksahoo/kubechat/releases/download/{{ .Tag }}/kubechat_{{ replace .Tag "v" "" }}_linux_arm64.rpm) | [i386](https://github.com/pramodksahoo/kubechat/releases/download/{{ .Tag }}/kubechat_{{ replace .Tag "v" "" }}_linux_386.rpm)
+
+    * **Arch Linux (.pkg.tar.zst):**
+    [amd64](https://github.com/pramodksahoo/kubechat/releases/download/{{ .Tag }}/kubechat_{{ replace .Tag "v" "" }}_linux_amd64.pkg.tar.zst) | [arm64](https://github.com/pramodksahoo/kubechat/releases/download/{{ .Tag }}/kubechat_{{ replace .Tag "v" "" }}_linux_arm64.pkg.tar.zst) | [i386](https://github.com/pramodksahoo/kubechat/releases/download/{{ .Tag }}/kubechat_{{ replace .Tag "v" "" }}_linux_386.pkg.tar.zst)

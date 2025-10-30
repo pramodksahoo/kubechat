@@ -1,1 +1,0 @@
-export { CommandApprovalInterface } from './CommandApprovalInterface';

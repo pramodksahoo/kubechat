@@ -1,0 +1,11 @@
+1. Get the application URL by running these commands:
+
+{{- if eq .Values.service.type "ClusterIP" }}
+  echo "Visit: https://$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "kubechat.fullname" . }} -o jsonpath='{.spec.clusterIP}'):$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "kubechat.fullname" . }} -o jsonpath='{.spec.ports[0].port}')"
+
+{{- else if eq .Values.service.type "LoadBalancer" }}
+  echo "Visit: https://$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "kubechat.fullname" . }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}'):$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "kubechat.fullname" . }} -o jsonpath='{.spec.ports[0].port}')"
+
+{{- else if eq .Values.service.type "NodePort" }}
+  echo "Visit: https://<NodeIP>:$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "kubechat.fullname" . }} -o jsonpath='{.spec.ports[0].nodePort}')"
+{{- end }}
