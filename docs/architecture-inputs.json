@@ -1,0 +1,130 @@
+{
+  "project_name": "kubechat",
+  "project_level": 4,
+  "deployment_alignment": "Kubechat monorepo with Go backend and React frontend, single process with modular internal packages",
+  "ai_provider_strategy": {
+    "default": "Ollama (offline) via in-process adapter",
+    "optional_connectors": [
+      "OpenAI GPT",
+      "Anthropic Claude",
+      "Google Gemini"
+    ],
+    "egress_policy": "Disabled by default; allow-list required",
+    "rate_limits": "Per-provider/per-user",
+    "redaction": "Request/response redaction before logging",
+    "auditing": "All AI calls audited"
+  },
+  "audit_strategy": {
+    "store": "PostgreSQL append-only with hash chaining",
+    "exports": [
+      "CSV",
+      "JSON"
+    ],
+    "anchoring": "Periodic digest anchoring",
+    "external_sinks": [
+      "Loki",
+      "Elasticsearch"
+    ],
+    "fields": [
+      "who",
+      "what",
+      "where",
+      "when",
+      "how",
+      "preview_output",
+      "result"
+    ]
+  },
+  "streaming_strategy": {
+    "primary": "SSE with fallback to polling",
+    "websocket_usage": "Interactive exec sessions",
+    "bandwidth": "Backoff, small payloads, server-side filtering"
+  },
+  "packaging": {
+    "binary": "Single binary (linux/macOS) with embedded UI",
+    "helm": "Helm chart with AIProvider and AuditPolicy CRDs",
+    "images": [
+      "linux/amd64",
+      "linux/arm64"
+    ],
+    "ingress": "Customer-managed Ingress with TLS termination or app TLS"
+  },
+  "security_layers": {
+    "transport": [
+      "TLS everywhere",
+      "CSP",
+      "HSTS"
+    ],
+    "sessions": "JWT",
+    "rbac": "Strict pre-check before execution",
+    "containers": "Non-root",
+    "logging": "No secrets",
+    "sbom": "Generated",
+    "signing": "Signed images"
+  },
+  "tenancy_and_environments": {
+    "environments": [
+      "dev",
+      "staging",
+      "prod"
+    ],
+    "cluster_counts": "5-50 per org",
+    "installs": {
+      "per_cluster": "Single tenant per cluster via Helm",
+      "hub_spoke": "Control plane connecting to multiple clusters via kubeconfigs",
+      "multi_tenant": "Future consideration"
+    }
+  },
+  "observability_hooks": {
+    "metrics": "Prometheus adapter",
+    "logs": [
+      "Loki",
+      "ELK"
+    ],
+    "tracing": "OpenTelemetry",
+    "incident": [
+      "PagerDuty",
+      "Slack",
+      "Jira"
+    ],
+    "opt_in": true
+  },
+  "identity": {
+    "default": "Local accounts + JWT + RBAC",
+    "api_tokens": true,
+    "extensions": [
+      "OIDC",
+      "SAML (future)"
+    ]
+  },
+  "persistence": {
+    "primary": "PostgreSQL",
+    "local_mode": "SQLite",
+    "optional": [
+      "Redis (cache)",
+      "Object storage (S3/MinIO)"
+    ]
+  },
+  "ci_cd": {
+    "pipeline": "GitHub Actions",
+    "steps": [
+      "tests",
+      "security_scans",
+      "multi_arch_build",
+      "sbom",
+      "signing"
+    ],
+    "releases": [
+      "OCI Helm registry",
+      "binaries",
+      "checksums"
+    ],
+    "air_gapped": "Self-hosted runners supported"
+  },
+  "documents": {
+    "prd": "docs/PRD.md",
+    "epics": "docs/epics.md",
+    "ux_spec": "docs/ux-design-specification.md"
+  },
+  "timestamp": "2025-10-30T09:12:48.615995Z"
+}

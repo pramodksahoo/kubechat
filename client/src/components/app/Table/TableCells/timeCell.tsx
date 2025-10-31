@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { getDisplayTime } from "@/utils";
 
@@ -8,20 +8,27 @@ type TimeCellProps = {
 
 
 function TimeCell({ cellValue }: TimeCellProps) {
-  const [currentTime, setCurrentTime] = useState((new Date()).getTime() - (new Date(cellValue)).getTime());
-  const [timerId, setTimerId] = useState<NodeJS.Timeout>();
+  const [currentTime, setCurrentTime] = useState(() => new Date().getTime() - new Date(cellValue).getTime());
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    clearTimeout(timerId);
-    const timeCellId = setInterval(() => {
-
-      setCurrentTime((currentTime) => currentTime + 500);
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    timerRef.current = setInterval(() => {
+      setCurrentTime((previous) => previous + 500);
     }, 1000);
-    setTimerId(timeCellId);
+
     return () => {
-      clearTimeout(timerId);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
     };
   }, []);
+
+  useEffect(() => {
+    setCurrentTime(new Date().getTime() - new Date(cellValue).getTime());
+  }, [cellValue]);
   return (
     <div className="px-3">
       <span title={cellValue} className="text-sm text-gray-700 dark:text-gray-100">

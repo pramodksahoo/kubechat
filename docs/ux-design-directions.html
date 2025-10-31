@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='UTF-8'>
+  <title>Kubechat Design Directions</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Inter, Arial, sans-serif; background: #0f141b; color: #f4f8ff; }
+    header { padding: 24px; border-bottom: 1px solid #1f2733; background: #121924; }
+    header h1 { margin: 0; font-size: 24px; }
+    header p { margin: 4px 0 0; font-size: 14px; color: #b1c0d8; }
+    main { padding: 32px; display: grid; gap: 32px; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
+    section { background: #1b2433; border-radius: 20px; padding: 24px; box-shadow: 0 18px 36px rgba(0,0,0,0.35); border: 1px solid rgba(91,107,247,0.15); }
+    h2 { margin-top: 0; font-size: 20px; color: #ced7ff; }
+    h3 { margin-top: 24px; font-size: 16px; text-transform: uppercase; letter-spacing: 0.08em; color: #7f8db3; }
+    .hero { background: linear-gradient(135deg, rgba(91,107,247,0.35), transparent); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+    .chip { display: inline-flex; align-items: center; padding: 6px 12px; border-radius: 999px; background: rgba(91,107,247,0.2); font-size: 12px; text-transform: uppercase; letter-spacing: 0.07em; margin-right: 8px; color: #dfe7ff; }
+    .bullet { margin: 6px 0; font-size: 14px; color: #c7d4f7; }
+    .cta { display: inline-flex; align-items: center; gap: 8px; margin-top: 16px; padding: 10px 16px; border-radius: 12px; background: rgba(94,229,163,0.18); color: #76fcb5; font-weight: 600; text-decoration: none; }
+    .cta span { font-size: 12px; letter-spacing: 0.08em; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Kubechat Design Directions</h1>
+    <p>Generated 2025-10-30T08:55:48.688568Z – compare design approaches for the incident operations console.</p>
+  </header>
+  <main>
+    <section>
+      <div class='hero'>
+        <div class='chip'>Direction A</div>
+        <h2>Command-First Console</h2>
+        <p>A focused, command palette-centric experience that mirrors the mental model of seasoned SREs. Minimal chrome and direct keyboard access keep the user in flow.</p>
+      </div>
+      <h3>Layout Highlights</h3>
+      <p class='bullet'>Global prompt bar anchored at top; plan cards cascade beneath with split-pane preview.</p>
+      <p class='bullet'>Timeline collapses to a thin rail, expanding on hover to reveal detailed entries.</p>
+      <p class='bullet'>Context badges (cluster/namespace) float near the prompt for constant visibility.</p>
+      <h3>Best For</h3>
+      <p class='bullet'>Experienced operators who favor keyboard efficiency and minimal UI distractions.</p>
+      <p class='bullet'>Rapid remediation where plan comprehension and approvals must happen in seconds.</p>
+      <h3>Risks & Mitigations</h3>
+      <p class='bullet'>Risk: Too dense for new users → Mitigation: Guided tooltips and onboarding overlays.</p>
+      <p class='bullet'>Risk: Timeline deemphasized → Mitigation: Toast reminders to review incident thread.</p>
+    </section>
+
+    <section>
+      <div class='hero'>
+        <div class='chip'>Direction B</div>
+        <h2>Situational Awareness Hub</h2>
+        <p>A spatial design that emphasizes shared context through a tri-pane layout: timeline, workspace, and insight rail surfaced simultaneously.</p>
+      </div>
+      <h3>Layout Highlights</h3>
+      <p class='bullet'>Persistent timeline on the left capturing prompts, diagnostics, approvals, and notes.</p>
+      <p class='bullet'>Central canvas adapts between plan cards, tables, and log streams.</p>
+      <p class='bullet'>Right rail surfaces telemetry, policy status, and post-action recommendations.</p>
+      <h3>Best For</h3>
+      <p class='bullet'>Teams collaborating during incidents who need shared visibility into every action.</p>
+      <p class='bullet'>Compliance-sensitive environments where audit context must stay visible.</p>
+      <h3>Risks & Mitigations</h3>
+      <p class='bullet'>Risk: Information overload → Mitigation: Toggleable panels and focus mode.</p>
+      <p class='bullet'>Risk: Less command bar emphasis → Mitigation: Floating palette button and shortcuts.</p>
+    </section>
+
+    <section>
+      <div class='hero'>
+        <div class='chip'>Direction C</div>
+        <h2>Narrative Incident Storyline</h2>
+        <p>Positions the incident thread as the backbone, with each action rendered as a storytelling beat stitched with AI summaries and visuals.</p>
+      </div>
+      <h3>Layout Highlights</h3>
+      <p class='bullet'>Vertical storyline with expandable cards showing plan previews, log extracts, and approvals.</p>
+      <p class='bullet'>Action composer floats alongside the active step, keeping context and input tied together.</p>
+      <p class='bullet'>Color-coded status ribbons (diagnostics, actions, notes, follow-ups) guide scanning.</p>
+      <h3>Best For</h3>
+      <p class='bullet'>Post-incident review and knowledge sharing workflows.</p>
+      <p class='bullet'>Teams that want ready-to-share incident narratives with minimal editing.</p>
+      <h3>Risks & Mitigations</h3>
+      <p class='bullet'>Risk: Less compact view during live ops → Mitigation: Toggle to condensed timeline mode.</p>
+      <p class='bullet'>Risk: Complex interactions for approvals → Mitigation: Inline microflows with clear CTAs.</p>
+    </section>
+  </main>
+</body>
+</html>

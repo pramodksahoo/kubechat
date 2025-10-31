@@ -1,2 +1,2 @@
-export * from './ExpandableCard';
-export * from './FixedCard';
+export { ExpandableCard } from "./ExpandableCard";
+export { FixedCard } from "./FixedCard";

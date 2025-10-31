@@ -37,6 +37,8 @@ import (
 	"github.com/pramodksahoo/kubechat/backend/internal/telemetry"
 	appmiddleware "github.com/pramodksahoo/kubechat/backend/routes/middleware"
 
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/pramodksahoo/kubechat/backend/container"
 	"github.com/pramodksahoo/kubechat/backend/handlers/app"
 	configmaps "github.com/pramodksahoo/kubechat/backend/handlers/config/configMaps"
@@ -49,13 +51,11 @@ import (
 	"github.com/pramodksahoo/kubechat/backend/handlers/workloads/pods"
 	"github.com/pramodksahoo/kubechat/backend/handlers/workloads/replicaset"
 	statefulset "github.com/pramodksahoo/kubechat/backend/handlers/workloads/statefulsets"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-//go:embed static/*
+//go:embed static/* static/**/*
 var embeddedFiles embed.FS
 
 func ConfigureRoutes(e *echo.Echo, appContainer container.Container) {
@@ -86,11 +86,15 @@ func ConfigureRoutes(e *echo.Echo, appContainer container.Container) {
 	planCatalog := planbuilder.NewConfigClusterCatalog(appContainer)
 	metricsRecorder := telemetry.NewPlanMetrics(prometheus.DefaultRegisterer)
 	planRepo := planrepository.NewPlanRepository(appContainer.Cache(), 24*time.Hour)
+	sseServer := appContainer.SSE()
 	promptController := promptapi.NewPromptController(planbuilder.NewDefaultBuilder(planCatalog), metricsRecorder, planRepo, nil)
 	planQueryController := promptapi.NewPlanQueryController(planRepo, nil)
+	planUpdateController := promptapi.NewPlanUpdateController(planRepo, sseServer, nil)
 
 	e.POST("api/v1/prompts", promptController.Handle)
 	e.GET("api/v1/plans/:id", planQueryController.Handle)
+	e.PATCH("api/v1/plans/:id", planUpdateController.Handle)
+	e.GET("api/v1/plans/:id/stream", promptapi.PlanStreamHandler(sseServer))
 
 	e.POST("api/v1/app/apply", apply.NewApplyHandler(appContainer, apply.POSTApply))
 

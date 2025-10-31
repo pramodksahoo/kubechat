@@ -1,0 +1,8 @@
+{
+  "E1": "internal/ai + internal/api + internal/k8s",
+  "E2": "internal/audit + internal/api + internal/k8s",
+  "E3": "internal/api + internal/k8s + frontend components",
+  "E4": "internal/api + streaming gateway + frontend",
+  "E5": "internal/audit + PostgreSQL + export subsystem",
+  "E6": "Build/packaging pipeline + Helm + CRDs"
+}

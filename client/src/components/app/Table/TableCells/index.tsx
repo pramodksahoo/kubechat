@@ -101,7 +101,13 @@ const TableCells = <T extends ClusterDetails>({
   }
   if (type === 'Name') {
     let link = '';
-    const { kind } = (row.original as any);
+    const original =
+      row.original as ClusterDetails & {
+        kind?: string;
+        metadata?: { namespace?: string };
+        namespace?: string;
+      };
+    const { kind } = original;
     const defaultQueryParams: Record<string,string> = {
       resourcekind: instanceType === PORT_FORWARDING_ENDPOINT && kind ? kind === "Pod" ? 'pods' : 'services' : instanceType.toLowerCase(),
       resourcename: value,

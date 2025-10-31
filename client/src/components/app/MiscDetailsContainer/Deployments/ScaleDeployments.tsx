@@ -83,7 +83,7 @@ const ScaleDeployments = ({ resourcename, queryParams }: ScaleDeploymentsProps) 
       dispatch(resetDeploymentScale());
       resetDialog();
     }
-  }, [message, error]);
+  }, [message, error, dispatch]);
 
 
   return (

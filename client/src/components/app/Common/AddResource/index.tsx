@@ -69,7 +69,7 @@ const AddResource = () => {
       setIsDialogOpen(false);
       dispatch(resetUpdateYaml());
     }
-  }, [yamlUpdateResponse, error]);
+  }, [yamlUpdateResponse, error, dispatch]);
 
   useEffect(() => {
     const resizeEditor = () => {

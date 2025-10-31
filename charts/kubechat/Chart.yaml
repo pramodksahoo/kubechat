@@ -2,7 +2,7 @@ apiVersion: v2
 name: kubechat
 description: A single binary kubernetes dashboard to manage your multiple clusters.
 home: https://github.com/pramodksahoo/kubechat.git
-icon: "https://raw.githubusercontent.com/kubechat/kubechat/7d87fe6c59bd3478cb65fa0d3247b5d01294d9ad/media/kubechat-logo-dark.svg"
+icon: "https://raw.githubusercontent.com/pramodksahoo/kubechat/7d87fe6c59bd3478cb65fa0d3247b5d01294d9ad/media/kubechat-logo-dark.svg"
 keywords:
   - kubechat
   - management
@@ -11,13 +11,10 @@ keywords:
   - kubernetes-ui
 type: application
 maintainers:
-  - name: "Abhimanyu Sharma"
-    email: "abhimanyusharma003@gmail.com"
-    url: "https://github.com/abhimanyu003"
-  - name: "Kshitij Mehta"
-    email: "Kshittijmehta@gmail.com"
-    url: "https://github.com/abhimanyu003"
-version: 0.0.0
+  - name: "Pramoda Sahoo"
+    email: "devopspramod100@gmail.com"
+    url: "https://github.com/pramodksahoo"
+version: 1.0.0
 sources:
   - https://github.com/pramodksahoo/kubechat.git
-appVersion: 0.0.0
+appVersion: 1.0.0

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, EffectCallback, DependencyList } from 'react';
+import { useState, useEffect, useRef, useCallback, EffectCallback } from 'react';
 import loader from '@monaco-editor/loader';
 import { type IDisposable, type editor } from 'monaco-editor';
 import { type EditorProps } from './types';
@@ -9,20 +9,7 @@ import * as monaco from 'monaco-editor';
 import { useSidebar } from '@/components/ui/sidebar';
 
 function useMount(effect: EffectCallback) {
-  useEffect(effect, []);
-}
-
-function useUpdate(effect: EffectCallback, deps: DependencyList, applyChanges = true) {
-  const isInitialMount = useRef(true);
-
-  useEffect(
-    isInitialMount.current || !applyChanges
-      ? () => {
-          isInitialMount.current = false;
-        }
-      : effect,
-    deps,
-  );
+  useEffect(() => effect(), [effect]);
 }
 
 function usePrevious<T>(value: T) {
@@ -108,96 +95,95 @@ function Editor({
     },
   };
   useMount(() => {
-    loader.config({monaco});
+    loader.config({ monaco });
     const cancelable = loader.init();
 
     cancelable
-      .then((monaco) => (monacoRef.current = monaco) && setIsMonacoMounting(false))
-      .catch(
-        (error) =>
-          error?.type !== 'cancelation' && console.error('Monaco initialization: error:', error),
-      );
+      .then((monacoInstance: Monaco) => {
+        monacoRef.current = monacoInstance;
+        setIsMonacoMounting(false);
+      })
+      .catch((error: unknown) => {
+        if ((error as { type?: string } | null | undefined)?.type !== 'cancelation') {
+          console.error('Monaco initialization: error:', error);
+        }
+      });
 
     return () => (editorRef.current ? disposeEditor() : cancelable.cancel());
   });
 
-  useUpdate(
-    () => {
-      const model = getOrCreateModel(
-        monacoRef.current!,
-        defaultValue || value || '',
-        defaultLanguage || language || '',
-        path || defaultPath || '',
-      );
+  useEffect(() => {
+    if (!isEditorReady) {
+      return;
+    }
 
-      if (model !== editorRef.current?.getModel()) {
-        if (saveViewState) viewStates.set(previousPath, editorRef.current?.saveViewState());
-        editorRef.current?.setModel(model);
-        if (saveViewState) editorRef.current?.restoreViewState(viewStates.get(path));
-      }
-    },
-    [path],
-    isEditorReady,
-  );
+    const model = getOrCreateModel(
+      monacoRef.current!,
+      defaultValue || value || '',
+      defaultLanguage || language || '',
+      path || defaultPath || '',
+    );
 
-  useUpdate(
-    () => {
-      editorRef.current?.updateOptions(options);
-    },
-    [options],
-    isEditorReady,
-  );
+    if (model !== editorRef.current?.getModel()) {
+      if (saveViewState) viewStates.set(previousPath, editorRef.current?.saveViewState());
+      editorRef.current?.setModel(model);
+      if (saveViewState) editorRef.current?.restoreViewState(viewStates.get(path));
+    }
+  }, [defaultLanguage, defaultPath, defaultValue, isEditorReady, language, path, previousPath, saveViewState, value]);
 
-  useUpdate(
-    () => {
-      if (!editorRef.current || value === undefined) return;
-      if (editorRef.current.getOption(monacoRef.current!.editor.EditorOption.readOnly)) {
-        editorRef.current.setValue(value);
-      } else if (value !== editorRef.current.getValue()) {
-        preventTriggerChangeEvent.current = true;
-        editorRef.current.executeEdits('', [
-          {
-            range: editorRef.current.getModel()!.getFullModelRange(),
-            text: value,
-            forceMoveMarkers: true,
-          },
-        ]);
+  useEffect(() => {
+    if (!isEditorReady) {
+      return;
+    }
+    editorRef.current?.updateOptions(options);
+  }, [isEditorReady, options]);
 
-        editorRef.current.pushUndoStop();
-        preventTriggerChangeEvent.current = false;
-      }
-    },
-    [value],
-    isEditorReady,
-  );
+  useEffect(() => {
+    if (!isEditorReady || !editorRef.current || value === undefined) {
+      return;
+    }
+    if (editorRef.current.getOption(monacoRef.current!.editor.EditorOption.readOnly)) {
+      editorRef.current.setValue(value);
+    } else if (value !== editorRef.current.getValue()) {
+      preventTriggerChangeEvent.current = true;
+      editorRef.current.executeEdits('', [
+        {
+          range: editorRef.current.getModel()!.getFullModelRange(),
+          text: value,
+          forceMoveMarkers: true,
+        },
+      ]);
 
-  useUpdate(
-    () => {
-      const model = editorRef.current?.getModel();
-      if (model && language) monacoRef.current?.editor.setModelLanguage(model, language);
-    },
-    [language],
-    isEditorReady,
-  );
+      editorRef.current.pushUndoStop();
+      preventTriggerChangeEvent.current = false;
+    }
+  }, [isEditorReady, value]);
 
-  useUpdate(
-    () => {
-      // reason for undefined check: https://github.com/suren-atoyan/monaco-react/pull/188
-      if (line !== undefined) {
-        editorRef.current?.revealLine(line);
-      }
-    },
-    [line],
-    isEditorReady,
-  );
+  useEffect(() => {
+    if (!isEditorReady) {
+      return;
+    }
+    const model = editorRef.current?.getModel();
+    if (model && language) {
+      monacoRef.current?.editor.setModelLanguage(model, language);
+    }
+  }, [isEditorReady, language]);
 
-  useUpdate(
-    () => {
-      monacoRef.current?.editor.setTheme(theme);
-    },
-    [theme],
-    isEditorReady,
-  );
+  useEffect(() => {
+    if (!isEditorReady) {
+      return;
+    }
+    if (line !== undefined) {
+      editorRef.current?.revealLine(line);
+    }
+  }, [isEditorReady, line]);
+
+  useEffect(() => {
+    if (!isEditorReady) {
+      return;
+    }
+    monacoRef.current?.editor.setTheme(theme);
+  }, [isEditorReady, theme]);
 
   const createEditor = useCallback(() => {
     if (!containerRef.current || !monacoRef.current) return;

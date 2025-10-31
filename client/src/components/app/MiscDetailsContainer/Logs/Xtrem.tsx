@@ -1,6 +1,6 @@
 import '@xterm/xterm/css/xterm.css';
 
-import { MutableRefObject, useEffect, useRef, useState } from 'react';
+import { MutableRefObject, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from '@/components/ui/button';
 import { ChevronsDown } from 'lucide-react';
@@ -19,6 +19,20 @@ type XtermProp = {
   searchAddonRef: MutableRefObject<SearchAddon | null>
 };
 
+const DARK_THEME = {
+  background: "#181818",
+  foreground: "#dcdcdc",
+  cursor: "#dcdcdc",
+  selectionBackground: "#404040",
+};
+
+const LIGHT_THEME = {
+  background: "#ffffff",
+  foreground: "#333333",
+  cursor: "#333333",
+  selectionBackground: "#bbbbbb",
+};
+
 const XtermTerminal = ({ containerNameProp, xterm, searchAddonRef, updateLogs }: XtermProp) => {
   const dispatch = useAppDispatch();
   const terminalRef = useRef<HTMLDivElement | null>(null);
@@ -31,7 +45,7 @@ const XtermTerminal = ({ containerNameProp, xterm, searchAddonRef, updateLogs }:
     const newContainer = `-------------------${containerNameProp || 'All Containers'}-------------------`;
     xterm?.current?.writeln(newContainer);
     updateLogs({log: newContainer} as PodSocketResponse);
-  }, [containerNameProp]);
+  }, [containerNameProp, updateLogs, xterm]);
 
   const scrollToBottom = () => {
     const xtermContainer = document.querySelector('.xterm-viewport');
@@ -40,24 +54,13 @@ const XtermTerminal = ({ containerNameProp, xterm, searchAddonRef, updateLogs }:
     }
   };
 
-  const darkTheme = {
-    background: '#181818',        // Dark gray background
-    foreground: '#dcdcdc',        // Light gray text
-    cursor: '#dcdcdc',            // Light gray cursor
-    selectionBackground: '#404040', // Darker gray for text selection
-  };
-  const lightTheme = {
-    background: '#ffffff',        // White background for light theme
-    foreground: '#333333',        // Dark text for readability
-    cursor: '#333333',            // Dark cursor
-    selectionBackground: '#bbbbbb', // Light gray for text selection
-  };
+  const theme = useMemo(() => (getSystemTheme() === "light" ? LIGHT_THEME : DARK_THEME), []);
 
   useEffect(() => {
     if (terminalRef.current && xterm) {
       xterm.current = new Terminal({
         cursorBlink: false,
-        theme: getSystemTheme() === 'light' ? lightTheme : darkTheme,
+        theme,
         scrollback: 9999999,
         fontSize: 13
       });
@@ -107,7 +110,7 @@ const XtermTerminal = ({ containerNameProp, xterm, searchAddonRef, updateLogs }:
         dispatch(clearLogs());
       };
     }
-  }, []);
+  }, [dispatch, searchAddonRef, theme, xterm]);
 
   return (
     <div ref={containerRef} className="w-full h-full relative">

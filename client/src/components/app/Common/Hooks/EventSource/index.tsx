@@ -1,18 +1,18 @@
 import { KcEventSource } from "@/types";
 import { isIP } from "@/utils";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
-const useEventSource = ({url, sendMessage} : KcEventSource) => {
-  let updatedUrl = '';
-  if(window.location.protocol === 'http:') {
-    if (!isIP(window.location.host.split(':')[0])) {
-      updatedUrl = `http://${new Date().getTime()}.${window.location.host}${url}`;
-    } else {
-      updatedUrl = `http://${window.location.host}${url}`;
+const useEventSource = ({ url, sendMessage }: KcEventSource) => {
+  const updatedUrl = useMemo(() => {
+    if (window.location.protocol === "http:") {
+      if (!isIP(window.location.host.split(":")[0])) {
+        return `http://${new Date().getTime()}.${window.location.host}${url}`;
+      }
+      return `http://${window.location.host}${url}`;
     }
-  } else {
-    updatedUrl = url;
-  }
+    return url;
+  }, [url]);
+
   useEffect(() => {
     // opening a connection to the server to begin receiving events from it
     const eventSource = new EventSource(updatedUrl);
@@ -32,7 +32,7 @@ const useEventSource = ({url, sendMessage} : KcEventSource) => {
     
     // terminating the connection on component unmount
     return () => eventSource.close();
-  }, [url]);
+  }, [updatedUrl, sendMessage]);
 };
 
 export {

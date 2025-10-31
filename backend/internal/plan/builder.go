@@ -61,6 +61,7 @@ type PlanDraft struct {
 	GeneratedAt       time.Time         `json:"generatedAt"`
 	GenerationLatency time.Duration     `json:"generationLatency"`
 	RiskSummary       RiskSummary       `json:"riskSummary"`
+	Parameters        Parameters        `json:"parameters"`
 }
 
 type RiskSummary struct {
@@ -125,6 +126,12 @@ func (b *DefaultBuilder) BuildPlan(ctx context.Context, input BuildInput) (PlanD
 		GenerationLatency: b.clock().Sub(start),
 		RiskSummary:       summarizeRisk(steps),
 	}
+
+	ApplyParameters(&plan, Parameters{
+		Namespace:        namespace,
+		Labels:           map[string]string{},
+		ReplicaOverrides: map[string]int{},
+	})
 
 	return plan, nil
 }

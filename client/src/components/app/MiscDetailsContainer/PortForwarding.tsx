@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "@tanstack/react-router";
 import { Loader } from "../Loader";
+import { PortForwardingListResponse } from "@/types/Networks/portForwarding";
+import { RawRequestError } from "@/data/kcFetch";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/redux/hooks";
 
@@ -18,10 +20,15 @@ type PortForwardingDialogProps = {
   config: string;
   cluster: string;
   resourceKind: "pod" | "service";
-  details: any; // podDetails or serviceDetails
-  portForwardingList: any[];
+  details: {
+    metadata: {
+      name?: string | null;
+      namespace?: string | null;
+    };
+  };
+  portForwardingList: PortForwardingListResponse[];
   loading: boolean;
-  error: any;
+  error: RawRequestError | null;
   message: string;
   getPortOptions: () => { value: string; label: string }[];
   getPortValue: (selected: string, custom?: string) => number;
@@ -68,12 +75,19 @@ export function PortForwardingDialog({
   };
 
   const savePortForwarding = () => {
+    const name = details.metadata.name ?? "";
+    const namespace = details.metadata.namespace ?? "";
+    if (!name || !namespace) {
+      toast.error("Failure", { description: "Missing metadata name or namespace for port forwarding." });
+      return;
+    }
+
     dispatch(portForwarding({
       queryParams,
-      name: details.metadata.name,
+      name,
       containerPort: getPortValue(containerPort, customContainerPort),
       localPort: Number(value),
-      namespace: details.metadata.namespace,
+      namespace,
       kind: resourceKind,
     }));
     setModalOpen(false);
@@ -90,14 +104,14 @@ export function PortForwardingDialog({
   useEffect(() => {
     if (message) {
       toast.success("Success", { description: message });
-      dispatch(resetPortForwarding())
+      dispatch(resetPortForwarding());
       resetDialog();
     } else if (error) {
       toast.error("Failure", { description: error.message });
-      dispatch(resetPortForwarding())
+      dispatch(resetPortForwarding());
       resetDialog();
     }
-  }, [message, error]);
+  }, [dispatch, error, message]);
 
   const setContainerPortSelection = (val: string) => {
     setContainerPort(val);

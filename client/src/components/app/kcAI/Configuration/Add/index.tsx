@@ -121,7 +121,7 @@ const AddConfiguration = ({ uuid, setShowAddConfiguration, config, cluster, setK
     if (provider && url && (['lmstudio'].includes(provider) || apiKey)) {
       dispatch(kcAiModels({ apiKey, url, queryParams: dynamicQueryParams }));
     }
-  }, [formData.apiKey, formData.url, formData.provider, formData.apiVersion, config, cluster, dispatch])
+  }, [cluster, config, dispatch, formData]);
 
   const resetAddConfiguration = () => {
     dispatch(resetKcAiModels());

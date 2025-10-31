@@ -1,0 +1,124 @@
+[
+  {
+    "category": "Deployment",
+    "decision": "Hybrid per-cluster + hub-spoke model",
+    "rationale": "Default to per-cluster Helm install for isolation; optionally run a central control plane connecting to multiple clusters via kubeconfigs.",
+    "impacts": [
+      "Secrets management for remote clusters via Kubernetes secrets",
+      "Network policy considerations for control plane egress",
+      "Documentation for both install patterns"
+    ]
+  },
+  {
+    "category": "AI Providers",
+    "decision": "In-process adapter interface with optional sidecar connectors",
+    "rationale": "Keeps architecture simple for offline default (Ollama) while allowing cloud providers behind explicit egress control.",
+    "impacts": [
+      "Common interface in internal/ai",
+      "Configurable provider registry with rate limits",
+      "Audit trail for every AI call",
+      "Optional HTTP proxy/sidecar when policy requires"
+    ]
+  },
+  {
+    "category": "Audit Logging",
+    "decision": "PostgreSQL append-only log with hash chaining and optional external sinks",
+    "rationale": "Meets tamper-evident compliance requirement while keeping baseline simple.",
+    "impacts": [
+      "Periodic digest anchoring",
+      "CSV/JSON export endpoints",
+      "Connectors for Loki/ELK when customers want log lakes"
+    ]
+  },
+  {
+    "category": "Streaming",
+    "decision": "SSE primary channel with polling fallback; WebSockets for exec sessions",
+    "rationale": "Simplifies deployment (proxy-friendly) while meeting low-bandwidth requirements and allowing bi-directional exec when required.",
+    "impacts": [
+      "SSE endpoints for plan/status/log streaming",
+      "Automatic fallback to polling when SSE unavailable",
+      "WebSocket gateway restricted to exec/interactive sessions with timeouts",
+      "Backoff and server-side filtering for low-bandwidth resilience"
+    ]
+  },
+  {
+    "category": "Persistence",
+    "decision": "PostgreSQL primary store; SQLite for local mode; optional Redis/Object storage",
+    "rationale": "Keeps baseline simple while allowing scale-out knobs for caching and long-term storage.",
+    "impacts": [
+      "PostgreSQL 15 as default database (Helm dependency)",
+      "SQLite activated in single-binary local deployments",
+      "Redis enabled via Helm values for rate limiting/cache",
+      "Object storage integration for incident exports and large logs"
+    ]
+  },
+  {
+    "category": "Packaging",
+    "decision": "Single binary + Helm chart with CRDs, container images linux/amd64 & arm64",
+    "rationale": "Aligns with Kubechat distribution while meeting customer-managed cluster expectations.",
+    "impacts": [
+      "Binary serves API and embedded UI",
+      "Helm chart defines AIProvider and AuditPolicy CRDs",
+      "Ingress/TLS handled by customer (or binary TLS enabled)",
+      "Images signed and include SBOM; published via GitHub Actions pipeline"
+    ]
+  },
+  {
+    "category": "Security",
+    "decision": "Defense-in-depth: TLS, JWT, RBAC pre-check, non-root containers, no secrets in logs, signed artifacts",
+    "rationale": "Ensures compliance readiness and safe operations across regulated environments.",
+    "impacts": [
+      "TLS termination via Ingress or app",
+      "JWT session management with refresh",
+      "RBAC evaluation before command execution",
+      "Containers run as non-root with seccomp/profiles",
+      "SBOM generation and cosign signature of images",
+      "Hooks for OIDC/SAML extensions"
+    ]
+  },
+  {
+    "category": "Configuration",
+    "decision": "CRDs (AIProvider, AuditPolicy) + secrets for cluster credentials",
+    "rationale": "Supports both per-cluster and hub installs with Kubernetes-native configuration.",
+    "impacts": [
+      "AIProvider CRD defines provider type, endpoint, auth, rate limits",
+      "AuditPolicy CRD configures retention/export rules",
+      "Secrets store kubeconfigs/service accounts for remote clusters",
+      "Environment overlays for dev/staging/prod"
+    ]
+  },
+  {
+    "category": "CI/CD",
+    "decision": "GitHub Actions pipeline for multi-arch builds, tests, SBOM, signing",
+    "rationale": "Aligns with community workflow while producing compliant artifacts.",
+    "impacts": [
+      "Build linux/amd64 and arm64 images",
+      "Run go test ./... and frontend tests",
+      "Security scanning (e.g., Trivy)",
+      "Generate SBOM (syft) and sign images with cosign",
+      "Publish Helm chart to OCI registry"
+    ]
+  },
+  {
+    "category": "Identity",
+    "decision": "Local users + JWT sessions + RBAC with optional OIDC",
+    "rationale": "Delivers secure defaults while allowing enterprise identity integrations.",
+    "impacts": [
+      "User accounts stored in PostgreSQL",
+      "JWT access/refresh tokens with configurable expiry",
+      "RBAC policies linked to Kubernetes permissions",
+      "OIDC (and later SAML) pluggable via configuration and callback endpoints"
+    ]
+  },
+  {
+    "category": "Observability",
+    "decision": "Opt-in adapters: Prometheus metrics, Loki/ELK logs, OpenTelemetry tracing",
+    "rationale": "Keep core lightweight but ready for enterprise observability stacks.",
+    "impacts": [
+      "/metrics endpoint for Prometheus",
+      "Structured logs with trace IDs",
+      "OpenTelemetry exporter toggles",
+      "Webhook integrations for PagerDuty/Slack/Jira"
+    ]
+  }
+]

@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/labstack/echo/v4"
 	"github.com/pramodksahoo/kubechat/backend/container"
 	"github.com/pramodksahoo/kubechat/backend/handlers/base"
 	"github.com/pramodksahoo/kubechat/backend/handlers/helpers"
 	"github.com/pramodksahoo/kubechat/backend/handlers/workloads/pods"
-	"github.com/labstack/echo/v4"
 	coreV1 "k8s.io/api/core/v1"
 )
 
@@ -83,7 +83,7 @@ func transformItems(items []any, b *base.BaseHandler) ([]byte, error) {
 func (h *NodeHandler) GetPods(c echo.Context) error {
 	streamID := fmt.Sprintf("%s-%s-%s-node-pods", h.BaseHandler.QueryConfig, h.BaseHandler.QueryCluster, c.Param("name"))
 	go h.NodePods(c)
-	h.BaseHandler.Container.SSE().ServeHTTP(streamID, c.Response(), c.Request())
+	helpers.ServeStream(c, h.BaseHandler.Container.SSE(), streamID)
 	return nil
 }
 

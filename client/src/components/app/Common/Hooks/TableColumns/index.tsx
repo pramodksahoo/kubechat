@@ -6,7 +6,6 @@ import { TableCells } from '@/components/app/Table/TableCells';
 import { useMemo } from 'react';
 
 function GenerateColumns<T extends ClusterDetails, C extends HeaderList>({
-  count,
   clusterName,
   configName,
   loading,
@@ -43,7 +42,7 @@ function GenerateColumns<T extends ClusterDetails, C extends HeaderList>({
           enableGlobalFilter: !!headerList.enableGlobalFilter
         };
       }),
-    [count,
+    [
       clusterName,
       configName,
       loading,

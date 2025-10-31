@@ -70,7 +70,7 @@ const YamlEditor = memo(function ({ instanceType, name, namespace, clusterName, 
       dispatch(resetUpdateYaml());
       setYamlUpdated(false);
     }
-  }, [yamlUpdateResponse, error]);
+  }, [dispatch, error, yamlUpdateResponse]);
 
 
 

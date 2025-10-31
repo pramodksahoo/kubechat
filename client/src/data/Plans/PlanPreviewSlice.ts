@@ -19,6 +19,8 @@ interface PlanPreviewState {
   lastPlanId?: string;
   dryRunInFlight: boolean;
   executeInFlight: boolean;
+  updateInFlight: boolean;
+  lastPlanSnapshot?: PlanRecord | null;
 }
 
 const initialState: PlanPreviewState = {
@@ -28,6 +30,8 @@ const initialState: PlanPreviewState = {
   plan: null,
   dryRunInFlight: false,
   executeInFlight: false,
+  updateInFlight: false,
+  lastPlanSnapshot: undefined,
 };
 
 const createPlanFromPrompt = createAsyncThunk<PlanRecord, CreatePlanPayload>(
@@ -48,6 +52,7 @@ const createPlanFromPrompt = createAsyncThunk<PlanRecord, CreatePlanPayload>(
         plan: data.plan,
         storedAt: data.storedAt ?? new Date().toISOString(),
         expiresAt: data.expiresAt,
+        revisions: data.revisions,
       };
 
       return record;
@@ -69,6 +74,47 @@ const fetchPlanById = createAsyncThunk<PlanRecord, string>(
   },
 );
 
+interface UpdatePlanPayload {
+  planId: string;
+  targetNamespace?: string;
+  labels?: Record<string, string>;
+  replicaOverrides?: Record<string, number>;
+  updatedBy?: string;
+}
+
+const updatePlanParameters = createAsyncThunk<PlanRecord, UpdatePlanPayload>(
+  "planPreview/updatePlanParameters",
+  async ({ planId, targetNamespace, labels, replicaOverrides, updatedBy }, thunkAPI) => {
+    try {
+      const payload: Record<string, unknown> = {};
+      if (typeof targetNamespace === "string") {
+        payload.targetNamespace = targetNamespace;
+      }
+      if (labels) {
+        payload.labels = labels;
+      }
+      if (replicaOverrides) {
+        payload.replicaOverrides = replicaOverrides;
+      }
+      if (updatedBy) {
+        payload.updatedBy = updatedBy;
+      }
+
+      const response = await kcFetch(`${API_VERSION}/${PLANS_ENDPOINT}/${planId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      return response as PlanRecord;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(serializeError(error));
+    }
+  },
+);
+
 const planPreviewSlice = createSlice({
   name: "planPreview",
   initialState,
@@ -77,10 +123,32 @@ const planPreviewSlice = createSlice({
       state.isOpen = false;
       state.loading = false;
       state.error = null;
+      state.lastPlanSnapshot = undefined;
+      state.updateInFlight = false;
     },
     setPlanRecord: (state, action: PayloadAction<PlanRecord | null>) => {
       state.plan = action.payload;
       state.lastPlanId = action.payload?.plan.id;
+      state.lastPlanSnapshot = undefined;
+      state.updateInFlight = false;
+    },
+    applyOptimisticPlanUpdate: (state, action: PayloadAction<PlanRecord>) => {
+      if (state.plan) {
+        state.lastPlanSnapshot = JSON.parse(JSON.stringify(state.plan)) as PlanRecord;
+      } else {
+        state.lastPlanSnapshot = null;
+      }
+      state.plan = action.payload;
+      state.lastPlanId = action.payload.plan.id;
+      state.updateInFlight = true;
+    },
+    rollbackPlanUpdate: (state) => {
+      if (state.lastPlanSnapshot) {
+        state.plan = state.lastPlanSnapshot;
+        state.lastPlanId = state.lastPlanSnapshot.plan.id;
+      }
+      state.lastPlanSnapshot = undefined;
+      state.updateInFlight = false;
     },
   },
   extraReducers: (builder) => {
@@ -114,16 +182,41 @@ const planPreviewSlice = createSlice({
       state.lastPlanId = action.payload.plan.id;
       state.error = null;
       state.isOpen = true;
+      state.lastPlanSnapshot = undefined;
+      state.updateInFlight = false;
     });
     builder.addCase(fetchPlanById.rejected, (state, action) => {
       state.loading = false;
       state.error = action.payload as RawRequestError;
       state.plan = null;
       state.isOpen = true;
+      state.lastPlanSnapshot = undefined;
+      state.updateInFlight = false;
+    });
+
+    builder.addCase(updatePlanParameters.pending, (state) => {
+      state.updateInFlight = true;
+      state.error = null;
+    });
+    builder.addCase(updatePlanParameters.fulfilled, (state, action) => {
+      state.plan = action.payload;
+      state.lastPlanId = action.payload.plan.id;
+      state.updateInFlight = false;
+      state.lastPlanSnapshot = undefined;
+      state.error = null;
+    });
+    builder.addCase(updatePlanParameters.rejected, (state, action) => {
+      if (state.lastPlanSnapshot) {
+        state.plan = state.lastPlanSnapshot;
+        state.lastPlanId = state.lastPlanSnapshot.plan.id;
+      }
+      state.lastPlanSnapshot = undefined;
+      state.updateInFlight = false;
+      state.error = action.payload as RawRequestError;
     });
   },
 });
 
 export default planPreviewSlice.reducer;
-export const { closePlan, setPlanRecord } = planPreviewSlice.actions;
-export { createPlanFromPrompt, fetchPlanById, initialState };
+export const { closePlan, setPlanRecord, applyOptimisticPlanUpdate, rollbackPlanUpdate } = planPreviewSlice.actions;
+export { createPlanFromPrompt, fetchPlanById, updatePlanParameters, initialState };

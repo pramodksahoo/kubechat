@@ -18,8 +18,8 @@ import (
 
 	"net/http"
 
-	"github.com/pramodksahoo/kubechat/backend/container"
 	"github.com/labstack/echo/v4"
+	"github.com/pramodksahoo/kubechat/backend/container"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/json"
 )
@@ -142,7 +142,7 @@ func (h *PodsHandler) GetLogs(c echo.Context) error {
 	}
 	go h.publishLogsToSSE(c, key, sseServer)
 
-	sseServer.ServeHTTP(key, c.Response(), c.Request())
+	helpers.ServeStream(c, sseServer, key)
 
 	return nil
 }

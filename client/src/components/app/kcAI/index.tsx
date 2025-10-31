@@ -32,12 +32,15 @@ export function AiChat({ isFullscreen = false, onToggleFullscreen, customHeight,
   const dispatch = useAppDispatch();
   let config = '';
   let cluster = '';
+  let namespaceValue = '';
   if (!isDetailsPage) {
     config = kcList.useParams().config;
     cluster = kcList.useSearch().cluster;
   } else {
     config = kcDetails.useParams().config;
-    cluster = kcDetails.useSearch().cluster;
+    const detailsSearch = kcDetails.useSearch();
+    cluster = detailsSearch.cluster;
+    namespaceValue = detailsSearch.namespace ?? '';
   }
   const {
     clusters,
@@ -57,10 +60,10 @@ export function AiChat({ isFullscreen = false, onToggleFullscreen, customHeight,
   const [currentChatKey, setCurrentChatKey] = useState<string>(getLatestChat);
 
   useEffect(() => {
-    dispatch(fetchKcAiTools({isDev: clusters.version === 'dev', config, cluster}));
-    const kcAIStoredModels = JSON.parse(localStorage.getItem('kcAIStoredModels') || '{}') as kcAIStoredModels;
+    dispatch(fetchKcAiTools({ isDev: clusters.version === "dev", config, cluster }));
+    const kcAIStoredModels = JSON.parse(localStorage.getItem("kcAIStoredModels") || "{}") as kcAIStoredModels;
     setKcAIStoredModelsCollection(() => kcAIStoredModels);
-  }, []);
+  }, [cluster, clusters.version, config, dispatch]);
 
 
   const containerClass = `${customHeight} flex flex-col`;
@@ -186,7 +189,7 @@ export function AiChat({ isFullscreen = false, onToggleFullscreen, customHeight,
                 cluster={cluster}
                 config={config}
                 isDetailsPage={isDetailsPage}
-                namespace={isDetailsPage ? namespace : undefined}
+                namespace={isDetailsPage ? namespaceValue : undefined}
                 kcAIStoredModels={kcAIStoredModelsCollection}
                 resetChat={resetChat}
               />

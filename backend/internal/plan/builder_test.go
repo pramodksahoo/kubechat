@@ -34,6 +34,12 @@ func TestDefaultBuilderUsesHints(t *testing.T) {
 	if draft.TargetNamespace != "hint-payments" {
 		t.Fatalf("expected namespace hint to win, got %s", draft.TargetNamespace)
 	}
+	if draft.Parameters.Namespace != "hint-payments" {
+		t.Fatalf("expected parameters to reflect namespace hint, got %s", draft.Parameters.Namespace)
+	}
+	if len(draft.Parameters.Labels) != 0 {
+		t.Fatalf("expected no labels by default, got %+v", draft.Parameters.Labels)
+	}
 	if draft.Steps[0].Target.Cluster != "hint-prod" || draft.Steps[0].Target.Namespace != "hint-payments" {
 		t.Fatalf("expected step targets to mirror hints, got %+v", draft.Steps[0].Target)
 	}
@@ -65,6 +71,9 @@ func TestDefaultBuilderExtractsFromPrompt(t *testing.T) {
 		if step.Sequence != i+1 {
 			t.Fatalf("expected sequential numbering, got %d at index %d", step.Sequence, i)
 		}
+	}
+	if draft.Parameters.Namespace != "payments" {
+		t.Fatalf("expected parameters namespace to mirror extracted namespace, got %s", draft.Parameters.Namespace)
 	}
 }
 

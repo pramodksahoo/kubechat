@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- Route configuration exports router objects */
 import { Navigate, createRootRoute, createRoute, createRouter } from '@tanstack/react-router';
 import { kcDetailsSearch, kcListSearch } from '@/types';
 
