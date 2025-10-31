@@ -22,6 +22,7 @@ go.work
 .env
 backend/.env
 .pnpm-store/
+/kubechat
 # dist folder
 dist
 
@@ -55,4 +56,4 @@ resources/views/*.go
 resources/views/*/*.go
 # BMAD
 docs/stories
-# bmad/
+# bmad//kubechat
