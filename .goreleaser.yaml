@@ -9,7 +9,7 @@ builds:
   - main: main.go
     dir: ./backend
     binary: kubechat
-    goos: ["linux", "darwin", "windows", "freebsd"]
+    goos: ["linux", "darwin", "freebsd"]
     goarch: ["386", "amd64", "arm64"]
     flags:
       - -trimpath
@@ -26,7 +26,6 @@ universal_binaries:
 
 archives:
   - formats: ["tar.gz"]
-    # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: >-
       {{ .ProjectName }}_
       {{- title .Os }}_
@@ -34,28 +33,9 @@ archives:
       {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
-    # use zip for windows archives
-    format_overrides:
-      - goos: windows
-        formats: ["zip"]
 
 sboms:
   - artifacts: archive
-
-nfpms:
-  - id: kubechat
-    vendor: kubechat
-    homepage: "https://github.com/pramodksahoo/kubechat"
-    maintainer: "Pramoda Sahoo <devopspramod100@gmail.com>"
-    description: "kubechat is a single binary to manage multiple clusters."
-    license: "Apache License 2.0"
-    formats:
-      - deb
-      - rpm
-      - archlinux
-    bindir: /usr/bin
-    recommends:
-      - kubectl
 
 homebrew_casks:
   - name: kubechat
