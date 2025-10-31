@@ -57,3 +57,5 @@ resources/views/*/*.go
 # BMAD
 docs/stories
 # bmad//kubechat
+/kubechat
+/apps/api/server
