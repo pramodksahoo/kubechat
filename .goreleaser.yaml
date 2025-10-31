@@ -42,11 +42,15 @@ homebrew_casks:
     homepage: "https://github.com/pramodksahoo/kubechat"
     description: "kubechat is a single binary to manage multiple clusters."
     repository:
-      owner: kubechat
+      owner: pramodksahoo
       name: homebrew-tap
+      token: "{{ .Env.GORELEASER_TOKEN }}"
+    skip_upload: false
+    commit_author:
+      name: "Pramoda Sahoo"
+      email: "devopspramod100@gmail.com"
     hooks:
       post:
-        # This hook is needed until this binary is signed and notarized
         install: |
           if system_command("/usr/bin/xattr", args: ["-h"]).exit_status == 0
             system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/kubechat"]
