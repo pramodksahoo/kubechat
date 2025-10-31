@@ -3,7 +3,7 @@ version: 2
 
 before:
   hooks:
-    - sh -c "yarn --cwd client install && yarn --cwd client run build && rm -rf backend/static && mv client/dist backend/static"
+    - sh -c "pnpm --dir client install --frozen-lockfile && pnpm --dir client run build && rm -rf backend/routes/static && mkdir -p backend/routes/static && cp -R client/dist/. backend/routes/static/"
 
 builds:
   - main: main.go
