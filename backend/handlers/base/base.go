@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/pramodksahoo/kubechat/backend/container"
 	"github.com/labstack/echo/v4"
 	"github.com/r3labs/sse/v2"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
+
+	"github.com/pramodksahoo/kubechat/backend/container"
+	"github.com/pramodksahoo/kubechat/backend/handlers/helpers"
 )
 
 type RouteType int
@@ -38,7 +40,7 @@ type BaseHandler struct {
 
 func (h *BaseHandler) GetList(c echo.Context) error {
 	streamID := fmt.Sprintf("%s-%s-%s", h.QueryConfig, h.QueryCluster, h.Kind)
-	h.Container.SSE().ServeHTTP(streamID, c.Response(), c.Request())
+	helpers.ServeStream(c, h.Container.SSE(), streamID)
 	return nil
 }
 
@@ -51,7 +53,7 @@ func (h *BaseHandler) GetDetails(c echo.Context) error {
 		Data: h.marshalDetailData(item, exists),
 	})
 
-	h.Container.SSE().ServeHTTP(streamID, c.Response(), c.Request())
+	helpers.ServeStream(c, h.Container.SSE(), streamID)
 	return nil
 }
 
@@ -64,7 +66,7 @@ func (h *BaseHandler) GetYaml(c echo.Context) error {
 		Data: h.marshalYAML(item, exists),
 	})
 
-	h.Container.SSE().ServeHTTP(fmt.Sprintf("%s-yaml", streamID), c.Response(), c.Request())
+	helpers.ServeStream(c, h.Container.SSE(), fmt.Sprintf("%s-yaml", streamID))
 	return nil
 }
 
@@ -78,7 +80,7 @@ func (h *BaseHandler) GetEvents(c echo.Context) error {
 	ticker := h.startEventTicker(c.Request().Context(), streamID, data)
 	defer ticker.Stop()
 
-	h.Container.SSE().ServeHTTP(streamID, c.Response(), c.Request())
+	helpers.ServeStream(c, h.Container.SSE(), streamID)
 	return nil
 }
 

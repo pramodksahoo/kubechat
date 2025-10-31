@@ -1,0 +1,85 @@
+{
+  "core_components": [
+    {
+      "name": "Control Plane Service",
+      "tech": "Go 1.23",
+      "responsibilities": [
+        "API endpoints for chat, plan generation, approvals",
+        "AI provider abstraction and inference orchestration",
+        "Kubernetes command execution and audit logging",
+        "Streaming (SSE/WebSocket) pipelines"
+      ],
+      "packages": [
+        "internal/api",
+        "internal/ai",
+        "internal/audit",
+        "internal/k8s"
+      ]
+    },
+    {
+      "name": "Web Console",
+      "tech": "React + Vite",
+      "responsibilities": [
+        "Timeline view and command palette",
+        "Plan preview and approval workflow UI",
+        "Multi-cluster dashboards and log viewers",
+        "Settings/onboarding \u2013 kubeconfig, providers"
+      ]
+    },
+    {
+      "name": "PostgreSQL",
+      "tech": "PostgreSQL 15",
+      "responsibilities": [
+        "Audit log (append only with hash chain)",
+        "Configuration storage (clusters, policies, providers)",
+        "User accounts and roles",
+        "Session state for collaboration"
+      ]
+    },
+    {
+      "name": "Streaming Gateway",
+      "tech": "Go SSE/WebSocket",
+      "responsibilities": [
+        "Plan execution status streaming",
+        "Log tail delivery",
+        "Fallback polling orchestration"
+      ]
+    }
+  ],
+  "optional_components": [
+    {
+      "name": "Redis Cache",
+      "use_cases": [
+        "Rate limiting",
+        "Session acceleration",
+        "AI provider caching"
+      ],
+      "deployment": "Optional Helm values"
+    },
+    {
+      "name": "Object Storage",
+      "use_cases": [
+        "Incident exports",
+        "Large log archives"
+      ],
+      "deployment": "Customer-provided S3/MinIO"
+    }
+  ],
+  "integration_points": [
+    {
+      "name": "Prometheus",
+      "method": "Scrape metrics endpoint /metrics",
+      "purpose": "Performance dashboards"
+    },
+    {
+      "name": "Loki/ELK",
+      "method": "Optional log sink connector",
+      "purpose": "Centralized log lake"
+    },
+    {
+      "name": "PagerDuty/Slack/Jira",
+      "method": "Outgoing webhooks",
+      "purpose": "Incident notifications and workflow"
+    }
+  ]
+}

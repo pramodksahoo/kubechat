@@ -49,7 +49,7 @@ const KcDetails = () => {
   useEffect(() => {
     dispatch(resetYamlDetails());
     dispatch(clearLogs());
-  }, []);
+  }, [dispatch]);
 
   // Fetch yaml for kcAi
   const sendMessage = (message: Event[]) => {

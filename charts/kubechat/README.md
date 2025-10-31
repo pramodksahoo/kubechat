@@ -7,7 +7,7 @@ Kubechat allows you to manage Kubernetes clusters. This Helm chart simplifies th
 To install the kubechat chart using Helm, run the following command:
 
 ```bash
-helm install kubechat oci://ghcr.io/kubechat/charts/kubechat -n kubechat-system --create-namespace
+helm install kubechat oci://ghcr.io/pramodksahoo/charts/kubechat -n kubechat-system --create-namespace
 ```
 
 ### Notes:
@@ -29,8 +29,8 @@ To use your own TLS certificates instead of the default self-signed ones:
 2. **Install Kubechat with your certificates**:
 
    ```bash
-   helm install kubechat oci://ghcr.io/kubechat/kubechat \
-     -n kubechat-system --version v0.0.11 --create-namespace \
+   helm install kubechat oci://ghcr.io/pramodksahoo/charts/kubechat \
+     -n kubechat-system --version v1.0.0 --create-namespace \
      --set tls.secretName=kubechat-tls-secret
    ```
 
@@ -41,8 +41,8 @@ By default, the chart creates a service account with `admin` RBAC permissions in
 1. **Install Kubechat with an existing service account**:
 
    ```bash
-   helm install kubechat oci://ghcr.io/kubechat/kubechat \
-     -n kubechat-system --version v0.0.11 --create-namespace \
+   helm install kubechat oci://ghcr.io/pramodksahoo/charts/kubechat \
+     -n kubechat-system --version v1.0.0 --create-namespace \
      --set serviceAccount.create=false \
      --set serviceAccount.name=<yourServiceAccountName>
    ```
@@ -52,8 +52,8 @@ By default, the chart creates a service account with `admin` RBAC permissions in
 To upgrade to a newer version of the chart, run the following command:
 
 ```bash
-helm upgrade kubechat oci://ghcr.io/kubechat/kubechat \
-  -n kubechat-system --version v0.0.11
+helm upgrade kubechat oci://ghcr.io/pramodksahoo/charts/kubechat \
+  -n kubechat-system --version v1.0.0
 ```
 
 ## Configuration Parameters

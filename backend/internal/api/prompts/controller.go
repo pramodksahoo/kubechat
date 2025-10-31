@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/charmbracelet/log"
+	"github.com/labstack/echo/v4"
 	"github.com/pramodksahoo/kubechat/backend/internal/api/repository"
 	"github.com/pramodksahoo/kubechat/backend/internal/plan"
 	"github.com/pramodksahoo/kubechat/backend/internal/telemetry"
-	"github.com/labstack/echo/v4"
 )
 
 type PromptRequest struct {
@@ -27,10 +27,11 @@ type ResponseMetrics struct {
 }
 
 type PromptResponse struct {
-	Plan      plan.PlanDraft  `json:"plan"`
-	Metrics   ResponseMetrics `json:"metrics"`
-	StoredAt  time.Time       `json:"storedAt,omitempty"`
-	ExpiresAt time.Time       `json:"expiresAt,omitempty"`
+	Plan      plan.PlanDraft            `json:"plan"`
+	Metrics   ResponseMetrics           `json:"metrics"`
+	StoredAt  time.Time                 `json:"storedAt,omitempty"`
+	ExpiresAt time.Time                 `json:"expiresAt,omitempty"`
+	Revisions []repository.PlanRevision `json:"revisions,omitempty"`
 }
 
 type PromptController struct {
@@ -146,6 +147,9 @@ func (c *PromptController) Handle(ctx echo.Context) error {
 	}
 	if !record.ExpiresAt.IsZero() {
 		resp.ExpiresAt = record.ExpiresAt
+	}
+	if len(record.Revisions) > 0 {
+		resp.Revisions = record.Revisions
 	}
 
 	return ctx.JSON(http.StatusCreated, resp)

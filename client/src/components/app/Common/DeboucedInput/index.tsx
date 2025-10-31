@@ -1,6 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Input } from "@/components/ui/input";
+
+const INPUT_TEXT_EXCEPTION_IDS = [
+  "addKcAiConfigUrl",
+  "addKcAiConfigApiKey",
+  "addKcAiConfigAlias",
+  "global-search",
+];
 
 const DebouncedInput = ({
   value: initialValue,
@@ -15,12 +22,7 @@ const DebouncedInput = ({
   const [value, setValue] = useState(initialValue);
   const globalSearchRef = useRef<null | HTMLInputElement>(null);
 
-  const inputTextExceptionIds = [
-    'addKcAiConfigUrl',
-    'addKcAiConfigApiKey',
-    'addKcAiConfigAlias',
-    'global-search',
-  ];
+  const inputTextExceptionIds = useMemo(() => INPUT_TEXT_EXCEPTION_IDS, []);
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === "/" && !inputTextExceptionIds.includes((e.target as HTMLInputElement)?.id) && (e.target as HTMLInputElement)?.role !== 'combobox') {
@@ -31,7 +33,7 @@ const DebouncedInput = ({
 
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
-  }, []);
+  }, [inputTextExceptionIds]);
 
 
   useEffect(() => {
@@ -44,7 +46,7 @@ const DebouncedInput = ({
     }, debounce);
 
     return () => clearTimeout(timeout);
-  }, [value]);
+  }, [value, debounce, onChange]);
 
   return (
     <Input

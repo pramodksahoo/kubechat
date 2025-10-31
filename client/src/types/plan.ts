@@ -28,6 +28,12 @@ type PlanRiskSummary = {
   justifications: string[];
 };
 
+type PlanParameters = {
+  namespace: string;
+  labels: Record<string, string>;
+  replicaOverrides: Record<string, number>;
+};
+
 type PlanDraft = {
   id: string;
   prompt: string;
@@ -39,12 +45,29 @@ type PlanDraft = {
   generatedAt: string;
   generationLatency: number;
   riskSummary: PlanRiskSummary;
+  parameters: PlanParameters;
+};
+
+type PlanRevisionChange = {
+  field: string;
+  before?: unknown;
+  after?: unknown;
+  resource?: string;
+  stepSequence?: number;
+};
+
+type PlanRevision = {
+  version: number;
+  updatedAt: string;
+  updatedBy?: string;
+  changes: PlanRevisionChange[];
 };
 
 type PlanRecord = {
   plan: PlanDraft;
   storedAt?: string;
   expiresAt?: string;
+  revisions?: PlanRevision[];
 };
 
 type PlanPromptResponse = {
@@ -55,12 +78,16 @@ type PlanPromptResponse = {
   };
   storedAt?: string;
   expiresAt?: string;
+  revisions?: PlanRevision[];
 };
 
 export type {
   PlanDraft,
+  PlanParameters,
   PlanRecord,
   PlanPromptResponse,
+  PlanRevision,
+  PlanRevisionChange,
   PlanRiskAnnotation,
   PlanRiskSummary,
   PlanStep,

@@ -4,7 +4,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { resetAllStates, useAppDispatch, useAppSelector } from "@/redux/hooks";
 
 import { App } from "./app";
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils";
 import { fetchClusters } from "@/data/KcClusters/ClustersSlice";
 import { useEffect } from "react";

@@ -86,14 +86,14 @@ const TableDelete = ({ selectedRows, toggleAllRowsSelected, postDeleteCallback }
       });
       dispatch(resetDeleteResource());
     }
-  }, [message, error]);
+  }, [dispatch, error, message, postDeleteCallback, toggleAllRowsSelected]);
 
   const deleteResource = () => {
     const data = selectedRows.map(({ original }) => {
-      if(resourcekind === PORT_FORWARDING_ENDPOINT) {
+      if (resourcekind === PORT_FORWARDING_ENDPOINT) {
         return {
           'id': original.id,
-        }
+        };
       }
       return {
         'name': original.name || original.metadata.name,

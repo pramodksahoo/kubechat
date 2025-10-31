@@ -64,21 +64,64 @@ KubeChat is an **open-source Natural Language Kubernetes Management Platform** t
 
 ## 🏗️ Architecture
 
+The control plane is a single Go binary that embeds the React frontend and exposes REST + SSE endpoints. It shards cleanly into API, streaming, AI-provider, and Kubernetes adapter layers and can run either per cluster or as a hub pointing at multiple kubeconfigs. A Helm chart packages the same binary for in-cluster installs with TLS, persistent volume mounts, and optional ingress.
+
+```mermaid
+graph TD
+    subgraph Browser
+        UI[React + Tailwind UI<br/>kcAI chat, tables, YAML editor]
+    end
+
+    subgraph Backend Go Service
+        API[Echo REST API<br/>/api/v1/...]
+        Stream[SSE/WebSocket Gateway]
+        Planner[internal/plan<br/>intent → command plan]
+        MCP[internal/api/prompts<br/>AI SDK MCP client]
+        K8S[internal/k8s handlers<br/>pods, nodes, port-forward, logs]
+        Telemetry[Prometheus metrics<br/>structured logging]
+    end
+
+    subgraph Integrations
+        Ollama[(Ollama / Local LLM)]
+        OptionalLLM[(OpenAI / Anthropic / Azure)]
+        Cluster[(Target Kubernetes Clusters)]
+    end
+
+    UI <-->|REST + SSE| API
+    UI <-->|plan_update, logs, events| Stream
+    API --> Planner
+    API --> MCP
+    Planner --> MCP
+    MCP --> Ollama
+    MCP --> OptionalLLM
+    API --> K8S
+    Stream --> K8S
+    K8S --> Cluster
+    Telemetry --> API
+    Telemetry --> Cluster
+```
+
+More detail (service boundaries, data flows, and architectural decisions) lives in:
+
+- [Architecture Overview](docs/architecture.md)
+- [Architecture Decision Records](docs/architecture-decisions.json)
+- [Epic ↔ Architecture Mapping](docs/architecture-epic-mapping.json)
+- [Implementation Readiness Report](docs/implementation-readiness-report.md)
 
 ---
 
-## ✨ Current Capabilities (MVP)
+## ✨ Current Capabilities (October 2025)
 
 | Area | Status | Description |
 |------|--------|-------------|
-| Natural-language prompt ingestion | ✅ | `POST /api/v1/prompts` accepts user intents, classifies cluster/namespace scope, and emits structured plans with per-step metadata. |
-| Plan builder heuristics | ✅ | `internal/plan` enriches steps with operation types, target descriptors, risk notes, and affected resources derived from prompt context. |
-| Plan persistence | ✅ | Plans are cached via an in-memory repository so they can be reloaded (`GET /api/v1/plans/{id}`) and rehydrated in the UI. |
-| Metrics & logging | ✅ | `plan_generation_duration_seconds` Prometheus histogram plus structured logs (request ID, cluster, namespace, risk level). |
-| Plan preview UI | ✅ | React-based drawer showing plan header, namespace/cluster chips, affected-resource summaries, and copyable step commands. |
-| Chat integration | ✅ | The chat workflow triggers plan creation automatically and deep-links the preview drawer using `?plan=<id>`. |
+| Conversational AI & planning | ✅ | `kcAI` chat uses the AI SDK MCP transport to Ollama/OpenAI and `internal/plan` to generate risk-tagged kubectl plans with editable parameters and SSE plan updates. |
+| Plan preview & incident context | ✅ | React drawer renders clusters/namespaces, blast radius summaries, recommended diagnostics, and lets operators follow along via real-time `plan_update` events. |
+| Multi-cluster resource explorer | ✅ | Tables and detail panes stream pods, nodes, events, deployments, CRDs, and YAML using the shared SSE server; cluster and kubeconfig context switching is first-class. |
+| Streaming diagnostics | ✅ | Built-in log tailing, YAML viewer (Monaco), live events, and port-forwarding handlers surface diagnostics without leaving the UI (`/api/v1/.../logs`, `/portforward`). |
+| Guardrail foundations | ✅ | Dry-run/apply scaffolding, plan risk annotations, Prometheus metrics, and structured audit logging stubs are implemented; approvals & rollback automation land next. |
+| Packaging & deployment | ✅ | Single binary embeds the UI (`go:embed backend/routes/static`) and Helm chart values support TLS, PVCs, image overrides, and Rancher Desktop/kind workflows. |
 
-> These features satisfy Acceptance Criteria 1 and partially satisfy Acceptance Criteria 2 of story `1-1-capture-natural-language-intents`.
+> These capabilities cover the MVP slice for Epics **E1** and **E3** in the [Epic breakdown](docs/epics.md) and align with functional requirements **FR-1**, **FR-3**, and parts of **FR-4** in the [PRD](docs/PRD.md).
 
 ---
 
@@ -86,13 +129,13 @@ KubeChat is an **open-source Natural Language Kubernetes Management Platform** t
 
 | Epic / FR | Description | Status |
 |-----------|-------------|--------|
-| **E1 / FR-1** AI-Assisted Command Planning | Natural-language intents → explainable kubectl plan | 🚧 In progress (MVP delivered, editing/approval workflows forthcoming) |
-| **E2 / FR-2** Guarded Execution & Approvals | Dry-run enforcement, approvals, RBAC, rollback | ⏳ Planned |
-| **E3 / FR-3** Multi-Cluster Visibility | Aggregated diagnostics, scoped actions | ⏳ Planned |
-| **E4 / FR-4** Streaming Observability | Live logs, rollout status, AI summaries | ⏳ Planned |
-| **E5 / FR-5** Audit & Reporting | Tamper-evident audit trails, exports | ⏳ Planned |
-| **E6 / FR-6** Packaging & AI Abstraction | Single binary, Helm chart, provider plugins | ⏳ Planned |
-| **FR-7** Workflow Governance | Guardrailed recipes, post-incident notes | ⏳ Planned |
+| **E1 / FR-1** AI-Assisted Command Planning | Natural-language intents → explainable kubectl plan | ✅ MVP shipped (kcAI chat, plan builder, risk annotations); advanced editing/approvals queued |
+| **E2 / FR-2** Guarded Execution & Approvals | Dry-run enforcement, approvals, RBAC, rollback | 🚧 Dry-run plumbing & metrics landed; policy evaluation + approval UX next |
+| **E3 / FR-3** Multi-Cluster Visibility | Aggregated diagnostics, scoped actions | ✅ Core resource explorer, context banner, streamed diagnostics live |
+| **E4 / FR-4** Streaming Observability | Live logs, rollout status, AI summaries | ✅ SSE-powered logs/events/plan updates in UI; exec session replay forthcoming |
+| **E5 / FR-5** Audit & Reporting | Tamper-evident audit trails, exports | ⏳ PostgreSQL-backed audit store & export flow scheduled |
+| **E6 / FR-6** Packaging & AI Abstraction | Single binary, Helm chart, provider plugins | ✅ Go binary embeds UI, Helm chart + MCP provider abstraction delivered |
+| **FR-7** Workflow Governance | Guardrailed recipes, post-incident notes | ⏳ Design underway per `docs/stories/` backlog |
 
 For full requirements and design principles, see:
 - [Product Requirements Document](docs/PRD.md)
@@ -141,6 +184,8 @@ pnpm run dev    # Starts Vite dev server with the React plan drawer
 
 > ⚠️ Running `go test ./...` in restricted environments may fail when the MCP handler attempts to bind to localhost. Use `go test ./internal/...` for targeted coverage.
 
+- Need end‑to‑end steps (UI build, Docker image, Helm deployment)? See [`docs/local-development.md`](docs/local-development.md).
+
 ---
 
 ## 📁 Repository Structure
@@ -148,8 +193,6 @@ pnpm run dev    # Starts Vite dev server with the React plan drawer
 ```
 backend/                      # Go services (API, plan builder, telemetry)
 client/                       # React application (plan drawer, chat integration)
-third_party/github.com/kubechat/sse/v2
-                              # Vendored SSE fork used via go.mod replace
 charts/                       # Helm assets (placeholder, upcoming stories)
 docs/                         # PRD, epics, architecture, and sprint docs
 ```
@@ -179,4 +222,16 @@ Please review the [code of conduct](CODE_OF_CONDUCT.md) before contributing.
 
 Kubechat aims to make Kubernetes safer and more approachable by combining conversational interfaces with governed execution. The current milestone proves out plan generation; upcoming stories will layer in approvals, audit trails, and packaging aligned with the PRD roadmap.
 
-> Built with ❤️ for platform engineers and SREs who want confidence before they hit “apply”.
+**Key Features:**
+- 🤖 **Conversational AI & Plan Preview** – kcAI chat, risk-tagged kubectl plans, and editable parameters.  
+- 📡 **Live Cluster Diagnostics** – streaming tables, YAML viewer, log tailing, and port-forward controls per cluster.  
+- 🔄 **Guardrail Foundations** – dry-run defaults, risk scoring, Prometheus metrics, and structured audit hooks ready for approvals.  
+- 🧠 **Pluggable AI Providers** – offline-first Ollama with optional OpenAI/Anthropic/Azure connectors via the MCP interface.  
+- 🚢 **Batteries-Included Packaging** – single Go binary embeds the UI; Helm chart supports TLS, storage, and image pinning.  
+- 📚 **PRD-Aligned Roadmap** – documented epics, architecture decisions, and UX specifications tracked in `docs/`.
+
+---
+
+**Built with ❤️ for the Kubernetes community**
+
+*Making Kubernetes accessible through the power of natural language AI while maintaining enterprise-grade security and compliance.*

@@ -1,4 +1,5 @@
-import { ToolSet, experimental_createMCPClient } from "ai";
+import { type ToolSet } from "ai";
+import { experimental_createMCPClient } from "@ai-sdk/mcp";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
 import { RawRequestError } from "../kcFetch";
@@ -7,9 +8,12 @@ import { serializeError } from "serialize-error";
 // Module-level variable to store the full tools object (including functions)
 let fullTools: ToolSet = {};
 
+type SerializableTool = Record<string, unknown>;
+type SerializableToolSet = Record<string, SerializableTool>;
+
 type InitialState = {
   loading: boolean;
-  tools: ToolSet; // Only serializable data!
+  tools: SerializableToolSet;
   error: RawRequestError | null;
 };
 
@@ -25,7 +29,7 @@ const initialState: InitialState = {
   error: null,
 };
 
-const fetchKcAiTools = createAsyncThunk('kcAiTools', async ({isDev, config, cluster}: FetchKcAiToolsProps, thunkAPI) => {
+const fetchKcAiTools = createAsyncThunk<SerializableToolSet, FetchKcAiToolsProps, { rejectValue: RawRequestError }>('kcAiTools', async ({isDev, config, cluster}: FetchKcAiToolsProps, thunkAPI) => {
   try {
     const hostName = isDev ? 'http://localhost:7080' : window.location.origin;
     const client = await experimental_createMCPClient({
@@ -37,23 +41,28 @@ const fetchKcAiTools = createAsyncThunk('kcAiTools', async ({isDev, config, clus
     const tools = await client.tools();
 
     // Store the full tools object (with functions) outside Redux
-    fullTools = tools;
+    fullTools = tools as ToolSet;
 
     // Only store serializable data in Redux
-    const serializableTools: ToolSet = {};
-    for (const [key, tool] of Object.entries(tools)) {
-      serializableTools[key] = {} as typeof tool;
-      for (const [prop, value] of Object.entries(tool)) {
+    const serializableTools: SerializableToolSet = {};
+    for (const [key, tool] of Object.entries(fullTools)) {
+      const serializableTool: SerializableTool = {};
+      for (const [prop, value] of Object.entries(tool as Record<string, unknown>)) {
         if (typeof value !== "function") {
-          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-          (serializableTools[key] as Record<string, any>)[prop] = value;
+          serializableTool[prop] = value;
         }
       }
+      serializableTools[key] = serializableTool;
     }
 
     return serializableTools;
   } catch (e) {
-    return thunkAPI.rejectWithValue(serializeError(e));
+    const serialized = serializeError(e) as { message?: string; code?: number; stack?: string };
+    return thunkAPI.rejectWithValue({
+      message: serialized.message ?? 'Failed to fetch kcAI tools',
+      code: typeof serialized.code === 'number' ? serialized.code : undefined,
+      details: serialized.stack,
+    });
   }
 });
 
@@ -67,15 +76,13 @@ const kcAiToolsSlice = createSlice({
     });
     builder.addCase(fetchKcAiTools.fulfilled, (state, action) => {
       state.loading = false;
-      // TODO: fix this type error
-      // @ts-expect-error: action.payload is ToolSet
       state.tools = action.payload;
       state.error = null;
     });
     builder.addCase(fetchKcAiTools.rejected, (state, action) => {
       state.loading = false;
       state.tools = {};
-      state.error = action.payload as RawRequestError;
+      state.error = action.payload ?? { message: 'Failed to fetch kcAI tools' };
     });
   },
 });

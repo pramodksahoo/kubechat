@@ -1,0 +1,27 @@
+[
+  {
+    "name": "Kubechat Base",
+    "description": "Existing Kubechat repository architecture (Go backend, React frontend)",
+    "url": "https://github.com/pramodksahoo/kubechat",
+    "language": "Go + TypeScript",
+    "decision_impacts": [
+      "Single-process (monolithic) deployment with modular packages",
+      "React SPA served by Go backend",
+      "Kubernetes client via client-go",
+      "PostgreSQL persistence"
+    ],
+    "version_verification": {
+      "go_version": "1.23",
+      "node_version": ">=18",
+      "kubectl_version": ">=1.29 (supports N-3)"
+    },
+    "selected": true,
+    "initial_command": [
+      "git clone https://github.com/pramodksahoo/kubechat.git kubechat",
+      "cd kubechat",
+      "git checkout -b feature/kubechat",
+      "go mod tidy",
+      "pnpm install"
+    ]
+  }
+]

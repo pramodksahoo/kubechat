@@ -36,7 +36,7 @@ const Sidebar = memo(function ({ className }: SidebarProps) {
   const routerForce = useRouter();
   const dispatch = useAppDispatch();
   const configName = router.location.pathname.split('/')[1];
-  const queryParams = new URLSearchParams(router.location.search);
+  const queryParams = useMemo(() => new URLSearchParams(router.location.search), [router.location.search]);
   const clusterName = queryParams.get('cluster') || '';
   const {
     clusters
@@ -82,7 +82,7 @@ const Sidebar = memo(function ({ className }: SidebarProps) {
         }
       });
     }
-  }, []);
+  }, [queryParams]);
 
 
   const toggleMenu = (route: string) => {

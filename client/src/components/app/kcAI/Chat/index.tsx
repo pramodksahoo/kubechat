@@ -8,7 +8,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { stepCountIs, streamText } from "ai";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import Markdown from "react-markdown";
@@ -59,7 +59,6 @@ const ChatWindow = ({ currentChatKey, cluster, config, isDetailsPage, kcAIStored
   const dispatch = useAppDispatch();
   const clusterConfigKey = `cluster=${cluster}&config=${config}`;
   const abortControllerRef = useRef<AbortController | null>(null);
-  const kcAIStoredChatHistory = JSON.parse(localStorage.getItem('kcAIStoredChatHistory') || '{}') as kcAIStoredChatHistory;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [messageLoading, setMessageLoading] = useState(false);
@@ -220,7 +219,7 @@ const ChatWindow = ({ currentChatKey, cluster, config, isDetailsPage, kcAIStored
     if (kcAIStoredModels) {
       setProviderList(kcAIStoredModels.providerCollection);
     }
-  }, []);
+  }, [kcAIStoredModels]);
   const [isLoading, setIsLoading] = useState(false);
   const {
     yamlData,
@@ -476,12 +475,13 @@ const ChatWindow = ({ currentChatKey, cluster, config, isDetailsPage, kcAIStored
     }
 
   };
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
-  };
-  const storeToChatHistory = (key: string) => {
+  }, []);
+
+  const storeToChatHistory = useCallback((key: string) => {
     try {
       const kcAIStoredChatHistory = localStorage.getItem('kcAIStoredChatHistory') || '{}';
       let kcAIChatHistory = JSON.parse(kcAIStoredChatHistory) as kcAIStoredChatHistory;
@@ -508,14 +508,15 @@ const ChatWindow = ({ currentChatKey, cluster, config, isDetailsPage, kcAIStored
     } catch (error) {
       console.log('error', error);
     }
-  };
+  }, [clusterConfigKey, messages, selectedProvider]);
   useEffect(() => {
     scrollToBottom();
     currentChatKey && messages.length && storeToChatHistory(currentChatKey);
-  }, [messages]);
+  }, [currentChatKey, messages, scrollToBottom, storeToChatHistory]);
 
   useEffect(() => {
-    const currentContext = kcAIStoredChatHistory[clusterConfigKey]?.[currentChatKey];
+    const storedHistory = JSON.parse(localStorage.getItem('kcAIStoredChatHistory') || '{}') as kcAIStoredChatHistory;
+    const currentContext = storedHistory[clusterConfigKey]?.[currentChatKey];
     if (currentContext?.messages) {
       setMessages(currentContext?.messages);
       if (kcAIStoredModels) {
@@ -528,7 +529,7 @@ const ChatWindow = ({ currentChatKey, cluster, config, isDetailsPage, kcAIStored
       }
     }
 
-  }, [currentChatKey]);
+  }, [clusterConfigKey, currentChatKey, kcAIStoredModels]);
 
   /* eslint-disable  @typescript-eslint/no-explicit-any */
   /* eslint-disable  @typescript-eslint/no-unused-vars */

@@ -5,15 +5,17 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/pramodksahoo/kubechat/backend/container"
-	"github.com/pramodksahoo/kubechat/backend/handlers/base"
 	"github.com/labstack/echo/v4"
 	"github.com/r3labs/sse/v2"
+
+	"github.com/pramodksahoo/kubechat/backend/container"
+	"github.com/pramodksahoo/kubechat/backend/handlers/base"
+	"github.com/pramodksahoo/kubechat/backend/handlers/helpers"
 )
 
 type PortForwardRequest struct {
 	Namespace     string `json:"namespace"`
-	Kind          string `json:kind"`
+	Kind          string `json:"kind"`
 	Name          string `json:"name"`
 	LocalPort     int    `json:"localPort"`
 	ContainerPort int    `json:"containerPort"`
@@ -75,7 +77,7 @@ func (h *PortForwardHandler) ListPortForwarding(c echo.Context) error {
 	streamID := fmt.Sprintf("%s-%s-portForwarder", config, cluster)
 	h.publishList(config, cluster)
 
-	h.container.SSE().ServeHTTP(streamID, c.Response(), c.Request())
+	helpers.ServeStream(c, h.container.SSE(), streamID)
 
 	return nil
 }

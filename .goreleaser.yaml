@@ -3,7 +3,7 @@ version: 2
 
 before:
   hooks:
-    - sh -c "yarn --cwd client install && yarn --cwd client run build && rm -rf backend/routes/static && mv client/dist backend/routes/static"
+    - sh -c "yarn --cwd client install && yarn --cwd client run build && rm -rf backend/static && mv client/dist backend/static"
 
 builds:
   - main: main.go
@@ -46,7 +46,7 @@ nfpms:
   - id: kubechat
     vendor: kubechat
     homepage: "https://github.com/pramodksahoo/kubechat"
-    maintainer: "Abhimanyu Sharma <abhimanyusharma003@gmail.com>"
+    maintainer: "Pramoda Sahoo <devopspramod100@gmail.com>"
     description: "kubechat is a single binary to manage multiple clusters."
     license: "Apache License 2.0"
     formats:
@@ -97,13 +97,13 @@ aurs:
     homepage: "https://github.com/pramodksahoo/kubechat"
     description: "kubechat is a single binary to manage multiple clusters."
     maintainers:
-      - "Abhimanyu Sharma <abhimanyusharma003@gmail.com>"
+      - "Pramoda Sahoo <devopspramod100@gmail.com>"
     license: "Apache License 2.0"
     private_key: "{{ .Env.AUR_KEY }}"
     git_url: "ssh://aur@aur.archlinux.org/kubechat-bin.git"
     commit_author:
-      name: Abhimanyu Sharma
-      email: abhimanyusharma003@gmail.com
+      name: Pramoda Sahoo
+      email: devopspramod100@gmail.com
 
 snapcrafts:
   - name: kubechat
@@ -126,8 +126,7 @@ dockers:
     use: buildx
     dockerfile: .goreleaser.Dockerfile
     image_templates:
-      - ghcr.io/kubechat/{{ .ProjectName }}:{{ .Version }}-amd64
-      - docker.io/kubechat/{{ .ProjectName }}:{{ .Version }}-amd64
+      - ghcr.io/pramodksahoo/{{ .ProjectName }}:{{ .Version }}-amd64
     build_flag_templates:
       - --platform=linux/amd64
       - --label=org.opencontainers.image.version={{ .Version }}
@@ -138,15 +137,14 @@ dockers:
       - --label=org.opencontainers.image.vendor=kubechat
       - --label=org.opencontainers.image.licenses=Apache License 2.0
       - --label=org.opencontainers.image.source=https://github.com/pramodksahoo/kubechat
-      - --label=org.opencontainers.image.authors=Abhimanyu Sharma <abhimanyusharma003@gmail.com>
+      - --label=org.opencontainers.image.authors=Pramoda Sahoo <devopspramod100@gmail.com>
 
   - skip_push: false
     goarch: arm64
     use: buildx
     dockerfile: .goreleaser.Dockerfile
     image_templates:
-      - ghcr.io/kubechat/{{ .ProjectName }}:{{ .Version }}-arm64
-      - docker.io/kubechat/{{ .ProjectName }}:{{ .Version }}-arm64
+      - ghcr.io/pramodksahoo/{{ .ProjectName }}:{{ .Version }}-arm64
     build_flag_templates:
       - --platform=linux/arm64
       - --label=org.opencontainers.image.version={{ .Version }}
@@ -157,24 +155,16 @@ dockers:
       - --label=org.opencontainers.image.vendor=kubechat
       - --label=org.opencontainers.image.licenses=Apache License 2.0
       - --label=org.opencontainers.image.source=https://github.com/pramodksahoo/kubechat
-      - --label=org.opencontainers.image.authors=Abhimanyu Sharma <abhimanyusharma003@gmail.com>
+      - --label=org.opencontainers.image.authors=Pramoda Sahoo <devopspramod100@gmail.com>
 docker_manifests:
-  - name_template: ghcr.io/kubechat/{{ .ProjectName }}:{{ .Version }}
+  - name_template: ghcr.io/pramodksahoo/{{ .ProjectName }}:{{ .Version }}
     image_templates:
-      - ghcr.io/kubechat/{{ .ProjectName }}:{{ .Version }}-amd64
-      - ghcr.io/kubechat/{{ .ProjectName }}:{{ .Version }}-arm64
-  - name_template: ghcr.io/kubechat/{{ .ProjectName }}:latest
+      - ghcr.io/pramodksahoo/{{ .ProjectName }}:{{ .Version }}-amd64
+      - ghcr.io/pramodksahoo/{{ .ProjectName }}:{{ .Version }}-arm64
+  - name_template: ghcr.io/pramodksahoo/{{ .ProjectName }}:latest
     image_templates:
-      - ghcr.io/kubechat/{{ .ProjectName }}:{{ .Version }}-amd64
-      - ghcr.io/kubechat/{{ .ProjectName }}:{{ .Version }}-arm64
-  - name_template: docker.io/kubechat/{{ .ProjectName }}:{{ .Version }}
-    image_templates:
-      - docker.io/kubechat/{{ .ProjectName }}:{{ .Version }}-amd64
-      - docker.io/kubechat/{{ .ProjectName }}:{{ .Version }}-arm64
-  - name_template: docker.io/kubechat/{{ .ProjectName }}:latest
-    image_templates:
-      - docker.io/kubechat/{{ .ProjectName }}:{{ .Version }}-amd64
-      - docker.io/kubechat/{{ .ProjectName }}:{{ .Version }}-arm64
+      - ghcr.io/pramodksahoo/{{ .ProjectName }}:{{ .Version }}-amd64
+      - ghcr.io/pramodksahoo/{{ .ProjectName }}:{{ .Version }}-arm64
 
 signs:
   - cmd: cosign
@@ -207,8 +197,8 @@ winget:
     short_description: A single binary kubernetes dashboard to manage your multiple clusters.
     license: "Apache License 2.0"
     commit_author:
-      name: Abhimanyu Sharma
-      email: abhimanyusharma003@gmail.com
+      name: Pramoda Sahoo
+      email: devopspramod100@gmail.com
     homepage: https://github.com/pramodksahoo/kubechat
     license_url: https://github.com/pramodksahoo/kubechat/blob/master/LICENSE
     copyright: Copyright (c) 2024-{{ .Now.Format "2006" }} kubechat
@@ -221,7 +211,7 @@ winget:
       - transform
       - devutil
       - productivity
-    author: Abhimanyu Sharma
+    author: Pramoda Sahoo
     publisher_support_url: https://github.com/pramodksahoo/kubechat/issues
     repository:
       owner: kubechat

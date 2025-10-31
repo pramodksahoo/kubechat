@@ -7,11 +7,11 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/labstack/echo/v4"
+	"github.com/maruel/natural"
 	"github.com/pramodksahoo/kubechat/backend/container"
 	"github.com/pramodksahoo/kubechat/backend/handlers/base"
 	"github.com/pramodksahoo/kubechat/backend/handlers/helpers"
-	"github.com/labstack/echo/v4"
-	"github.com/maruel/natural"
 	"github.com/r3labs/sse/v2"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -94,7 +94,7 @@ func (h *UnstructuredHandler) Get(c echo.Context) error {
 	streamKey := fmt.Sprintf("%s-%s-%s-%s", h.BaseHandler.QueryConfig, h.BaseHandler.QueryCluster, h.BaseHandler.Kind, itemKey)
 	streamKey = strings.ReplaceAll(streamKey, "/", "-")
 	go h.BaseHandler.Container.EventProcessor().AddEvent(streamKey, h.ProcessDetails(itemKey, streamKey))
-	h.BaseHandler.Container.SSE().ServeHTTP(streamKey, c.Response(), c.Request())
+	helpers.ServeStream(c, h.BaseHandler.Container.SSE(), streamKey)
 
 	return nil
 }

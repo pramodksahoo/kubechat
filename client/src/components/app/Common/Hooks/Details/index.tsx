@@ -1,2 +1,2 @@
-export * from './detailsWrapper';
-export * from './fetchDataForDetails';
+export { useDetailsWrapper } from "./detailsWrapper";
+export { useFetchDataForDetails } from "./fetchDataForDetails";

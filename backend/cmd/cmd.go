@@ -7,12 +7,12 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/log"
-	"github.com/pramodksahoo/kubechat/backend/config"
-	"github.com/pramodksahoo/kubechat/backend/container"
-	"github.com/pramodksahoo/kubechat/backend/routes"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/pkg/browser"
+	"github.com/pramodksahoo/kubechat/backend/config"
+	"github.com/pramodksahoo/kubechat/backend/container"
+	"github.com/pramodksahoo/kubechat/backend/routes"
 	"github.com/spf13/cobra"
 )
 
@@ -141,12 +141,13 @@ func openDefaultBrowser(isSecure bool, listenAddr string) {
 }
 
 func startBanner() {
-	fmt.Println(" _          _                        _ _ ")
-	fmt.Println("| | ___   _| |__   _____      ____ _| | |")
-	fmt.Println("| |/ / | | | '_ \\ / _ \\ \\ /\\ / / _` | | |")
-	fmt.Println("|   <| |_| | |_) |  __/\\ V  V / (_| | | |")
-	fmt.Println("|_|\\_\\\\__,_|_.__/ \\___| \\_/\\_/ \\__,_|_|_|")
-	fmt.Println("___________________________________________")
+	fmt.Println("  _  __       _                _           _   _   _ ")
+	fmt.Println(" | |/ /__ _  | |__   ___  __ _| |__   __ _| | | \\ | |")
+	fmt.Println(" | ' // _` | | '_ \\ / _ \\/ _` | '_ \\ / _` | | |  \\| |")
+	fmt.Println(" | . \\ (_| | | |_) |  __/ (_| | | | | (_| | | | |\\  |")
+	fmt.Println(" |_|\\_\\__,_| |_.__/ \\___|\\__, |_| |_|\\__,_|_| |_| \\_|")
+	fmt.Println("                          |___/                      ")
+	fmt.Println("______________________ Kubechat NLP ______________________")
 	fmt.Println("version:", Version)
 	fmt.Println("commit:", Commit)
 	fmt.Println("https://github.com/pramodksahoo/kubechat")

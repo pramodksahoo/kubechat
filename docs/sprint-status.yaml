@@ -1,0 +1,77 @@
+# generated: 2025-10-30T10:57:32Z
+# project: kubechat
+# project_key: kubechat
+# tracking_system: file-system
+# story_location: {project-root}/docs/stories
+#
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic exists in epic file but not contexted
+#   - contexted: Epic tech context created (required before drafting stories)
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - drafted: Story file created in stories folder
+#   - ready-for-dev: Draft approved and story context created
+#   - in-progress: Developer actively working on implementation
+#   - review: Under SM review (via code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - completed: Retrospective has been done
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epics should be contexted before stories can be drafted
+# - Stories can be worked in parallel if team capacity allows
+# - Agents should never regress status
+# - Rest of the lifecycle managed via SM workflows
+
+generated: 2025-10-30T10:57:32Z
+project: kubechat
+project_key: kubechat
+tracking_system: file-system
+story_location: /Users/pramodsahoo/kubechat-new/docs/stories
+
+development_status:
+  epic-1: contexted
+  1-1-capture-natural-language-intents: in-progress
+  1-2-surface-risk-and-blast-radius-insights: backlog
+  1-3-suggest-diagnostic-steps: backlog
+  1-4-post-execution-summaries: backlog
+  epic-1-retrospective: optional
+  epic-2: backlog
+  2-1-dry-run-previews-for-mutations: backlog
+  2-2-rbac-and-policy-evaluation: backlog
+  2-3-two-person-approval-workflow: backlog
+  2-4-rollback-snapshot-and-execution: backlog
+  epic-2-retrospective: optional
+  epic-3: backlog
+  3-1-cluster-and-namespace-selector: backlog
+  3-2-aggregated-resource-views: backlog
+  3-3-scoped-action-shortcuts: backlog
+  3-4-timeline-and-event-overlay: backlog
+  epic-3-retrospective: optional
+  epic-4: backlog
+  4-1-integrated-log-tail: backlog
+  4-2-secure-exec-sessions: backlog
+  4-3-telemetry-correlation: backlog
+  4-4-post-incident-note-automation: backlog
+  epic-4-retrospective: optional
+  epic-5: backlog
+  5-1-audit-log-ingestion: backlog
+  5-2-evidence-export: backlog
+  5-3-policy-management: backlog
+  5-4-runbook-and-recipe-catalog: backlog
+  5-5-secrets-rotation-and-credential-playbook: backlog
+  epic-5-retrospective: optional
+  epic-6: backlog
+  6-1-single-binary-build: backlog
+  6-2-helm-chart-with-crds: backlog
+  6-3-ai-provider-abstraction-layer: backlog
+  6-4-ci-cd-and-release-pipeline: backlog
+  6-5-redis-object-storage-enablement-guides: backlog
+  6-6-provision-cosign-otel-credentials-for-ci-cd: backlog
+  epic-6-retrospective: optional

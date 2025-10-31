@@ -15,7 +15,7 @@ k8s_client_qps: ""    # Queries per second limit for Kubernetes client (e.g., "1
 # Container image settings
 image:
   # Image repository location
-  repository: ghcr.io/kubechat/kubechat
+  repository: ghcr.io/pramodksahoo/kubechat
   # Pull policy for the image ("Always", "IfNotPresent", "Never")
   pullPolicy: IfNotPresent
   # Image tag to be used (can be set to a specific version or "latest")

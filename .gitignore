@@ -55,5 +55,4 @@ resources/views/*.go
 resources/views/*/*.go
 # BMAD
 docs/stories
-docs/
-bmad/
+# bmad/
