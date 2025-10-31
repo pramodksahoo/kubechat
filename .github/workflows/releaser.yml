@@ -34,12 +34,6 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Set up Snapcraft
-        run: |
-          sudo snap install snapcraft --classic
-          mkdir -p $HOME/.cache/snapcraft/download
-          mkdir -p $HOME/.cache/snapcraft/stage-packages
-
       - name: Install Chocolatey
         run: |
           mkdir -p /opt/chocolatey
@@ -79,9 +73,7 @@ jobs:
           version: "~> v2"
           args: release --clean
         env:
-          AUR_KEY: ${{ secrets.AUR_SSH_KEY }}
           GITHUB_TOKEN: ${{ secrets.GORELEASER_TOKEN }}
-          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_LOGIN }}
 
       - name: Push Helm chart to GHCR
         env:
