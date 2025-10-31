@@ -62,16 +62,6 @@ homebrew_casks:
         EOS
       end
 
-scoops:
-  - repository:
-      owner: kubechat
-      name: scoop-bucket
-      token: "{{ .Env.GITHUB_TOKEN }}"
-    name: kubechat
-    homepage: "https://github.com/pramodksahoo/kubechat"
-    description: "kubechat is a single binary to manage multiple clusters."
-    license: "Apache License 2.0"
-
 
 dockers:
   - skip_push: false
