@@ -44,7 +44,7 @@ homebrew_casks:
     repository:
       owner: pramodksahoo
       name: homebrew-tap
-      token: "{{ .Env.GORELEASER_TOKEN }}"
+      token: "{{ .Env.GITHUB_TOKEN }}"
     skip_upload: false
     commit_author:
       name: "Pramoda Sahoo"
