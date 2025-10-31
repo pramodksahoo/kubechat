@@ -142,41 +142,6 @@ docker_signs:
       - "${artifact}@${digest}"
       - --yes
 
-winget:
-  - name: kubechat
-    publisher: kubechat
-    publisher_url: https://github.com/pramodksahoo/kubechat
-    short_description: A single binary kubernetes dashboard to manage your multiple clusters.
-    license: "Apache License 2.0"
-    commit_author:
-      name: Pramoda Sahoo
-      email: devopspramod100@gmail.com
-    homepage: https://github.com/pramodksahoo/kubechat
-    license_url: https://github.com/pramodksahoo/kubechat/blob/master/LICENSE
-    copyright: Copyright (c) 2024-{{ .Now.Format "2006" }} kubechat
-    release_notes: "{{ .Changelog }}"
-    release_notes_url: https://github.com/pramodksahoo/kubechat/releases/tag/{{ .Tag }}
-    tags:
-      - kubernetes
-      - kubernetes-dashboard
-      - kubernetes-gui
-      - transform
-      - devutil
-      - productivity
-    author: Pramoda Sahoo
-    publisher_support_url: https://github.com/pramodksahoo/kubechat/issues
-    repository:
-      owner: kubechat
-      name: winget-pkgs
-      branch: kubechat-{{ .Version }}
-      token: "{{ .Env.GITHUB_TOKEN }}"
-      pull_request:
-        enabled: true
-        base:
-          owner: microsoft
-          name: winget-pkgs
-          branch: master
-
 release:
   footer: |
     ## Quick Download Links - {{ .Tag }}
@@ -186,9 +151,6 @@ release:
 
     **Linux (Binaries)**
     [amd64](https://github.com/pramodksahoo/kubechat/releases/download/{{ .Tag }}/kubechat_Linux_x86_64.tar.gz) | [arm64](https://github.com/pramodksahoo/kubechat/releases/download/{{ .Tag }}/kubechat_Linux_arm64.tar.gz) | [i386](https://github.com/pramodksahoo/kubechat/releases/download/{{ .Tag }}/kubechat_Linux_i386.tar.gz)
-
-    **Windows (Exe)**
-    [amd64](https://github.com/pramodksahoo/kubechat/releases/download/{{ .Tag }}/kubechat_Windows_x86_64.zip) | [arm64](https://github.com/pramodksahoo/kubechat/releases/download/{{ .Tag }}/kubechat_Windows_arm64.zip) | [i386](https://github.com/pramodksahoo/kubechat/releases/download/{{ .Tag }}/kubechat_Windows_i386.zip)
 
     **FreeBSD (Binaries)**
     [amd64](https://github.com/pramodksahoo/kubechat/releases/download/{{ .Tag }}/kubechat_Freebsd_x86_64.tar.gz) | [arm64](https://github.com/pramodksahoo/kubechat/releases/download/{{ .Tag }}/kubechat_Freebsd_arm64.tar.gz) | [i386](https://github.com/pramodksahoo/kubechat/releases/download/{{ .Tag }}/kubechat_Freebsd_i386.tar.gz)
