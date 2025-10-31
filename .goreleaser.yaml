@@ -92,34 +92,6 @@ scoops:
     description: "kubechat is a single binary to manage multiple clusters."
     license: "Apache License 2.0"
 
-aurs:
-  - name: kubechat-bin
-    homepage: "https://github.com/pramodksahoo/kubechat"
-    description: "kubechat is a single binary to manage multiple clusters."
-    maintainers:
-      - "Pramoda Sahoo <devopspramod100@gmail.com>"
-    license: "Apache License 2.0"
-    private_key: "{{ .Env.AUR_KEY }}"
-    git_url: "ssh://aur@aur.archlinux.org/kubechat-bin.git"
-    commit_author:
-      name: Pramoda Sahoo
-      email: devopspramod100@gmail.com
-
-snapcrafts:
-  - name: kubechat
-    publish: true
-    summary: A single binary Kubernetes Open-Source Dashboard.
-    description: |
-      kubechat is single binary Kubernetes Open-Source Dashboard.
-    grade: stable
-    confinement: strict
-    license: "Apache-2.0"
-    base: core20
-    channel_templates:
-      - stable
-    apps:
-      kubechat:
-        plugs: ["home", "network", "network-bind"]
 
 dockers:
   - skip_push: false
