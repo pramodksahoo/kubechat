@@ -89,13 +89,21 @@ helm upgrade --install kubechat ./charts/kubechat \
   --set image.repository=ghcr.io/pramodksahoo/kubechat \
   --set image.tag=dev \
   --set image.pullPolicy=IfNotPresent \
-  --set service.listen=":7080"
+  --set service.listen=":7080" \
+  -f charts/kubechat/values-dev.yaml
 ```
 
+```bash
+helm upgrade --install kubechat ./charts/kubechat \
+  -n kubechat-system --create-namespace \
+  -f charts/kubechat/values-dev.yaml \
+  --set service.listen=":7080"
+```
 Notes:
 - If you pushed the image to a registry, set `image.repository` and `image.tag` appropriately.
 - Leaving `tls.secretName` blank instructs the chart to create a self-signed TLS secret (hooked via `templates/tls-secret.yaml`). Provide your own secret name to use custom certificates.
 - The chart forces `--no-open-browser` inside the container, so it is safe for headless deployments.
+- `charts/kubechat/values-dev.yaml` enables a Traefik ingress and sets the required annotations so Traefik talks HTTPS to the pod (`service.serversscheme: https`, `service.serverstransport`, and `service.servername`). It also switches the route to the `websecure` entrypoint and turns on `router.tls`, which means Traefik terminates TLS for browser traffic. If you build your own values file, either carry these annotations forward or expose a plain HTTP listener instead.
 
 ### 4.2 Access the UI
 
@@ -106,6 +114,13 @@ kubectl -n kubechat-system port-forward svc/kubechat 7080:7080
 ```
 
 Visit `https://localhost:7080`. With the self-signed certificate you may need to accept the browser warning.
+
+If you prefer to use the Traefik ingress:
+
+1. Add an `/etc/hosts` entry pointing `kubechat.local` at your cluster (for local setups: `127.0.0.1 kubechat.local`).
+2. Browse to `https://kubechat.local` or run  
+   `curl -k -H "Host: kubechat.local" https://<traefik-ip>:443/healthz`
+   (replace `<traefik-ip>` with the Traefik service endpoint if you’re not port-forwarding it).
 
 ### 4.3 Supplying kubeconfigs
 

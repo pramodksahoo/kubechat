@@ -19,7 +19,7 @@ image:
   # Pull policy for the image ("Always", "IfNotPresent", "Never")
   pullPolicy: IfNotPresent
   # Image tag to be used (can be set to a specific version or "latest")
-  tag: ""
+  tag: "1.0.0"
 
 # Service account settings
 serviceAccount:
@@ -88,3 +88,18 @@ tolerations: []
 
 # Affinity rules for pod scheduling
 affinity: {}
+
+# Ingress configuration
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: kubechat.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  traefik:
+    insecureSkipVerify: false
+    serverName: ""

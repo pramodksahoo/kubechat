@@ -1,0 +1,70 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "kubechat.fullname" . }}
+  labels:
+    {{- include "kubechat.labels" . | nindent 4 }}
+  {{- $ann := dict -}}
+  {{- with .Values.ingress.annotations }}
+  {{- $_ := merge $ann . }}
+  {{- end }}
+  {{- if and .Values.ingress.traefik (eq .Values.ingress.className "traefik") }}
+  {{- $serverName := default .Values.tls.host .Values.ingress.traefik.serverName }}
+  {{- if $serverName }}
+  {{- $_ := set $ann "traefik.ingress.kubernetes.io/service.servername" $serverName }}
+  {{- end }}
+  {{- if .Values.ingress.traefik.insecureSkipVerify }}
+  {{- $transportName := printf "%s-insecure" (include "kubechat.fullname" .) }}
+  {{- $_ := set $ann "traefik.ingress.kubernetes.io/service.serverstransport" (printf "%s-%s@kubernetescrd" .Release.Namespace $transportName) }}
+  {{- end }}
+  {{- end }}
+  {{- if gt (len $ann) 0 }}
+  annotations:
+    {{- toYaml $ann | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with .Values.ingress.className }}
+  ingressClassName: {{ . | quote }}
+  {{- end }}
+  rules:
+    {{- $fullName := include "kubechat.fullname" . }}
+    {{- range .Values.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path | default "/" | quote }}
+            pathType: {{ .pathType | default "Prefix" | quote }}
+            backend:
+              service:
+                name: {{ .serviceName | default $fullName | quote }}
+                {{- if .servicePort }}
+                port:
+                  {{- if kindIs "string" .servicePort }}
+                  name: {{ .servicePort | quote }}
+                  {{- else }}
+                  number: {{ .servicePort }}
+                  {{- end }}
+                {{- else }}
+                port:
+                  name: https
+                {{- end }}
+          {{- end }}
+    {{- end }}
+  {{- with .Values.ingress.tls }}
+  tls:
+    {{- range . }}
+    - {{- $entry := . -}}
+      {{- if $entry.hosts }}
+        hosts:
+          {{- range $entry.hosts }}
+          - {{ . | quote }}
+          {{- end }}
+      {{- end }}
+      {{- if $entry.secretName }}
+        secretName: {{ $entry.secretName | quote }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}
