@@ -141,11 +141,11 @@ func openDefaultBrowser(isSecure bool, listenAddr string) {
 }
 
 func startBanner() {
-	fmt.Println(" _  __   _   _   ____    _____    ____   _   _       _    _____ ")
+	fmt.Println(" _  __  _   _   ____    _____    ____   _   _       _   _____ ")
 	fmt.Println("| |/ / | | | | | __ )  | ____|  / ___| | | | |     / \\ |_   _|")
-	fmt.Println("| ' /  | | | | |  _ \\  |  _|   | |     | |_| |    / _ \\   | |  ")
-	fmt.Println("| . \\  | |_| | | |_) | | |___  | |___  |  _  |   / ___ \\   | |  ")
-	fmt.Println("|_|\\_\\  \\___/  |____/  |_____|  \\____| |_| |_|  /_/   \\_\\   |_|  ")
+	fmt.Println("| ' /  | | | | |  _ \\  |  _|   | |     | |_| |    / _ \\  | |  ")
+	fmt.Println("| . \\  | |_| | | |_) | | |___  | |___  |  _  |   / ___ \\ | |  ")
+	fmt.Println("|_|\\_\\  \\___/  |____/  |_____|  \\____| |_| |_|  /_/   \\_\\|_|  ")
 	fmt.Println("_________________________ Kubechat NLP __________________________________")
 	fmt.Println("version:", Version)
 	fmt.Println("commit:", Commit)

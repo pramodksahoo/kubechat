@@ -34,6 +34,6 @@ helm upgrade --install kubechat ./charts/kubechat \
   -f charts/kubechat/values-dev.yaml
 
 echo "[7/7] Waiting for rollout"
-kubectl -n kubechat-system rollout status deploy/kubechat
+kubectl -n kubechat-system rollout restart deploy/kubechat
 
 echo "Done. kubechat should now be serving via Traefik at https://kubechat.local (see docs/local-development.md)."

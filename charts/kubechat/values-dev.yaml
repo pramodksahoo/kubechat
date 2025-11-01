@@ -3,18 +3,18 @@ image:
   tag: dev
   pullPolicy: IfNotPresent
 
-ingress:
-  enabled: true
-  className: "traefik"
-  annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/service.serversscheme: https
-  hosts:
-    - host: kubechat.local
-      paths:
-        - path: /
-          pathType: Prefix
-  tls: []
-  traefik:
-    insecureSkipVerify: true
+# ingress:
+#   enabled: true
+#   className: "traefik"
+#   annotations:
+#     traefik.ingress.kubernetes.io/router.entrypoints: websecure
+#     traefik.ingress.kubernetes.io/router.tls: "true"
+#     traefik.ingress.kubernetes.io/service.serversscheme: https
+#   hosts:
+#     - host: kubechat.local
+#       paths:
+#         - path: /
+#           pathType: Prefix
+#   tls: []
+#   traefik:
+#     insecureSkipVerify: true
