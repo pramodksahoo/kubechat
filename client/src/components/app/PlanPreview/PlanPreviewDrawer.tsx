@@ -275,7 +275,7 @@ const StepItem = ({ step }: { step: PlanStep }) => {
   };
 
   return (
-    <div className="rounded-lg border bg-card p-4 shadow-sm">
+    <div className="rounded-lg border border-border/60 bg-card p-4 shadow-floating">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-medium uppercase text-muted-foreground">Step {step.sequence}</p>
@@ -306,7 +306,7 @@ const StepItem = ({ step }: { step: PlanStep }) => {
         </div>
       </div>
 
-      <div className="mt-3 grid gap-2 rounded-md border p-3 text-xs text-muted-foreground">
+      <div className="mt-3 grid gap-2 rounded-md border border-border/60 p-3 text-xs text-muted-foreground">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline" className="bg-background text-xs font-medium">
             Cluster: {step.target.cluster}
@@ -318,11 +318,11 @@ const StepItem = ({ step }: { step: PlanStep }) => {
             Resource: {step.target.resource}
           </Badge>
           {step.dryRunAvailable ? (
-            <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+            <Badge variant="outline" className="bg-success/15 text-success">
               Dry-run supported
             </Badge>
           ) : (
-            <Badge variant="outline" className="bg-amber-500/10 text-amber-700 dark:text-amber-300">
+            <Badge variant="outline" className="bg-warning/20 text-warning">
               Dry-run unavailable
             </Badge>
           )}
@@ -330,7 +330,7 @@ const StepItem = ({ step }: { step: PlanStep }) => {
         <p className="text-xs italic">{step.risk.description}</p>
       </div>
 
-      <div className="mt-3 rounded-md border border-dashed p-3 text-xs text-muted-foreground">
+      <div className="mt-3 rounded-md border border-border/60 border-dashed p-3 text-xs text-muted-foreground">
         Dry-run output will appear here once executed.
       </div>
     </div>
@@ -444,7 +444,7 @@ const PlanParameterEditor = ({ plan, isUpdating }: { plan: PlanRecord; isUpdatin
   }, [dispatch, labelsInput, namespace, plan, replicaValues]);
 
   return (
-    <section className="space-y-3 rounded-lg border bg-card p-4">
+    <section className="space-y-3 rounded-lg border border-border/60 bg-card p-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">Plan parameters</h3>
         <div className="flex items-center gap-2">
@@ -542,14 +542,14 @@ const PlanRevisionHistory = ({ revisions }: { revisions?: PlanRevision[] }) => {
   }
 
   return (
-    <section className="space-y-3 rounded-lg border bg-card p-4">
+    <section className="space-y-3 rounded-lg border border-border/60 bg-card p-4">
       <h3 className="text-sm font-semibold">Revision history</h3>
       <div className="space-y-2 text-xs">
         {revisions
           .slice()
           .reverse()
           .map((revision) => (
-            <div key={revision.version} className="rounded-md border px-3 py-2">
+            <div key={revision.version} className="rounded-md border border-border/50 px-3 py-2">
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <span className="font-medium">Version {revision.version}</span>
                 <span className="text-muted-foreground">{new Date(revision.updatedAt).toLocaleString()}</span>
@@ -609,13 +609,13 @@ const PlanPreviewContent = ({ plan, onClose, isUpdating }: { plan: PlanRecord; o
       <ScrollArea className="flex-1 p-4">
         <div className="space-y-4">
           <PlanParameterEditor plan={plan} isUpdating={isUpdating} />
-          <section className="rounded-lg border bg-card p-4">
+          <section className="rounded-lg border border-border/60 bg-card p-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Affected resources</h3>
               <span className="text-xs text-muted-foreground">{resourceStats.length} unique</span>
             </div>
             <Collapsible>
-              <CollapsibleTrigger className="mt-3 flex w-full items-center justify-between rounded-md border px-3 py-2 text-sm">
+              <CollapsibleTrigger className="mt-3 flex w-full items-center justify-between rounded-md border border-border/50 px-3 py-2 text-sm">
                 View resources
               </CollapsibleTrigger>
               <CollapsibleContent>
@@ -623,7 +623,7 @@ const PlanPreviewContent = ({ plan, onClose, isUpdating }: { plan: PlanRecord; o
                   {resourceStats.map((resource) => (
                     <li
                       key={resource.key}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2 text-xs"
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/40 px-3 py-2 text-xs"
                     >
                       <div className="flex flex-col">
                         <span className="font-medium text-foreground">{resource.label}</span>
@@ -686,7 +686,7 @@ const PlanPreviewContent = ({ plan, onClose, isUpdating }: { plan: PlanRecord; o
 const DesktopDrawer = ({ isOpen, children }: { isOpen: boolean; children: React.ReactNode }) => (
   <aside
     className={cn(
-      "hidden h-screen flex-col border-l bg-background shadow-lg transition-all duration-300 lg:flex",
+      "hidden h-screen flex-col border-l border-border/60 bg-background shadow-feature transition-all duration-300 lg:flex",
       isOpen ? "pointer-events-auto" : "pointer-events-none",
     )}
     style={{ width: isOpen ? DRAWER_WIDTH : 0 }}

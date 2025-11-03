@@ -14,7 +14,7 @@ const NameCell = memo(function ({ cellValue, link}: NameCellProps) {
       <Link
         to={`/${link}`}
       >
-        <span title={cellValue} className="max-w-[750px] text-sm truncate text-blue-600 dark:text-blue-500 hover:underline px-3">
+        <span title={cellValue} className="max-w-[750px] px-3 text-sm truncate text-primary hover:text-primary/80 hover:underline">
           {cellValue}
         </span>
       </Link>

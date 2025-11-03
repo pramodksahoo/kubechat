@@ -2,7 +2,7 @@ type LoaderProps = {
   className?: string
 }
 
-export function Loader({ className = 'w-8 h-8 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600' }: LoaderProps) {
+export function Loader({ className = 'h-8 w-8 animate-spin text-muted-foreground/40 dark:text-muted-foreground/30 fill-primary' }: LoaderProps) {
   return (
     <div className="flex items-center justify-center h-screen">
       <div role="status">

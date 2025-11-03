@@ -81,7 +81,7 @@ const SidebarNavigator = memo(function SidebarNavigator({ setOpenMenus }: Sideba
         <button
           type="button"
           onClick={() => setOpen((open) => !open)}
-          className="mt-2 h-8 w-full flex items-center justify-between rounded-md border bg-background px-3 text-sm text-muted-foreground shadow-none hover:bg-muted"
+          className="mt-2 flex h-8 w-full items-center justify-between rounded-md border border-border/60 bg-background px-3 text-sm text-muted-foreground shadow-none hover:bg-muted"
         >
           <span>Open...</span>
           <div className="absolute right-1.5 hidden gap-1 sm:flex">

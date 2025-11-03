@@ -31,7 +31,7 @@ function TimeCell({ cellValue }: TimeCellProps) {
   }, [cellValue]);
   return (
     <div className="px-3">
-      <span title={cellValue} className="text-sm text-gray-700 dark:text-gray-100">
+      <span title={cellValue} className="text-sm text-foreground/80">
         {getDisplayTime(Number(currentTime))}
       </span>
     </div>

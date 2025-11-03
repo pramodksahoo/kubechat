@@ -20,7 +20,7 @@ const CopyToClipboard = memo(function ({val}: CopyToClipboardProps){
       {
         hasCopied ? 
         <CheckCircledIcon
-          className="mr-2 h-3 w-3 text-green-800 invisible group-hover/edit:visible cursor-pointer"
+          className="mr-2 h-3 w-3 text-success invisible group-hover/edit:visible cursor-pointer"
         />
         :
         <CopyIcon

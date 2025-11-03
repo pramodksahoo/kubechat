@@ -30,8 +30,12 @@ export function ContainerCard(containerData: ContainerCardProps) {
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Status</p>
             <p className="text-sm font-medium leading-none">
-              <span className={started ? 'text-emerald-400' : 'text-red-400'}>{!started ? 'Not' : ''} Stared</span>
-              <span className={`pl-1 ${ready ? 'text-emerald-300' : 'text-red-300'}`}>{!ready ? 'Not' : ''} Ready</span>
+              <span className={started ? 'text-success' : 'text-destructive'}>
+                {started ? 'Started' : 'Not Started'}
+              </span>
+              <span className={`pl-1 ${ready ? 'text-success/80' : 'text-destructive/80'}`}>
+                {ready ? 'Ready' : 'Not Ready'}
+              </span>
             </p>
           </div>
         </div>

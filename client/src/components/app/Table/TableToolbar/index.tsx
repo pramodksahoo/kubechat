@@ -84,8 +84,8 @@ export function DataTableToolbar<TData>({
           <TooltipProvider>
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
-                <div className="flex items-center mr-5 border px-3 text-xs font-medium rounded-md h-8 cursor-default">
-                  <span className="h-2 w-2 rounded-full bg-green-400" />
+                <div className="flex h-8 items-center mr-5 rounded-md border border-border bg-card/40 px-3 text-xs font-medium text-foreground/80 cursor-default">
+                  <span className="h-2 w-2 rounded-full bg-success" />
                   <span className="pl-2">{table.getFilteredRowModel().rows.length}</span>
                 </div>
               </TooltipTrigger>
@@ -104,8 +104,8 @@ export function DataTableToolbar<TData>({
         <Tooltip delayDuration={0}>
           <TooltipTrigger asChild>
             <div className="ml-2 relative inline-block cursor-pointer" onClick={() => setShowChat(!showChat)}>
-              <div className="absolute inset-0 bg-gradient-to-r from-pink-500 via-purple-600 to-blue-500 rounded-sm blur-[4px] animate-pulse"></div>
-              <div className="relative inline-flex i gap-[0.125rem] w-12 h-8 bg-background rounded-md flex items-center justify-center border border-gray-200 dark:border-none shadow-sm hover:bg-accent hover:text-accent-foreground">
+              <div className="absolute inset-0 rounded-sm blur-[4px] animate-pulse bg-[linear-gradient(120deg,hsl(var(--primary))_0%,hsl(var(--success))_50%,hsl(var(--accent))_100%)]"></div>
+              <div className="relative inline-flex gap-[0.125rem] w-12 h-8 bg-background rounded-md flex items-center justify-center border border-border shadow-subtle hover:bg-accent hover:text-accent-foreground transition-colors">
                 <Sparkles className="w-4 h-4" />
                 <span className='text-xs'>AI</span>
               </div>

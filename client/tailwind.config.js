@@ -30,6 +30,14 @@ module.exports = {
 					DEFAULT: 'hsl(var(--secondary))',
 					foreground: 'hsl(var(--secondary-foreground))'
 				},
+				success: {
+					DEFAULT: 'hsl(var(--success))',
+					foreground: 'hsl(var(--success-foreground))'
+				},
+				warning: {
+					DEFAULT: 'hsl(var(--warning))',
+					foreground: 'hsl(var(--warning-foreground))'
+				},
 				destructive: {
 					DEFAULT: 'hsl(var(--destructive))',
 					foreground: 'hsl(var(--destructive-foreground))'
@@ -61,44 +69,47 @@ module.exports = {
 					ring: 'hsl(var(--sidebar-ring))'
 				}
 			},
+			fontFamily: {
+				sans: ['var(--font-sans)'],
+				serif: ['var(--font-serif)'],
+				mono: ['var(--font-mono)'],
+			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
 			},
+			boxShadow: {
+				subtle: 'var(--shadow-sm)',
+				raised: 'var(--shadow)',
+				floating: 'var(--shadow-md)',
+				feature: 'var(--shadow-lg)',
+			},
 			keyframes: {
 				'accordion-down': {
-					from: {
-						height: 0
-					},
-					to: {
-						height: 'var(--radix-accordion-content-height)'
-					}
+					from: { height: 0 },
+					to: { height: 'var(--radix-accordion-content-height)' }
 				},
 				'accordion-up': {
-					from: {
-						height: 'var(--radix-accordion-content-height)'
-					},
-					to: {
-						height: 0
-					}
+					from: { height: 'var(--radix-accordion-content-height)' },
+					to: { height: 0 }
 				},
 				rotate: {
-					"0%, 100%": { transform: "rotate(0deg) scale(10)" },
-					"50%": { transform: "rotate(-360deg) scale(10)" },
+					'0%, 100%': { transform: 'rotate(0deg) scale(10)' },
+					'50%': { transform: 'rotate(-360deg) scale(10)' },
 				},
-				flashorange: {
-         '0%': { color: 'inherit' },
-          '10%': { color: '#f97316' }, // Tailwind orange-500 hex
-          '66.6%': { color: '#f97316' },
-          '100%': { color: 'inherit' },
-        },
+				flashpulse: {
+					'0%': { color: 'inherit' },
+					'15%': { color: 'hsl(var(--warning))' },
+					'60%': { color: 'hsl(var(--warning))' },
+					'100%': { color: 'inherit' },
+				},
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				rotate: "rotate 10s linear infinite",
-				flashorange: 'flashorange 1.5s ease-in-out infinite',
+				rotate: 'rotate 10s linear infinite',
+				flashpulse: 'flashpulse 1.5s ease-in-out infinite',
 			}
 		}
 	},

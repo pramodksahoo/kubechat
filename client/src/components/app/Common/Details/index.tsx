@@ -120,7 +120,7 @@ const KcDetails = () => {
   return (
     <div className="py-2">
       <div className="flex items-center gap-2 pl-2">
-        <span className="text-xs text-blue-600 dark:text-blue-500 hover:underline flex items-center">
+        <span className="flex items-center text-xs text-primary hover:underline">
           <Link to={`/${config}/list?${getListPageQueryparams()}`} className="flex items-center">
             <CaretLeftIcon className="h-3.5 w-3.5 mr-1" />
             {resourceInitialData.label}
@@ -199,8 +199,8 @@ const KcDetails = () => {
                     <Tooltip delayDuration={0}>
                       <TooltipTrigger asChild>
                         <div className="ml-2 relative inline-block cursor-pointer" onClick={() => setShowChat(!showChat)}>
-                          <div className="absolute inset-0 bg-gradient-to-r from-pink-500 via-purple-600 to-blue-500 rounded-sm blur-[3px] animate-pulse"></div>
-                          <div className="relative inline-flex i gap-[0.125rem] w-12 h-8 bg-background rounded-md flex items-center justify-center border border-gray-200 dark:border-none shadow-sm  hover:bg-accent hover:text-accent-foreground">
+                          <div className="absolute inset-0 rounded-sm blur-[3px] animate-pulse bg-[linear-gradient(120deg,hsl(var(--primary))_0%,hsl(var(--success))_50%,hsl(var(--accent))_100%)]"></div>
+                          <div className="relative inline-flex gap-[0.125rem] w-12 h-8 bg-background rounded-md flex items-center justify-center border border-border shadow-subtle hover:bg-accent hover:text-accent-foreground transition-colors">
                             <Sparkles className="w-4 h-4" />
                             <span className='text-xs'>AI</span>
                           </div>

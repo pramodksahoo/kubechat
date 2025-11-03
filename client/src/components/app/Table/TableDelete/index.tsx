@@ -127,7 +127,7 @@ const TableDelete = ({ selectedRows, toggleAllRowsSelected, postDeleteCallback }
                 onClick={() => setModalOpen(true)}
               > {
                   loading ?
-                    <Loader className='w-5 h-5 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600' /> :
+                    <Loader className='h-5 w-5' /> :
                     <Trash2Icon className="h-4 w-4" />
                 }
                 {isListPage && <span className='text-xs'>Delete</span>}

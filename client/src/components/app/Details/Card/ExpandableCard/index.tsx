@@ -49,7 +49,7 @@ function CardContentDetails({ fieldLabel, data, defaultLabelCount }: CardItems) 
             {
               checkForTagLength() &&
               <span
-                className="text-xs pl-1 pt-1 text-blue-600 dark:text-blue-500 cursor-pointer hover:underline"
+                className="text-xs pl-1 pt-1 text-primary cursor-pointer hover:text-primary/80 hover:underline"
                 onClick={() => setShowCompleteLabel(!showCompleteLabel)}
               >
                 {

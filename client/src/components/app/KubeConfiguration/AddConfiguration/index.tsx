@@ -139,12 +139,12 @@ const AddConfig = () => {
                         id="bearerTokenName"
                         placeholder="Config name"
                         value={bearerTokenConfig.name}
-                        className={cn('shadow-none', bearerTokenConfig.name && checkForValidConfigName(bearerTokenConfig.name) && 'border-red-500 focus-visible:ring-red-500')}
+                        className={cn('shadow-none', bearerTokenConfig.name && checkForValidConfigName(bearerTokenConfig.name) && 'border-destructive focus-visible:ring-destructive')}
                         onChange={(e) => setBearerTokenConfig({ ...bearerTokenConfig, name: e.target.value || '' })}
                       />
                       {
                         bearerTokenConfig.name && checkForValidConfigName(bearerTokenConfig.name) &&
-                        <p className="text-red-500 text-sm">Name must be alphanumeric and can include hyphens (-).</p>
+                        <p className="text-destructive text-sm">Name must be alphanumeric and can include hyphens (-).</p>
                       }
                     </div>
                     <div className="space-y-1">
@@ -176,12 +176,12 @@ const AddConfig = () => {
                         id="certificateName"
                         placeholder="Config name"
                         value={certificateConfig.name}
-                        className={cn('shadow-none', bearerTokenConfig.name && checkForValidConfigName(certificateConfig.name) && 'border-red-500 focus-visible:ring-red-500')}
+                        className={cn('shadow-none', bearerTokenConfig.name && checkForValidConfigName(certificateConfig.name) && 'border-destructive focus-visible:ring-destructive')}
                         onChange={(e) => setCertificateConfig({ ...certificateConfig, name: e.target.value || '' })}
                       />
                       {
                         bearerTokenConfig.name && checkForValidConfigName(certificateConfig.name) &&
-                        <p className="text-red-500 text-sm">Name must be alphanumeric and can include hyphens (-).</p>
+                        <p className="text-destructive text-sm">Name must be alphanumeric and can include hyphens (-).</p>
                       }
                     </div>
                     <div className="space-y-1">

@@ -92,7 +92,7 @@ const ListConfigurations = ({ setSelectedUUId, setKcAIStoredModelsCollection, is
           <span>Looks like you haven't added a provider yet.</span>
           <br />
           <span>Click
-            <span className="text-blue-600/100 dark:text-sky-400/100 cursor-pointer" onClick={() => setShowAddConfiguration(true)}> here </span>
+            <span className="text-primary cursor-pointer hover:text-primary/80" onClick={() => setShowAddConfiguration(true)}> here </span>
             or use the button <Button variant="outline" size="icon" className="h-8 w-8 shadow-none" onClick={() => setShowAddConfiguration(true)}>
               <CirclePlus className="h-4 w-4" />
             </Button> at the top, to go to Configuration add your first one.</span>
@@ -100,7 +100,7 @@ const ListConfigurations = ({ setSelectedUUId, setKcAIStoredModelsCollection, is
       </div>
       :
       <div className="overflow-auto p-2 pt-0">
-        <Table className="border">
+        <Table className="border border-border/60">
           <TableHeader className="sticky top-0 z-10 bg-muted">
             <TableRow>
               <TableHead>Alias</TableHead>
@@ -184,8 +184,8 @@ const ListConfigurations = ({ setSelectedUUId, setKcAIStoredModelsCollection, is
                                       <Star className={cn(
                                         "h-3 w-3 transition-colors",
                                         data.defaultProvider === uuid
-                                          ? "fill-yellow-400 text-yellow-400"
-                                          : "text-muted-foreground hover:fill-yellow-400 hover:text-yellow-400"
+                                          ? "fill-warning text-warning"
+                                          : "text-muted-foreground hover:fill-warning hover:text-warning"
                                       )} />
                                     </Button>
                                   </TooltipTrigger>

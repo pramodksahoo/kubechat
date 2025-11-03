@@ -113,7 +113,7 @@ export function AiChat({ isFullscreen = false, onToggleFullscreen, customHeight,
           </div>
           <span className="font-semibold">
             kcAI
-            <span className="text-xs align-text-bottom text-gray-500"> (beta)</span>
+            <span className="text-xs align-text-bottom text-muted-foreground"> (beta)</span>
           </span>
           <div className="flex items-center gap-1">
             <TooltipProvider>
@@ -199,7 +199,7 @@ export function AiChat({ isFullscreen = false, onToggleFullscreen, customHeight,
                   <span>You haven't set up any providers yet.</span>
                   <br />
                   <span>Click
-                    <span className="text-blue-600/100 dark:text-sky-400/100 cursor-pointer" onClick={() => setActiveView('configuration')}> here</span>
+                    <span className="text-primary cursor-pointer hover:text-primary/80" onClick={() => setActiveView('configuration')}> here</span>
                     , to go to Configuration and add one now.</span>
                 </p>
               </div>

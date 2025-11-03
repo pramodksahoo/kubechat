@@ -191,7 +191,7 @@ const Sidebar = memo(function ({ className }: SidebarProps) {
                                 <DropdownMenuTrigger asChild>
                                   <SidebarMenuButton className='group-data-[collapsible=icon]:justify-center' tooltip={route} showTooltipOnExpanded={true}>
                                     {getResourceIcon(route.toLowerCase().split(' ').join(''))}
-                                    <span className='truncate text-gray-800 dark:text-gray-200 group-data-[collapsible=icon]:hidden'>{route}</span>
+                                    <span className='truncate text-sidebar-foreground group-data-[collapsible=icon]:hidden'>{route}</span>
                                     <ChevronRight size={16} className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 group-data-[collapsible=icon]:hidden" />
                                   </SidebarMenuButton>
                                 </DropdownMenuTrigger>
@@ -207,7 +207,7 @@ const Sidebar = memo(function ({ className }: SidebarProps) {
                                               <TooltipTrigger asChild>
                                                 <SidebarMenuSubButton asChild isActive={getActiveNav(routeValue, true)}>
                                                   <a onClick={() => onNavClick(routeValue)}>
-                                                    <span className="text-gray-600 dark:text-gray-300">{name}</span>
+                                                    <span className="text-sidebar-foreground/80">{name}</span>
                                                   </a>
                                                 </SidebarMenuSubButton>
                                               </TooltipTrigger>
@@ -230,7 +230,7 @@ const Sidebar = memo(function ({ className }: SidebarProps) {
                                   align="start"
                                   side={isMobile ? "bottom" : "right"}
                                 >
-                                  <DropdownMenuLabel className="truncate font-medium text-gray-800 dark:text-gray-200">{route}</DropdownMenuLabel>
+                                  <DropdownMenuLabel className="truncate font-medium text-sidebar-foreground">{route}</DropdownMenuLabel>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuGroup className='overflow-auto max-h-64'>
                                     {
@@ -239,7 +239,7 @@ const Sidebar = memo(function ({ className }: SidebarProps) {
                                           <DropdownMenuItem
                                             key={routeValue}
                                             onClick={() => onNavClick(routeValue)}
-                                            className="gap-2 cursor-pointer text-gray-600 dark:text-gray-300"
+                                            className="gap-2 cursor-pointer text-sidebar-foreground/80"
                                           >
                                             {name}
                                           </DropdownMenuItem>
@@ -269,7 +269,7 @@ const Sidebar = memo(function ({ className }: SidebarProps) {
                             <SidebarMenuButton className='group-data-[collapsible=icon]:justify-center' asChild tooltip='Definitions'>
                               <a onClick={() => onNavClick('customresourcedefinitions')}>
                                 {getResourceIcon('customesources')}
-                                <span className='truncate text-gray-800 dark:text-gray-200 group-data-[collapsible=icon]:hidden'>Definitions</span>
+                                <span className='truncate text-sidebar-foreground group-data-[collapsible=icon]:hidden'>Definitions</span>
                               </a>
                             </SidebarMenuButton>
                           </TooltipTrigger>
@@ -298,7 +298,7 @@ const Sidebar = memo(function ({ className }: SidebarProps) {
                                       minWidth={16}
                                     />
                                   </div>
-                                  <span className='truncate text-gray-800 dark:text-gray-200 group-data-[collapsible=icon]:hidden'>{customResourceGroup}</span>
+                                  <span className='truncate text-sidebar-foreground group-data-[collapsible=icon]:hidden'>{customResourceGroup}</span>
                                   <ChevronRight size={16} className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 group-data-[collapsible=icon]:hidden" />
                                 </SidebarMenuButton>
                               </DropdownMenuTrigger>
@@ -313,7 +313,7 @@ const Sidebar = memo(function ({ className }: SidebarProps) {
                                         <TooltipTrigger asChild>
                                           <SidebarMenuSubButton asChild isActive={getActiveNav(customResource.name)}>
                                             <a onClick={() => onCustomResourcesNavClick(customResource.route, customResource.name)}>
-                                              <span className="text-gray-600 dark:text-gray-300 group-data-[collapsible=icon]:hidden">{customResource.name}</span>
+                                              <span className="text-sidebar-foreground/80 group-data-[collapsible=icon]:hidden">{customResource.name}</span>
                                             </a>
                                           </SidebarMenuSubButton>
                                         </TooltipTrigger>
@@ -336,7 +336,7 @@ const Sidebar = memo(function ({ className }: SidebarProps) {
                                 align="start"
                                 side={isMobile ? "bottom" : "right"}
                               >
-                                <DropdownMenuLabel className="truncate font-medium text-gray-800 dark:text-gray-200">{customResourceGroup}</DropdownMenuLabel>
+                                <DropdownMenuLabel className="truncate font-medium text-sidebar-foreground">{customResourceGroup}</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuGroup className='overflow-auto max-h-64'>
                                   {
@@ -346,7 +346,7 @@ const Sidebar = memo(function ({ className }: SidebarProps) {
                                         <DropdownMenuItem
                                           key={customResource.name}
                                           onClick={() => onCustomResourcesNavClick(customResource.route, customResource.name)}
-                                          className="gap-2 p-2 cursor-pointer text-gray-600 dark:text-gray-300"
+                                          className="gap-2 p-2 cursor-pointer text-sidebar-foreground/80"
                                         >
                                           {customResource.name}
                                         </DropdownMenuItem>

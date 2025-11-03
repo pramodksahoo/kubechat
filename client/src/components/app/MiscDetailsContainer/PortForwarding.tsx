@@ -145,11 +145,11 @@ export function PortForwardingDialog({
                 disabled={loading}
                 variant='ghost'
                 size='icon'
-                className='z-10 border w-8 mr-1 h-8'
+                className='z-10 h-8 w-8 border border-border/60 mr-1'
                 onClick={() => setModalOpen(true)}
               >
                 {loading ? (
-                  <Loader className='w-4 h-4 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600' />
+                  <Loader className='h-4 w-4' />
                 ) : filteredList.length > 0 ? (
                   <PlugZap className='h-4 w-4' />
                 ) : (
@@ -180,7 +180,7 @@ export function PortForwardingDialog({
               id="localPort"
               type="number"
               min="0"
-              className="flex-1 rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground shadow-sm "
+              className="flex-1"
               placeholder="e.g. 8080"
               onChange={handleChange}
               value={value}
@@ -216,7 +216,7 @@ export function PortForwardingDialog({
                 id="defaultPort"
                 type="number"
                 min="0"
-                className="flex-1 rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground shadow-sm "
+                className="flex-1"
                 placeholder="e.g. 8080"
                 onChange={handleChange}
                 value={customContainerPort}
@@ -230,7 +230,7 @@ export function PortForwardingDialog({
             <div>
               <span className="text-xs">
                 You have <strong>{filteredList.length}</strong> port forwarding rules for this {resourceKind}.
-                Click <Link className="text-blue-600" to={`/${config}/list?cluster=${cluster}&resourcekind=portforwards`}>here</Link> to view them.
+                Click <Link className="text-primary hover:text-primary/80" to={`/${config}/list?cluster=${cluster}&resourcekind=portforwards`}>here</Link> to view them.
               </span>
             </div>
           )}

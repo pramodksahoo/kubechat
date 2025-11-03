@@ -20,17 +20,17 @@ type XtermProp = {
 };
 
 const DARK_THEME = {
-  background: "#181818",
-  foreground: "#dcdcdc",
-  cursor: "#dcdcdc",
-  selectionBackground: "#404040",
+  background: "#0F141B",
+  foreground: "#DFE7FF",
+  cursor: "#DFE7FF",
+  selectionBackground: "#2D394A",
 };
 
 const LIGHT_THEME = {
-  background: "#ffffff",
-  foreground: "#333333",
-  cursor: "#333333",
-  selectionBackground: "#bbbbbb",
+  background: "#FFFFFF",
+  foreground: "#0F141B",
+  cursor: "#0F141B",
+  selectionBackground: "#BCC6DC",
 };
 
 const XtermTerminal = ({ containerNameProp, xterm, searchAddonRef, updateLogs }: XtermProp) => {
@@ -119,7 +119,7 @@ const XtermTerminal = ({ containerNameProp, xterm, searchAddonRef, updateLogs }:
         <Button
           variant="secondary"
           size="icon"
-          className='absolute bottom-10 right-0 mt-1 mr-2 rounded z-10 border'
+          className='absolute bottom-10 right-0 mt-1 mr-2 rounded z-10 border border-border/60'
           onClick={scrollToBottom}
         >  <ChevronsDown className="h-4 w-4" />
         </Button>

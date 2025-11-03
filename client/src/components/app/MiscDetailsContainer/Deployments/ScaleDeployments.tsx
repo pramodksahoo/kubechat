@@ -96,12 +96,12 @@ const ScaleDeployments = ({ resourcename, queryParams }: ScaleDeploymentsProps) 
                 disabled={loading}
                 variant='ghost'
                 size='icon'
-                className='z-10 border w-20 mr-1 h-8'
+                className='z-10 h-8 w-20 border border-border/60 mr-1'
                 onClick={() => setModalOpen(true)}
               >
                 {
                   loading ?
-                    <Loader className='w-4 h-4 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600' /> :
+                    <Loader className='h-4 w-4' /> :
                     <ScaleIcon className='h-4 w-4' />
                 }
                 <span className='text-xs'>Scale</span>
@@ -123,7 +123,7 @@ const ScaleDeployments = ({ resourcename, queryParams }: ScaleDeploymentsProps) 
         <div className="mt-3 space-y-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <span className="font-medium text-foreground">Current Replicas:</span>
-            <span className="px-2 py-1 rounded bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+            <span className="rounded px-2 py-1 bg-accent text-foreground">
               {deploymentDetails.status.replicas}
             </span>
           </div>
@@ -141,7 +141,7 @@ const ScaleDeployments = ({ resourcename, queryParams }: ScaleDeploymentsProps) 
               id="desired-replicas"
               type="number"
               min="0"
-              className="flex-1 rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+              className="flex-1"
               placeholder="e.g. 5"
               onChange={handleChange}
               value={value}

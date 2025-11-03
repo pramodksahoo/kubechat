@@ -548,7 +548,7 @@ const ChatWindow = ({ currentChatKey, cluster, config, isDetailsPage, kcAIStored
       h5: ({ node, ...props }: any) => <h5 className="text-sm font-medium text-foreground mt-2 mb-1" {...props} />,
       h6: ({ node, ...props }: any) => <h6 className="text-sm font-medium text-muted-foreground mt-2 mb-1" {...props} />,
       p: ({ node, ...props }: any) => <p className="leading-7 [&:not(:first-child)]:mt-2" {...props} />,
-      a: ({ node, ...props }: any) => <a className="text-sm text-blue-600 hover:text-blue-800 underline underline-offset-2 transition-colors" {...props} />,
+      a: ({ node, ...props }: any) => <a className="text-sm text-primary hover:text-primary/80 underline underline-offset-2 transition-colors" {...props} />,
       ul: ({ node, ...props }: any) => <ul className="my-1 ml-2 space-y-1 text-sm [&>li]:relative [&>li]:pl-4" {...props} />,
       ol: ({ node, ...props }: any) => <ol className="my-1 ml-2 space-y-1 text-sm list-decimal [&>li]:pl-1" {...props} />,
       li: ({ node, ...props }: any) => {
@@ -564,7 +564,7 @@ const ChatWindow = ({ currentChatKey, cluster, config, isDetailsPage, kcAIStored
       },
       pre: ({ node, ...props }: any) => <pre className="my-1 overflow-x-auto rounded-md bg-muted/50 p-4 font-mono text-xs leading-relaxed border" {...props} />,
       hr: ({ node, ...props }: any) => <hr className="my-4 border-t border-border" {...props} />,
-      img: ({ node, ...props }: any) => <img className="rounded-md border border-border shadow-sm my-1 max-w-full h-auto" {...props} />,
+      img: ({ node, ...props }: any) => <img className="my-1 h-auto max-w-full rounded-md border border-border/60 shadow-subtle" {...props} />,
       strong: ({ node, ...props }: any) => <strong className="font-semibold text-foreground" {...props} />,
       em: ({ node, ...props }: any) => <em className="italic text-foreground" {...props} />,
       del: ({ node, ...props }: any) => <del className="line-through text-muted-foreground" {...props} />,
@@ -592,7 +592,7 @@ const ChatWindow = ({ currentChatKey, cluster, config, isDetailsPage, kcAIStored
           <Card className={cn("cursor-pointer shadow-none transition-all duration-200 border-dashed rounded-md", copen ? "rounded-b-none" : "rounded-0")}>
             <CardHeader className="p-3">
               <div className="flex items-center space-x-3">
-                <Icon className={cn("h-4 w-4 text-primary", isReasoning ? "animate-flashorange" : "text-orange-500")} />
+                <Icon className={cn("h-4 w-4", isReasoning ? "animate-flashpulse text-warning" : "text-muted-foreground/70")} />
                 <div className="flex-1">
                   <CardTitle className="text-default font-medium tracking-tight">{isReasoning ? "Thinking..." : "Reasoning..."}</CardTitle>
                   <CardDescription className="text-xs"></CardDescription>
@@ -619,18 +619,22 @@ const ChatWindow = ({ currentChatKey, cluster, config, isDetailsPage, kcAIStored
             !(message.role === "system") &&
             <div key={message.id} className={`flex gap-3 ${message.role === "user" ? "justify-end pt-4 pb-1" : "justify-start"}`}>
               <Card
-                className={`max-w-[98%] p-3 pb-0 ${message.role === "user" ? "bg-primary text-primary-foreground" : message.error ? "w-[98%] border-red-100 border-none shadow-none" : "w-[98%] border-none shadow-none"}`}
+                className={cn(
+                  "max-w-[98%] w-[98%] rounded-xl border border-border/40 bg-card/70 p-3 pb-0 text-foreground/90 shadow-subtle",
+                  message.role === "user" && "bg-primary text-primary-foreground border-transparent shadow-raised",
+                  message.error && "border border-destructive/40 bg-destructive/15 text-destructive-foreground"
+                )}
               >
                 {
                   messageLoading && message.content === "" && !message.reasoning ?
                     <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                      <div className="h-2 w-2 rounded-full bg-muted-foreground/60 animate-bounce"></div>
                       <div
-                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                        className="h-2 w-2 rounded-full bg-muted-foreground/60 animate-bounce"
                         style={{ animationDelay: "0.1s" }}
                       ></div>
                       <div
-                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                        className="h-2 w-2 rounded-full bg-muted-foreground/60 animate-bounce"
                         style={{ animationDelay: "0.2s" }}
                       ></div>
                     </div>
@@ -678,7 +682,7 @@ const ChatWindow = ({ currentChatKey, cluster, config, isDetailsPage, kcAIStored
                           // </Accordion>
                         }
                         {
-                          message.error && <div className="flex items-center gap-2 text-red-500"><ShieldAlert className="h-4 w-4" /> An error occured, please check the below details.</div>
+                          message.error && <div className="flex items-center gap-2 text-destructive"><ShieldAlert className="h-4 w-4" /> An error occured, please check the below details.</div>
                         }
 
                         <Markdown

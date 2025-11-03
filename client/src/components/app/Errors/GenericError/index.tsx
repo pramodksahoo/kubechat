@@ -6,7 +6,7 @@ export default function GenericError() {
   return (
     <>
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <h1 className="text-3xl font-bold text-red-600">Oops! Something Went Wrong</h1>
+        <h1 className="text-3xl font-bold text-destructive">Oops! Something Went Wrong</h1>
         <p className="mt-4 text-center">
           Please try again, and if the issue persists, log the error on GitHub.
         </p>

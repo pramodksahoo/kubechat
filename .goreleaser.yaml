@@ -40,7 +40,7 @@ sboms:
 homebrew_casks:
   - name: kubechat
     homepage: "https://github.com/pramodksahoo/kubechat"
-    description: "kubechat is a single binary to manage multiple clusters."
+    description: "kubechat is a NLP to manage multiple clusters."
     repository:
       owner: pramodksahoo
       name: homebrew-tap
